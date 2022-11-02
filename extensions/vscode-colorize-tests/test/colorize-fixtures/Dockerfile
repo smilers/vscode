@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:kinetic-20220830
 MAINTAINER Kimbro Staken
 
 RUN apt-get install -y software-properties-common python
