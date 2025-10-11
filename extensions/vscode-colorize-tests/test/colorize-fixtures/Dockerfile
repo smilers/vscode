@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:24.04
 MAINTAINER Kimbro Staken
 
 RUN apt-get install -y software-properties-common python
