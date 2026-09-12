@@ -3,19 +3,26 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as dom from 'vs/base/browser/dom';
-import { CancellationToken } from 'vs/base/common/cancellation';
-import { IDisposable } from 'vs/base/common/lifecycle';
-import { LinkedList } from 'vs/base/common/linkedList';
-import { ResourceMap } from 'vs/base/common/map';
-import { parse } from 'vs/base/common/marshalling';
-import { Schemas } from 'vs/base/common/network';
-import { normalizePath } from 'vs/base/common/resources';
-import { URI } from 'vs/base/common/uri';
-import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';
-import { ICommandService } from 'vs/platform/commands/common/commands';
-import { EditorOpenContext } from 'vs/platform/editor/common/editor';
-import { IExternalOpener, IExternalUriResolver, IOpener, IOpenerService, IResolvedExternalUri, IValidator, matchesScheme, matchesSomeScheme, OpenOptions, ResolveExternalUriOptions } from 'vs/platform/opener/common/opener';
+import * as dom from '../../../base/browser/dom.js';
+import { mainWindow } from '../../../base/browser/window.js';
+import { CancellationToken } from '../../../base/common/cancellation.js';
+import { IDisposable } from '../../../base/common/lifecycle.js';
+import { LinkedList } from '../../../base/common/linkedList.js';
+import { ResourceMap } from '../../../base/common/map.js';
+import { parse } from '../../../base/common/marshalling.js';
+import { matchesScheme, matchesSomeScheme, Schemas } from '../../../base/common/network.js';
+import { normalizePath } from '../../../base/common/resources.js';
+import { URI } from '../../../base/common/uri.js';
+import { ICodeEditorService } from './codeEditorService.js';
+import { ICommandService } from '../../../platform/commands/common/commands.js';
+import { EditorOpenSource } from '../../../platform/editor/common/editor.js';
+import { defaultExternalUriOpenerId, extractSelection, IExternalOpener, IExternalUriResolver, IOpener, IOpenerService, IResolvedExternalUri, IValidator, OpenOptions, ResolveExternalUriOptions } from '../../../platform/opener/common/opener.js';
+
+interface IExternalUriOpenTarget {
+	readonly sourceUri: URI;
+	readonly href: string;
+	readonly validationTarget: URI | string;
+}
 
 class CommandOpener implements IOpener {
 
@@ -25,17 +32,27 @@ class CommandOpener implements IOpener {
 		if (!matchesScheme(target, Schemas.command)) {
 			return false;
 		}
+
 		if (!options?.allowCommands) {
 			// silently ignore commands when command-links are disabled, also
-			// surpress other openers by returning TRUE
+			// suppress other openers by returning TRUE
 			return true;
 		}
-		// run command or bail out if command isn't known
+
 		if (typeof target === 'string') {
 			target = URI.parse(target);
 		}
+
+		if (Array.isArray(options.allowCommands)) {
+			// Only allow specific commands
+			if (!options.allowCommands.includes(target.path)) {
+				// Suppress other openers by returning TRUE
+				return true;
+			}
+		}
+
 		// execute as command
-		let args: any = [];
+		let args: unknown[] = [];
 		try {
 			args = parse(decodeURIComponent(target.query));
 		} catch {
@@ -62,18 +79,9 @@ class EditorOpener implements IOpener {
 		if (typeof target === 'string') {
 			target = URI.parse(target);
 		}
-		let selection: { startLineNumber: number; startColumn: number; } | undefined = undefined;
-		const match = /^L?(\d+)(?:,(\d+))?/.exec(target.fragment);
-		if (match) {
-			// support file:///some/file.js#73,84
-			// support file:///some/file.js#L73
-			selection = {
-				startLineNumber: parseInt(match[1]),
-				startColumn: match[2] ? parseInt(match[2]) : 1
-			};
-			// remove fragment
-			target = target.with({ fragment: '' });
-		}
+
+		const { selection, uri } = extractSelection(target);
+		target = uri;
 
 		if (target.scheme === Schemas.file) {
 			target = normalizePath(target); // workaround for non-normalized paths (https://github.com/microsoft/vscode/issues/12954)
@@ -84,7 +92,7 @@ class EditorOpener implements IOpener {
 				resource: target,
 				options: {
 					selection,
-					context: options?.fromUserGesture ? EditorOpenContext.USER : EditorOpenContext.API,
+					source: options?.fromUserGesture ? EditorOpenSource.USER : EditorOpenSource.API,
 					...options?.editorOptions
 				}
 			},
@@ -94,6 +102,16 @@ class EditorOpener implements IOpener {
 
 		return true;
 	}
+}
+
+function shouldOpenExternal(target: URI | string, options: OpenOptions | undefined): boolean {
+	return !!options?.openExternal || matchesSomeScheme(target, Schemas.mailto, Schemas.http, Schemas.https, Schemas.vsls);
+}
+
+function shouldUseContributedExternalOpeners(target: URI | string, options: OpenOptions | undefined): boolean {
+	return !!options?.allowContributedOpeners
+		&& options.allowContributedOpeners !== defaultExternalUriOpenerId
+		&& shouldOpenExternal(target, options);
 }
 
 export class OpenerService implements IOpenerService {
@@ -107,6 +125,7 @@ export class OpenerService implements IOpenerService {
 
 	private _defaultExternalOpener: IExternalOpener;
 	private readonly _externalOpeners = new LinkedList<IExternalOpener>();
+	private readonly _externalResourceOpener: IOpener;
 
 	constructor(
 		@ICodeEditorService editorService: ICodeEditorService,
@@ -122,23 +141,24 @@ export class OpenerService implements IOpenerService {
 				if (matchesSomeScheme(href, Schemas.http, Schemas.https)) {
 					dom.windowOpenNoOpener(href);
 				} else {
-					window.location.href = href;
+					mainWindow.location.href = href;
 				}
 				return true;
 			}
 		};
 
 		// Default opener: any external, maito, http(s), command, and catch-all-editors
-		this._openers.push({
+		this._externalResourceOpener = {
 			open: async (target: URI | string, options?: OpenOptions) => {
-				if (options?.openExternal || matchesSomeScheme(target, Schemas.mailto, Schemas.http, Schemas.https, Schemas.vsls)) {
+				if (shouldOpenExternal(target, options)) {
 					// open externally
 					await this._doOpenExternal(target, options);
 					return true;
 				}
 				return false;
 			}
-		});
+		};
+		this._openers.push(this._externalResourceOpener);
 		this._openers.push(new CommandOpener(commandService));
 		this._openers.push(new EditorOpener(editorService));
 	}
@@ -168,18 +188,33 @@ export class OpenerService implements IOpenerService {
 	}
 
 	async open(target: URI | string, options?: OpenOptions): Promise<boolean> {
-		// check with contributed validators
 		const targetURI = typeof target === 'string' ? URI.parse(target) : target;
-		// validate against the original URI that this URI resolves to, if one exists
-		const validationTarget = this._resolvedUriTargets.get(targetURI) ?? target;
-		for (const validator of this._validators) {
-			if (!(await validator.shouldOpen(validationTarget))) {
+
+		// Internal schemes are not openable and must instead be handled in event listeners
+		if (targetURI.scheme === Schemas.internal) {
+			return false;
+		}
+
+		let externalUriOpenTarget: IExternalUriOpenTarget | undefined;
+		if (shouldUseContributedExternalOpeners(target, options)) {
+			externalUriOpenTarget = await this._resolveExternalUriOpenTarget(target, options);
+			if (await this._openWithContributedExternalOpeners(externalUriOpenTarget, options)) {
+				return true;
+			}
+		}
+
+		if (!options?.skipValidation) {
+			const validationTarget = externalUriOpenTarget?.validationTarget ?? this._resolvedUriTargets.get(targetURI) ?? target;
+			if (!(await this._validate(validationTarget, options))) {
 				return false;
 			}
 		}
 
 		// check with contributed openers
 		for (const opener of this._openers) {
+			if (externalUriOpenTarget && opener === this._externalResourceOpener) {
+				return this._openDefaultExternal(externalUriOpenTarget);
+			}
 			const handled = await opener.open(target, options);
 			if (handled) {
 				return true;
@@ -207,8 +242,7 @@ export class OpenerService implements IOpenerService {
 		throw new Error('Could not resolve external URI: ' + resource.toString());
 	}
 
-	private async _doOpenExternal(resource: URI | string, options: OpenOptions | undefined): Promise<boolean> {
-
+	private async _resolveExternalUriOpenTarget(resource: URI | string, options: OpenOptions | undefined): Promise<IExternalUriOpenTarget> {
 		//todo@jrieken IExternalUriResolver should support `uri: URI | string`
 		const uri = typeof resource === 'string' ? URI.parse(resource) : resource;
 		let externalUri: URI;
@@ -219,8 +253,9 @@ export class OpenerService implements IOpenerService {
 			externalUri = uri;
 		}
 
+		const preserveOriginalString = typeof resource === 'string' && uri.toString() === externalUri.toString();
 		let href: string;
-		if (typeof resource === 'string' && uri.toString() === externalUri.toString()) {
+		if (preserveOriginalString) {
 			// open the url-string AS IS
 			href = resource;
 		} else {
@@ -228,20 +263,44 @@ export class OpenerService implements IOpenerService {
 			href = encodeURI(externalUri.toString(true));
 		}
 
-		if (options?.allowContributedOpeners) {
-			const preferredOpenerId = typeof options?.allowContributedOpeners === 'string' ? options?.allowContributedOpeners : undefined;
-			for (const opener of this._externalOpeners) {
-				const didOpen = await opener.openExternal(href, {
-					sourceUri: uri,
-					preferredOpenerId,
-				}, CancellationToken.None);
-				if (didOpen) {
-					return true;
-				}
+		return {
+			sourceUri: uri,
+			href,
+			validationTarget: preserveOriginalString ? resource : externalUri,
+		};
+	}
+
+	private async _openWithContributedExternalOpeners(target: IExternalUriOpenTarget, options: OpenOptions | undefined): Promise<boolean> {
+		const preferredOpenerId = typeof options?.allowContributedOpeners === 'string' ? options.allowContributedOpeners : undefined;
+		for (const opener of this._externalOpeners) {
+			const didOpen = await opener.openExternal(target.href, {
+				sourceUri: target.sourceUri,
+				preferredOpenerId,
+			}, CancellationToken.None);
+			if (didOpen) {
+				return true;
 			}
 		}
 
-		return this._defaultExternalOpener.openExternal(href, { sourceUri: uri }, CancellationToken.None);
+		return false;
+	}
+
+	private _openDefaultExternal(target: IExternalUriOpenTarget): Promise<boolean> {
+		return this._defaultExternalOpener.openExternal(target.href, { sourceUri: target.sourceUri }, CancellationToken.None);
+	}
+
+	private async _doOpenExternal(resource: URI | string, options: OpenOptions | undefined): Promise<boolean> {
+		const target = await this._resolveExternalUriOpenTarget(resource, options);
+		return this._openDefaultExternal(target);
+	}
+
+	private async _validate(resource: URI | string, options: OpenOptions | undefined): Promise<boolean> {
+		for (const validator of this._validators) {
+			if (!(await validator.shouldOpen(resource, options))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	dispose() {

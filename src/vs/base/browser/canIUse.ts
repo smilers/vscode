@@ -3,8 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as browser from 'vs/base/browser/browser';
-import * as platform from 'vs/base/common/platform';
+import * as browser from './browser.js';
+import { mainWindow } from './window.js';
+import * as platform from '../common/platform.js';
 
 export const enum KeyboardSupport {
 	Always,
@@ -28,11 +29,11 @@ export const BrowserFeatures = {
 		)
 	},
 	keyboard: (() => {
-		if (platform.isNative || browser.isStandalone) {
+		if (platform.isNative || browser.isStandalone()) {
 			return KeyboardSupport.Always;
 		}
 
-		if ((<any>navigator).keyboard || browser.isSafari) {
+		if ((navigator as Navigator & { keyboard?: unknown }).keyboard || browser.isSafari) {
 			return KeyboardSupport.FullScreen;
 		}
 
@@ -41,6 +42,6 @@ export const BrowserFeatures = {
 
 	// 'ontouchstart' in window always evaluates to true with typescript's modern typings. This causes `window` to be
 	// `never` later in `window.navigator`. That's why we need the explicit `window as Window` cast
-	touch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
-	pointerEvents: window.PointerEvent && ('ontouchstart' in window || (window as Window).navigator.maxTouchPoints > 0 || navigator.maxTouchPoints > 0)
+	touch: 'ontouchstart' in mainWindow || navigator.maxTouchPoints > 0,
+	pointerEvents: mainWindow.PointerEvent && ('ontouchstart' in mainWindow || navigator.maxTouchPoints > 0)
 };

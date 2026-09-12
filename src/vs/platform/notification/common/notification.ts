@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IAction } from 'vs/base/common/actions';
-import { Event } from 'vs/base/common/event';
-import { IDisposable } from 'vs/base/common/lifecycle';
-import BaseSeverity from 'vs/base/common/severity';
-import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
+import { localize } from '../../../nls.js';
+import { IAction } from '../../../base/common/actions.js';
+import { Event } from '../../../base/common/event.js';
+import BaseSeverity from '../../../base/common/severity.js';
+import { createDecorator } from '../../instantiation/common/instantiation.js';
 
 export import Severity = BaseSeverity;
 
@@ -15,20 +15,44 @@ export const INotificationService = createDecorator<INotificationService>('notif
 
 export type NotificationMessage = string | Error;
 
+export enum NotificationPriority {
+
+	/**
+	 * Default priority: notification will be visible unless do not disturb mode is enabled.
+	 */
+	DEFAULT,
+
+	/**
+	 * Optional priority: notification might only be visible from the notifications center.
+	 */
+	OPTIONAL,
+
+	/**
+	 * Silent priority: notification will only be visible from the notifications center.
+	 */
+	SILENT,
+
+	/**
+	 * Urgent priority: notification will be visible even when do not disturb mode is enabled.
+	 */
+	URGENT
+}
+
 export interface INotificationProperties {
 
 	/**
-	 * Sticky notifications are not automatically removed after a certain timeout. By
-	 * default, notifications with primary actions and severity error are always sticky.
+	 * Sticky notifications are not automatically removed after a certain timeout.
+	 *
+	 * Currently, only 2 kinds of notifications are sticky:
+	 * - Error notifications with primary actions
+	 * - Notifications that show progress
 	 */
 	readonly sticky?: boolean;
 
 	/**
-	 * Silent notifications are not shown to the user unless the notification center
-	 * is opened. The status bar will still indicate all number of notifications to
-	 * catch some attention.
+	 * Allows to override the priority of the notification based on needs.
 	 */
-	readonly silent?: boolean;
+	readonly priority?: NotificationPriority;
 
 	/**
 	 * Adds an action to never show the notification again. The choice will be persisted
@@ -45,9 +69,16 @@ export enum NeverShowAgainScope {
 	WORKSPACE,
 
 	/**
-	 * Will never show this notification on any workspace again.
+	 * Will never show this notification on any workspace of the same
+	 * profile again.
 	 */
-	GLOBAL
+	PROFILE,
+
+	/**
+	 * Will never show this notification on any workspace across all
+	 * profiles again.
+	 */
+	APPLICATION
 }
 
 export interface INeverShowAgainOptions {
@@ -65,9 +96,33 @@ export interface INeverShowAgainOptions {
 
 	/**
 	 * Whether to persist the choice in the current workspace or for all workspaces. By
-	 * default it will be persisted for all workspaces (= `NeverShowAgainScope.GLOBAL`).
+	 * default it will be persisted for all workspaces across all profiles
+	 * (= `NeverShowAgainScope.APPLICATION`).
 	 */
 	readonly scope?: NeverShowAgainScope;
+}
+
+export interface INotificationSource {
+
+	/**
+	 * The id of the source.
+	 */
+	readonly id: string;
+
+	/**
+	 * The label of the source.
+	 */
+	readonly label: string;
+}
+
+export function isNotificationSource(thing: unknown): thing is INotificationSource {
+	if (thing) {
+		const candidate = thing as INotificationSource;
+
+		return typeof candidate.id === 'string' && typeof candidate.label === 'string';
+	}
+
+	return false;
 }
 
 export interface INotification extends INotificationProperties {
@@ -93,7 +148,7 @@ export interface INotification extends INotificationProperties {
 	/**
 	 * The source of the notification appears as additional information.
 	 */
-	readonly source?: string | { label: string; id: string; };
+	readonly source?: string | INotificationSource;
 
 	/**
 	 * Actions to show as part of the notification. Primary actions show up as
@@ -218,6 +273,14 @@ export interface INotificationHandle {
 	close(): void;
 }
 
+export interface IStatusHandle {
+
+	/**
+	 * Hide the status message.
+	 */
+	close(): void;
+}
+
 interface IBasePromptChoice {
 
 	/**
@@ -291,15 +354,13 @@ export enum NotificationsFilter {
 	OFF,
 
 	/**
-	 * All notifications are configured as silent. See
-	 * `INotificationProperties.silent` for more info.
-	 */
-	SILENT,
-
-	/**
 	 * All notifications are silent except error notifications.
 	*/
 	ERROR
+}
+
+export interface INotificationSourceFilter extends INotificationSource {
+	readonly filter: NotificationsFilter;
 }
 
 /**
@@ -312,14 +373,31 @@ export interface INotificationService {
 	readonly _serviceBrand: undefined;
 
 	/**
-	 * Emitted when a new notification is added.
+	 * Emitted when the notifications filter changed.
 	 */
-	readonly onDidAddNotification: Event<INotification>;
+	readonly onDidChangeFilter: Event<void>;
 
 	/**
-	 * Emitted when a notification is removed.
+	 * Sets a notification filter either for all notifications
+	 * or for a specific source.
 	 */
-	readonly onDidRemoveNotification: Event<INotification>;
+	setFilter(filter: NotificationsFilter | INotificationSourceFilter): void;
+
+	/**
+	 * Gets the notification filter either for all notifications
+	 * or for a specific source.
+	 */
+	getFilter(source?: INotificationSource): NotificationsFilter;
+
+	/**
+	 * Returns all filters with their sources.
+	 */
+	getFilters(): INotificationSourceFilter[];
+
+	/**
+	 * Removes a filter for a specific source.
+	 */
+	removeFilter(sourceId: string): void;
 
 	/**
 	 * Show the provided notification to the user. The returned `INotificationHandle`
@@ -357,7 +435,7 @@ export interface INotificationService {
 	 *
 	 * @param severity the severity of the notification. Either `Info`, `Warning` or `Error`.
 	 * @param message the message to show as status.
-	 * @param choices options to be choosen from.
+	 * @param choices options to be chosen from.
 	 * @param options provides some optional configuration options.
 	 *
 	 * @returns a handle on the notification to e.g. hide it or update message, buttons, etc.
@@ -370,16 +448,9 @@ export interface INotificationService {
 	 * @param message the message to show as status
 	 * @param options provides some optional configuration options
 	 *
-	 * @returns a disposable to hide the status message
+	 * @returns a handle to hide the status message
 	 */
-	status(message: NotificationMessage, options?: IStatusMessageOptions): IDisposable;
-
-	/**
-	 * Allows to configure a filter for notifications.
-	 *
-	 * @param filter the filter to use
-	 */
-	setFilter(filter: NotificationsFilter): void;
+	status(message: NotificationMessage, options?: IStatusMessageOptions): IStatusHandle;
 }
 
 export class NoOpNotification implements INotificationHandle {
@@ -401,4 +472,20 @@ export class NoOpProgress implements INotificationProgress {
 	done(): void { }
 	total(value: number): void { }
 	worked(value: number): void { }
+}
+
+export function withSeverityPrefix(label: string, severity: Severity): string {
+
+	// Add severity prefix to match WCAG 4.1.3 Status
+	// Messages requirements.
+
+	if (severity === Severity.Error) {
+		return localize('severityPrefix.error', "Error: {0}", label);
+	}
+
+	if (severity === Severity.Warning) {
+		return localize('severityPrefix.warning', "Warning: {0}", label);
+	}
+
+	return localize('severityPrefix.info', "Info: {0}", label);
 }

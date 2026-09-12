@@ -4,17 +4,21 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Command } from '../commandManager';
-import { MarkdownEngine } from '../markdownEngine';
-import { SkinnyTextDocument } from '../tableOfContentsProvider';
+import { MarkdownItEngine } from '../markdownEngine';
+import { ITextDocument } from '../types/textDocument';
 
 export class RenderDocument implements Command {
 	public readonly id = 'markdown.api.render';
 
-	public constructor(
-		private readonly engine: MarkdownEngine
-	) { }
+	readonly #engine: MarkdownItEngine;
 
-	public async execute(document: SkinnyTextDocument | string): Promise<string> {
-		return (await (this.engine.render(document))).html;
+	public constructor(
+		engine: MarkdownItEngine
+	) {
+		this.#engine = engine;
+	}
+
+	public async execute(document: ITextDocument | string): Promise<string> {
+		return (await (this.#engine.render(document))).html;
 	}
 }

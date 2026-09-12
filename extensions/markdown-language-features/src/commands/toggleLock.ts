@@ -4,16 +4,20 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Command } from '../commandManager';
-import { MarkdownPreviewManager } from '../features/previewManager';
+import { MarkdownPreviewManager } from '../preview/previewManager';
 
 export class ToggleLockCommand implements Command {
 	public readonly id = 'markdown.preview.toggleLock';
 
+	readonly #previewManager: MarkdownPreviewManager;
+
 	public constructor(
-		private readonly previewManager: MarkdownPreviewManager
-	) { }
+		previewManager: MarkdownPreviewManager
+	) {
+		this.#previewManager = previewManager;
+	}
 
 	public execute() {
-		this.previewManager.toggleLock();
+		this.#previewManager.toggleLock();
 	}
 }

@@ -3,23 +3,18 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { isArray, isObject, isUndefinedOrNull } from 'vs/base/common/types';
+import { isTypedArray, isObject, isUndefinedOrNull } from './types.js';
 
 export function deepClone<T>(obj: T): T {
 	if (!obj || typeof obj !== 'object') {
 		return obj;
 	}
 	if (obj instanceof RegExp) {
-		// See https://github.com/microsoft/TypeScript/issues/10990
-		return obj as any;
+		return obj;
 	}
 	const result: any = Array.isArray(obj) ? [] : {};
-	Object.keys(<any>obj).forEach((key: string) => {
-		if ((<any>obj)[key] && typeof (<any>obj)[key] === 'object') {
-			result[key] = deepClone((<any>obj)[key]);
-		} else {
-			result[key] = (<any>obj)[key];
-		}
+	Object.entries(obj).forEach(([key, value]) => {
+		result[key] = value && typeof value === 'object' ? deepClone(value) : value;
 	});
 	return result;
 }
@@ -35,7 +30,7 @@ export function deepFreeze<T>(obj: T): T {
 		for (const key in obj) {
 			if (_hasOwnProperty.call(obj, key)) {
 				const prop = obj[key];
-				if (typeof prop === 'object' && !Object.isFrozen(prop)) {
+				if (typeof prop === 'object' && !Object.isFrozen(prop) && !isTypedArray(prop)) {
 					stack.push(prop);
 				}
 			}
@@ -45,6 +40,7 @@ export function deepFreeze<T>(obj: T): T {
 }
 
 const _hasOwnProperty = Object.prototype.hasOwnProperty;
+
 
 export function cloneAndChange(obj: any, changer: (orig: any) => any): any {
 	return _cloneAndChange(obj, changer, new Set());
@@ -60,7 +56,7 @@ function _cloneAndChange(obj: any, changer: (orig: any) => any, seen: Set<any>):
 		return changed;
 	}
 
-	if (isArray(obj)) {
+	if (Array.isArray(obj)) {
 		const r1: any[] = [];
 		for (const e of obj) {
 			r1.push(_cloneAndChange(e, changer, seen));
@@ -73,10 +69,10 @@ function _cloneAndChange(obj: any, changer: (orig: any) => any, seen: Set<any>):
 			throw new Error('Cannot clone recursive data-structure');
 		}
 		seen.add(obj);
-		const r2 = {};
-		for (let i2 in obj) {
+		const r2: Record<string, unknown> = {};
+		for (const i2 in obj) {
 			if (_hasOwnProperty.call(obj, i2)) {
-				(r2 as any)[i2] = _cloneAndChange(obj[i2], changer, seen);
+				r2[i2] = _cloneAndChange(obj[i2], changer, seen);
 			}
 		}
 		seen.delete(obj);
@@ -181,16 +177,67 @@ export function safeStringify(obj: any): string {
 				seen.add(value);
 			}
 		}
+		if (typeof value === 'bigint') {
+			return `[BigInt ${value.toString()}]`;
+		}
 		return value;
 	});
 }
 
-export function getOrDefault<T, R>(obj: T, fn: (obj: T) => R | undefined, defaultValue: R): R {
-	const result = fn(obj);
-	return typeof result === 'undefined' ? defaultValue : result;
+/**
+ * Like `JSON.stringify`, but with deterministic ordering of object keys so that
+ * structurally equal inputs always produce the same string. Useful for cache
+ * keys derived from arbitrary object payloads.
+ *
+ * - Object keys are sorted at every level of nesting.
+ * - Properties whose value is `undefined` are omitted (matching `JSON.stringify`).
+ * - Circular references are replaced with the string `"[Circular]"` to avoid
+ *   throwing.
+ * - A top-level `undefined` returns the string `'undefined'`; any other
+ *   stringification failure returns the empty string.
+ */
+export function stableStringify(value: unknown): string {
+	if (value === undefined) {
+		return 'undefined';
+	}
+	try {
+		return _stableStringify(value, new WeakSet());
+	} catch {
+		return '';
+	}
 }
 
-type obj = { [key: string]: any; };
+function _stableStringify(value: unknown, seen: WeakSet<object>): string {
+	if (value === null || typeof value !== 'object') {
+		return JSON.stringify(value) ?? 'null';
+	}
+	if (seen.has(value as object)) {
+		return '"[Circular]"';
+	}
+	seen.add(value as object);
+
+	let result: string;
+	if (Array.isArray(value)) {
+		result = '[' + value.map(v => _stableStringify(v, seen)).join(',') + ']';
+	} else {
+		const keys = Object.keys(value as object).sort();
+		const parts: string[] = [];
+		for (const k of keys) {
+			const v = (value as Record<string, unknown>)[k];
+			if (v === undefined) {
+				continue;
+			}
+			parts.push(JSON.stringify(k) + ':' + _stableStringify(v, seen));
+		}
+		result = '{' + parts.join(',') + '}';
+	}
+
+	// Track only ancestors so shared sibling references are serialized in full.
+	seen.delete(value as object);
+	return result;
+}
+
+type obj = { [key: string]: any };
 /**
  * Returns an object that has keys for each value that is different in the base object. Keys
  * that do not exist in the target but in the base object are not considered.
@@ -221,7 +268,7 @@ export function distinct(base: obj, target: obj): obj {
 	return result;
 }
 
-export function getCaseInsensitive(target: obj, key: string): any {
+export function getCaseInsensitive(target: obj, key: string): unknown {
 	const lowercaseKey = key.toLowerCase();
 	const equivalentKey = Object.keys(target).find(k => k.toLowerCase() === lowercaseKey);
 	return equivalentKey ? target[equivalentKey] : target[key];
@@ -235,4 +282,12 @@ export function filter(obj: obj, predicate: (key: string, value: any) => boolean
 		}
 	}
 	return result;
+}
+
+export function mapValues<T extends {}, R>(obj: T, fn: (value: T[keyof T], key: string) => R): { [K in keyof T]: R } {
+	const result: { [key: string]: R } = {};
+	for (const [key, value] of Object.entries(obj)) {
+		result[key] = fn(<T[keyof T]>value, key);
+	}
+	return result as { [K in keyof T]: R };
 }

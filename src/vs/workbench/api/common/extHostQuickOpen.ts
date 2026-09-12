@@ -3,38 +3,36 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { asPromise } from 'vs/base/common/async';
-import { CancellationToken } from 'vs/base/common/cancellation';
-import { Emitter } from 'vs/base/common/event';
-import { dispose, IDisposable } from 'vs/base/common/lifecycle';
-import { ExtHostCommands } from 'vs/workbench/api/common/extHostCommands';
-import { IExtHostWorkspaceProvider } from 'vs/workbench/api/common/extHostWorkspace';
-import type { InputBox, InputBoxOptions, QuickInput, QuickInputButton, QuickPick, QuickPickItem, QuickPickItemButtonEvent, QuickPickOptions, WorkspaceFolder, WorkspaceFolderPickOptions } from 'vscode';
-import { ExtHostQuickOpenShape, IMainContext, MainContext, TransferQuickInput, TransferQuickInputButton, TransferQuickPickItemOrSeparator } from './extHost.protocol';
-import { URI } from 'vs/base/common/uri';
-import { ThemeIcon, QuickInputButtons, QuickPickItemKind } from 'vs/workbench/api/common/extHostTypes';
-import { isPromiseCanceledError } from 'vs/base/common/errors';
-import { ExtensionIdentifier, IExtensionDescription } from 'vs/platform/extensions/common/extensions';
-import { coalesce } from 'vs/base/common/arrays';
-import Severity from 'vs/base/common/severity';
-import { ThemeIcon as ThemeIconUtils } from 'vs/platform/theme/common/themeService';
-import { checkProposedApiEnabled } from 'vs/workbench/services/extensions/common/extensions';
+import { CancellationToken } from '../../../base/common/cancellation.js';
+import { Emitter } from '../../../base/common/event.js';
+import { dispose, IDisposable } from '../../../base/common/lifecycle.js';
+import { ExtHostCommands } from './extHostCommands.js';
+import { IExtHostWorkspaceProvider } from './extHostWorkspace.js';
+import { InputBox, InputBoxOptions, InputBoxValidationMessage, QuickInput, QuickInputButton, QuickPick, QuickPickItem, QuickPickItemButtonEvent, QuickPickOptions, WorkspaceFolder, WorkspaceFolderPickOptions } from 'vscode';
+import { ExtHostQuickOpenShape, IMainContext, MainContext, TransferQuickInput, TransferQuickInputButton, TransferQuickPickItemOrSeparator } from './extHost.protocol.js';
+import { QuickInputButtons, QuickPickItemKind, InputBoxValidationSeverity } from './extHostTypes.js';
+import { isCancellationError } from '../../../base/common/errors.js';
+import { IExtensionDescription } from '../../../platform/extensions/common/extensions.js';
+import { coalesce } from '../../../base/common/arrays.js';
+import Severity from '../../../base/common/severity.js';
+import { checkProposedApiEnabled } from '../../services/extensions/common/extensions.js';
+import { IconPath, MarkdownString } from './extHostTypeConverters.js';
 
 export type Item = string | QuickPickItem;
 
 export interface ExtHostQuickOpen {
-	showQuickPick(itemsOrItemsPromise: QuickPickItem[] | Promise<QuickPickItem[]>, options: QuickPickOptions & { canPickMany: true; }, token?: CancellationToken): Promise<QuickPickItem[] | undefined>;
-	showQuickPick(itemsOrItemsPromise: string[] | Promise<string[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<string | undefined>;
-	showQuickPick(itemsOrItemsPromise: QuickPickItem[] | Promise<QuickPickItem[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<QuickPickItem | undefined>;
-	showQuickPick(itemsOrItemsPromise: Item[] | Promise<Item[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<Item | Item[] | undefined>;
+	showQuickPick(extension: IExtensionDescription, itemsOrItemsPromise: QuickPickItem[] | Promise<QuickPickItem[]>, options: QuickPickOptions & { canPickMany: true }, token?: CancellationToken): Promise<QuickPickItem[] | undefined>;
+	showQuickPick(extension: IExtensionDescription, itemsOrItemsPromise: string[] | Promise<string[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<string | undefined>;
+	showQuickPick(extension: IExtensionDescription, itemsOrItemsPromise: QuickPickItem[] | Promise<QuickPickItem[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<QuickPickItem | undefined>;
+	showQuickPick(extension: IExtensionDescription, itemsOrItemsPromise: Item[] | Promise<Item[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<Item | Item[] | undefined>;
 
 	showInput(options?: InputBoxOptions, token?: CancellationToken): Promise<string | undefined>;
 
-	showWorkspaceFolderPick(options?: WorkspaceFolderPickOptions, token?: CancellationToken): Promise<WorkspaceFolder | undefined>
+	showWorkspaceFolderPick(options?: WorkspaceFolderPickOptions, token?: CancellationToken): Promise<WorkspaceFolder | undefined>;
 
-	createQuickPick<T extends QuickPickItem>(extensionId: IExtensionDescription): QuickPick<T>;
+	createQuickPick<T extends QuickPickItem>(extension: IExtensionDescription): QuickPick<T>;
 
-	createInputBox(extensionId: ExtensionIdentifier): InputBox;
+	createInputBox(extension: IExtensionDescription): InputBox;
 }
 
 export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IExtHostWorkspaceProvider, commands: ExtHostCommands): ExtHostQuickOpenShape & ExtHostQuickOpen {
@@ -46,7 +44,7 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 		private _commands: ExtHostCommands;
 
 		private _onDidSelectItem?: (handle: number) => void;
-		private _validateInput?: (input: string) => string | undefined | null | Thenable<string | undefined | null>;
+		private _validateInput?: (input: string) => string | InputBoxValidationMessage | undefined | null | Thenable<string | InputBoxValidationMessage | undefined | null>;
 
 		private _sessions = new Map<number, ExtHostQuickInput>();
 
@@ -57,21 +55,21 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			this._commands = commands;
 		}
 
-		showQuickPick(itemsOrItemsPromise: QuickPickItem[] | Promise<QuickPickItem[]>, options: QuickPickOptions & { canPickMany: true; }, token?: CancellationToken): Promise<QuickPickItem[] | undefined>;
-		showQuickPick(itemsOrItemsPromise: string[] | Promise<string[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<string | undefined>;
-		showQuickPick(itemsOrItemsPromise: QuickPickItem[] | Promise<QuickPickItem[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<QuickPickItem | undefined>;
-		showQuickPick(itemsOrItemsPromise: Item[] | Promise<Item[]>, options?: QuickPickOptions, token: CancellationToken = CancellationToken.None): Promise<Item | Item[] | undefined> {
-
+		showQuickPick(extension: IExtensionDescription, itemsOrItemsPromise: QuickPickItem[] | Promise<QuickPickItem[]>, options: QuickPickOptions & { canPickMany: true }, token?: CancellationToken): Promise<QuickPickItem[] | undefined>;
+		showQuickPick(extension: IExtensionDescription, itemsOrItemsPromise: string[] | Promise<string[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<string | undefined>;
+		showQuickPick(extension: IExtensionDescription, itemsOrItemsPromise: QuickPickItem[] | Promise<QuickPickItem[]>, options?: QuickPickOptions, token?: CancellationToken): Promise<QuickPickItem | undefined>;
+		showQuickPick(extension: IExtensionDescription, itemsOrItemsPromise: Item[] | Promise<Item[]>, options?: QuickPickOptions, token: CancellationToken = CancellationToken.None): Promise<Item | Item[] | undefined> {
 			// clear state from last invocation
 			this._onDidSelectItem = undefined;
 
-			const itemsPromise = <Promise<Item[]>>Promise.resolve(itemsOrItemsPromise);
+			const itemsPromise = Promise.resolve(itemsOrItemsPromise);
 
 			const instance = ++this._instances;
 
 			const quickPickWidget = proxy.$show(instance, {
 				title: options?.title,
 				placeHolder: options?.placeHolder,
+				prompt: options?.prompt,
 				matchOnDescription: options?.matchOnDescription,
 				matchOnDetail: options?.matchOnDetail,
 				ignoreFocusLost: options?.ignoreFocusOut,
@@ -96,12 +94,19 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 						} else if (item.kind === QuickPickItemKind.Separator) {
 							pickItems.push({ type: 'separator', label: item.label });
 						} else {
+							if (item.tooltip) {
+								checkProposedApiEnabled(extension, 'quickPickItemTooltip');
+							}
+
 							pickItems.push({
 								label: item.label,
+								iconPathDto: IconPath.from(item.iconPath),
 								description: item.description,
 								detail: item.detail,
 								picked: item.picked,
 								alwaysShow: item.alwaysShow,
+								tooltip: MarkdownString.fromStrict(item.tooltip),
+								resourceUri: item.resourceUri,
 								handle
 							});
 						}
@@ -127,7 +132,7 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 					});
 				});
 			}).then(undefined, err => {
-				if (isPromiseCanceledError(err)) {
+				if (isCancellationError(err)) {
 					return undefined;
 				}
 
@@ -138,9 +143,7 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 		}
 
 		$onItemSelected(handle: number): void {
-			if (this._onDidSelectItem) {
-				this._onDidSelectItem(handle);
-			}
+			this._onDidSelectItem?.(handle);
 		}
 
 		// ---- input
@@ -148,11 +151,11 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 		showInput(options?: InputBoxOptions, token: CancellationToken = CancellationToken.None): Promise<string | undefined> {
 
 			// global validate fn used in callback below
-			this._validateInput = options ? options.validateInput : undefined;
+			this._validateInput = options?.validateInput;
 
 			return proxy.$input(options, typeof this._validateInput === 'function', token)
 				.then(undefined, err => {
-					if (isPromiseCanceledError(err)) {
+					if (isCancellationError(err)) {
 						return undefined;
 					}
 
@@ -160,11 +163,36 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 				});
 		}
 
-		$validateInput(input: string): Promise<string | null | undefined> {
-			if (this._validateInput) {
-				return asPromise(() => this._validateInput!(input));
+		async $validateInput(input: string): Promise<string | { content: string; severity: Severity } | null | undefined> {
+			if (!this._validateInput) {
+				return;
 			}
-			return Promise.resolve(undefined);
+
+			const result = await this._validateInput(input);
+			if (!result || typeof result === 'string') {
+				return result;
+			}
+
+			let severity: Severity;
+			switch (result.severity) {
+				case InputBoxValidationSeverity.Info:
+					severity = Severity.Info;
+					break;
+				case InputBoxValidationSeverity.Warning:
+					severity = Severity.Warning;
+					break;
+				case InputBoxValidationSeverity.Error:
+					severity = Severity.Error;
+					break;
+				default:
+					severity = result.message ? Severity.Error : Severity.Ignore;
+					break;
+			}
+
+			return {
+				content: result.message,
+				severity
+			};
 		}
 
 		// ---- workspace folder picker
@@ -189,24 +217,20 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			return session;
 		}
 
-		createInputBox(extensionId: ExtensionIdentifier): InputBox {
-			const session: ExtHostInputBox = new ExtHostInputBox(extensionId, () => this._sessions.delete(session._id));
+		createInputBox(extension: IExtensionDescription): InputBox {
+			const session: ExtHostInputBox = new ExtHostInputBox(extension, () => this._sessions.delete(session._id));
 			this._sessions.set(session._id, session);
 			return session;
 		}
 
 		$onDidChangeValue(sessionId: number, value: string): void {
 			const session = this._sessions.get(sessionId);
-			if (session) {
-				session._fireDidChangeValue(value);
-			}
+			session?._fireDidChangeValue(value);
 		}
 
 		$onDidAccept(sessionId: number): void {
 			const session = this._sessions.get(sessionId);
-			if (session) {
-				session._fireDidAccept();
-			}
+			session?._fireDidAccept();
 		}
 
 		$onDidChangeActive(sessionId: number, handles: number[]): void {
@@ -223,25 +247,21 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			}
 		}
 
-		$onDidTriggerButton(sessionId: number, handle: number): void {
+		$onDidTriggerButton(sessionId: number, handle: number, checked?: boolean): void {
 			const session = this._sessions.get(sessionId);
-			if (session) {
-				session._fireDidTriggerButton(handle);
-			}
+			session?._fireDidTriggerButton(handle, checked);
 		}
 
-		$onDidTriggerItemButton(sessionId: number, itemHandle: number, buttonHandle: number): void {
+		$onDidTriggerItemButton(sessionId: number, itemHandle: number, buttonHandle: number, checked?: boolean): void {
 			const session = this._sessions.get(sessionId);
 			if (session instanceof ExtHostQuickPick) {
-				session._fireDidTriggerItemButton(itemHandle, buttonHandle);
+				session._fireDidTriggerItemButton(itemHandle, buttonHandle, checked);
 			}
 		}
 
 		$onDidHide(sessionId: number): void {
 			const session = this._sessions.get(sessionId);
-			if (session) {
-				session._fireDidHide();
-			}
+			session?._fireDidHide();
 		}
 	}
 
@@ -259,6 +279,7 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 		private _busy = false;
 		private _ignoreFocusOut = true;
 		private _value = '';
+		private _valueSelection: readonly [number, number] | undefined = undefined;
 		private _placeholder: string | undefined;
 		private _buttons: QuickInputButton[] = [];
 		private _handlesToButtons = new Map<number, QuickInputButton>();
@@ -266,7 +287,7 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 		private readonly _onDidChangeValueEmitter = new Emitter<string>();
 		private readonly _onDidTriggerButtonEmitter = new Emitter<QuickInputButton>();
 		private readonly _onDidHideEmitter = new Emitter<void>();
-		private _updateTimeout: any;
+		private _updateTimeout: Timeout | undefined;
 		private _pendingUpdate: TransferQuickInput = { id: this._id };
 
 		private _disposed = false;
@@ -277,7 +298,7 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			this._onDidChangeValueEmitter
 		];
 
-		constructor(protected _extensionId: ExtensionIdentifier, private _onDidDispose: () => void) {
+		constructor(protected _extension: IExtensionDescription, private _onDidDispose: () => void) {
 		}
 
 		get title() {
@@ -343,6 +364,15 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			this.update({ value });
 		}
 
+		get valueSelection() {
+			return this._valueSelection;
+		}
+
+		set valueSelection(valueSelection: readonly [number, number] | undefined) {
+			this._valueSelection = valueSelection;
+			this.update({ valueSelection });
+		}
+
 		get placeholder() {
 			return this._placeholder;
 		}
@@ -370,9 +400,11 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			this.update({
 				buttons: buttons.map<TransferQuickInputButton>((button, i) => {
 					return {
-						...getIconPathOrClass(button),
+						iconPathDto: IconPath.from(button.iconPath),
 						tooltip: button.tooltip,
 						handle: button === QuickInputButtons.Back ? -1 : i,
+						location: typeof button.location === 'number' ? button.location : undefined,
+						toggle: typeof button.toggle === 'object' && typeof button.toggle.checked === 'boolean' ? { checked: button.toggle.checked } : undefined,
 					};
 				})
 			});
@@ -402,9 +434,12 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			this._onDidChangeValueEmitter.fire(value);
 		}
 
-		_fireDidTriggerButton(handle: number) {
+		_fireDidTriggerButton(handle: number, checked?: boolean) {
 			const button = this._handlesToButtons.get(handle);
 			if (button) {
+				if (checked !== undefined && button.toggle) {
+					button.toggle.checked = checked;
+				}
 				this._onDidTriggerButtonEmitter.fire(button);
 			}
 		}
@@ -439,7 +474,7 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			proxy.$dispose(this._id);
 		}
 
-		protected update(properties: Record<string, any>): void {
+		protected update(properties: Record<string, unknown>): void {
 			if (this._disposed) {
 				return;
 			}
@@ -455,7 +490,7 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 				}
 				this.dispatchUpdate();
 			} else if (this._visible && !this._updateTimeout) {
-				// Defer the update so that multiple changes to setters dont cause a redraw each
+				// Defer the update so that multiple changes to setters don't cause a redraw each
 				this._updateTimeout = setTimeout(() => {
 					this._updateTimeout = undefined;
 					this.dispatchUpdate();
@@ -469,43 +504,6 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 		}
 	}
 
-	function getIconUris(iconPath: QuickInputButton['iconPath']): { dark: URI, light?: URI } | { id: string } {
-		if (iconPath instanceof ThemeIcon) {
-			return { id: iconPath.id };
-		}
-		const dark = getDarkIconUri(iconPath as URI | { light: URI; dark: URI; });
-		const light = getLightIconUri(iconPath as URI | { light: URI; dark: URI; });
-		// Tolerate strings: https://github.com/microsoft/vscode/issues/110432#issuecomment-726144556
-		return {
-			dark: typeof dark === 'string' ? URI.file(dark) : dark,
-			light: typeof light === 'string' ? URI.file(light) : light
-		};
-	}
-
-	function getLightIconUri(iconPath: URI | { light: URI; dark: URI; }) {
-		return typeof iconPath === 'object' && 'light' in iconPath ? iconPath.light : iconPath;
-	}
-
-	function getDarkIconUri(iconPath: URI | { light: URI; dark: URI; }) {
-		return typeof iconPath === 'object' && 'dark' in iconPath ? iconPath.dark : iconPath;
-	}
-
-	function getIconPathOrClass(button: QuickInputButton) {
-		const iconPathOrIconClass = getIconUris(button.iconPath);
-		let iconPath: { dark: URI; light?: URI | undefined; } | undefined;
-		let iconClass: string | undefined;
-		if ('id' in iconPathOrIconClass) {
-			iconClass = ThemeIconUtils.asClassName(iconPathOrIconClass);
-		} else {
-			iconPath = iconPathOrIconClass;
-		}
-
-		return {
-			iconPath,
-			iconClass
-		};
-	}
-
 	class ExtHostQuickPick<T extends QuickPickItem> extends ExtHostQuickInput implements QuickPick<T> {
 
 		private _items: T[] = [];
@@ -517,14 +515,14 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 		private _sortByLabel = true;
 		private _keepScrollPosition = false;
 		private _activeItems: T[] = [];
+		private _prompt: string | undefined;
 		private readonly _onDidChangeActiveEmitter = new Emitter<T[]>();
 		private _selectedItems: T[] = [];
 		private readonly _onDidChangeSelectionEmitter = new Emitter<T[]>();
 		private readonly _onDidTriggerItemButtonEmitter = new Emitter<QuickPickItemButtonEvent<T>>();
 
-		// TODO: revert this change once quickPickSeparators has been finalized.
-		constructor(private readonly extension: IExtensionDescription, onDispose: () => void) {
-			super(extension.identifier, onDispose);
+		constructor(extension: IExtensionDescription, onDispose: () => void) {
+			super(extension, onDispose);
 			this._disposables.push(
 				this._onDidChangeActiveEmitter,
 				this._onDidChangeSelectionEmitter,
@@ -538,10 +536,6 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 		}
 
 		set items(items: T[]) {
-			if (items.some((item) => item.kind !== undefined)) {
-				checkProposedApiEnabled(this.extension, 'quickPickSeparators');
-			}
-
 			this._items = items.slice();
 			this._handlesToItems.clear();
 			this._itemsToHandles.clear();
@@ -556,18 +550,29 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 				if (item.kind === QuickPickItemKind.Separator) {
 					pickItems.push({ type: 'separator', label: item.label });
 				} else {
+					if (item.tooltip) {
+						checkProposedApiEnabled(this._extension, 'quickPickItemTooltip');
+					}
+
 					pickItems.push({
 						handle,
 						label: item.label,
+						iconPathDto: IconPath.from(item.iconPath),
 						description: item.description,
 						detail: item.detail,
 						picked: item.picked,
 						alwaysShow: item.alwaysShow,
+						tooltip: MarkdownString.fromStrict(item.tooltip),
+						resourceUri: item.resourceUri,
 						buttons: item.buttons?.map<TransferQuickInputButton>((button, i) => {
 							return {
-								...getIconPathOrClass(button),
+								iconPathDto: IconPath.from(button.iconPath),
 								tooltip: button.tooltip,
-								handle: i
+								handle: i,
+								toggle:
+									typeof button.toggle === 'object' && typeof button.toggle.checked === 'boolean'
+										? { checked: button.toggle.checked }
+										: undefined,
 							};
 						}),
 					});
@@ -624,6 +629,15 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			this.update({ keepScrollPosition });
 		}
 
+		get prompt() {
+			return this._prompt;
+		}
+
+		set prompt(prompt: string | undefined) {
+			this._prompt = prompt;
+			this.update({ prompt });
+		}
+
 		get activeItems() {
 			return this._activeItems;
 		}
@@ -660,13 +674,16 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 
 		onDidTriggerItemButton = this._onDidTriggerItemButtonEmitter.event;
 
-		_fireDidTriggerItemButton(itemHandle: number, buttonHandle: number) {
+		_fireDidTriggerItemButton(itemHandle: number, buttonHandle: number, checked?: boolean) {
 			const item = this._handlesToItems.get(itemHandle)!;
 			if (!item || !item.buttons || !item.buttons.length) {
 				return;
 			}
 			const button = item.buttons[buttonHandle];
 			if (button) {
+				if (checked !== undefined && button.toggle) {
+					button.toggle.checked = checked;
+				}
 				this._onDidTriggerItemButtonEmitter.fire({
 					button,
 					item
@@ -679,10 +696,10 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 
 		private _password = false;
 		private _prompt: string | undefined;
-		private _validationMessage: string | undefined;
+		private _validationMessage: string | InputBoxValidationMessage | undefined;
 
-		constructor(extensionId: ExtensionIdentifier, onDispose: () => void) {
-			super(extensionId, onDispose);
+		constructor(extension: IExtensionDescription, onDispose: () => void) {
+			super(extension, onDispose);
 			this.update({ type: 'inputBox' });
 		}
 
@@ -708,9 +725,15 @@ export function createExtHostQuickOpen(mainContext: IMainContext, workspace: IEx
 			return this._validationMessage;
 		}
 
-		set validationMessage(validationMessage: string | undefined) {
+		set validationMessage(validationMessage: string | InputBoxValidationMessage | undefined) {
 			this._validationMessage = validationMessage;
-			this.update({ validationMessage, severity: validationMessage ? Severity.Error : Severity.Ignore });
+			if (!validationMessage) {
+				this.update({ validationMessage: undefined, severity: Severity.Ignore });
+			} else if (typeof validationMessage === 'string') {
+				this.update({ validationMessage, severity: Severity.Error });
+			} else {
+				this.update({ validationMessage: validationMessage.message, severity: validationMessage.severity ?? Severity.Error });
+			}
 		}
 	}
 

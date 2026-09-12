@@ -4,19 +4,19 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import type * as Proto from '../protocol';
+import { DocumentSelector } from '../configuration/documentSelector';
+import { LanguageDescription } from '../configuration/languageDescription';
+import type * as Proto from '../tsServer/protocol/protocol';
+import * as typeConverters from '../typeConverters';
 import { ITypeScriptServiceClient } from '../typescriptService';
-import API from '../utils/api';
-import { Condition, conditionalRegistration, requireConfiguration, requireMinVersion } from '../utils/dependentRegistration';
 import { Disposable } from '../utils/dispose';
-import { DocumentSelector } from '../utils/documentSelector';
-import * as typeConverters from '../utils/typeConverters';
+import { readUnifiedConfig } from '../utils/configuration';
+import { Condition, conditionalRegistration } from './util/dependentRegistration';
 
 class TagClosing extends Disposable {
-	public static readonly minVersion = API.v300;
 
 	private _disposed = false;
-	private _timeout: NodeJS.Timer | undefined = undefined;
+	private _timeout: NodeJS.Timeout | undefined = undefined;
 	private _cancel: vscode.CancellationTokenSource | undefined = undefined;
 
 	constructor(
@@ -52,12 +52,12 @@ class TagClosing extends Disposable {
 			return;
 		}
 
-		const activeDocument = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document;
+		const activeDocument = vscode.window.activeTextEditor?.document;
 		if (document !== activeDocument) {
 			return;
 		}
 
-		const filepath = this.client.toOpenedFilePath(document);
+		const filepath = this.client.toOpenTsFilePath(document);
 		if (!filepath) {
 			return;
 		}
@@ -139,29 +139,33 @@ class TagClosing extends Disposable {
 	}
 }
 
-function requireActiveDocument(
-	selector: vscode.DocumentSelector
+function requireActiveDocumentSetting(
+	selector: vscode.DocumentSelector,
+	language: LanguageDescription,
 ) {
 	return new Condition(
 		() => {
 			const editor = vscode.window.activeTextEditor;
-			return !!(editor && vscode.languages.match(selector, editor.document));
+			if (!editor || !vscode.languages.match(selector, editor.document)) {
+				return false;
+			}
+
+			return !!readUnifiedConfig<boolean>('autoClosingTags.enabled', true, { scope: editor.document, fallbackSection: language.id, fallbackSubSectionNameOverride: 'autoClosingTags' });
 		},
 		handler => {
 			return vscode.Disposable.from(
 				vscode.window.onDidChangeActiveTextEditor(handler),
-				vscode.workspace.onDidOpenTextDocument(handler));
+				vscode.workspace.onDidOpenTextDocument(handler),
+				vscode.workspace.onDidChangeConfiguration(handler));
 		});
 }
 
 export function register(
 	selector: DocumentSelector,
-	modeId: string,
+	language: LanguageDescription,
 	client: ITypeScriptServiceClient,
 ) {
 	return conditionalRegistration([
-		requireMinVersion(client, TagClosing.minVersion),
-		requireConfiguration(modeId, 'autoClosingTags'),
-		requireActiveDocument(selector.syntax)
+		requireActiveDocumentSetting(selector.syntax, language)
 	], () => new TagClosing(client));
 }

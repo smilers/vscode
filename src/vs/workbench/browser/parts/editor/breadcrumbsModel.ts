@@ -3,47 +3,52 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CancellationTokenSource } from 'vs/base/common/cancellation';
-import { onUnexpectedError } from 'vs/base/common/errors';
-import { Emitter, Event } from 'vs/base/common/event';
-import { DisposableStore, MutableDisposable, toDisposable } from 'vs/base/common/lifecycle';
-import { isEqual, dirname } from 'vs/base/common/resources';
-import { URI } from 'vs/base/common/uri';
-import { IWorkspaceContextService, IWorkspaceFolder, WorkbenchState } from 'vs/platform/workspace/common/workspace';
-import { Schemas } from 'vs/base/common/network';
-import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { BreadcrumbsConfig } from 'vs/workbench/browser/parts/editor/breadcrumbs';
-import { FileKind } from 'vs/platform/files/common/files';
-import { withNullAsUndefined } from 'vs/base/common/types';
-import { IOutline, IOutlineService, OutlineTarget } from 'vs/workbench/services/outline/browser/outline';
-import { IEditorPane } from 'vs/workbench/common/editor';
+import { CancellationTokenSource } from '../../../../base/common/cancellation.js';
+import { onUnexpectedError } from '../../../../base/common/errors.js';
+import { Emitter, Event } from '../../../../base/common/event.js';
+import { DisposableStore, MutableDisposable, toDisposable } from '../../../../base/common/lifecycle.js';
+import { Schemas, matchesSomeScheme } from '../../../../base/common/network.js';
+import { dirname, isEqual } from '../../../../base/common/resources.js';
+import { URI } from '../../../../base/common/uri.js';
+import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { FileKind } from '../../../../platform/files/common/files.js';
+import { ILabelService } from '../../../../platform/label/common/label.js';
+import { IWorkspaceContextService, IWorkspaceFolder, WorkbenchState } from '../../../../platform/workspace/common/workspace.js';
+import { BreadcrumbsConfig } from './breadcrumbs.js';
+import { IEditorPane } from '../../../common/editor.js';
+import { IOutline, IOutlineService, OutlineTarget } from '../../../services/outline/browser/outline.js';
+import { IWorkspaceFolderLabelService } from '../../../services/workspaces/common/workspaceFolderLabelService.js';
 
 export class FileElement {
 	constructor(
 		readonly uri: URI,
-		readonly kind: FileKind
+		readonly kind: FileKind,
+		readonly label?: string
 	) { }
+
+	equals(other: FileElement): boolean {
+		return isEqual(this.uri, other.uri) && this.label === other.label;
+	}
 }
 
-type FileInfo = { path: FileElement[], folder?: IWorkspaceFolder };
+type FileInfo = { path: FileElement[]; folder?: IWorkspaceFolder; home?: URI };
 
 export class OutlineElement2 {
 	constructor(
-		readonly element: IOutline<any> | any,
-		readonly outline: IOutline<any>
+		readonly element: IOutline<unknown> | unknown,
+		readonly outline: IOutline<unknown>
 	) { }
 }
 
 export class BreadcrumbsModel {
 
 	private readonly _disposables = new DisposableStore();
-	private readonly _fileInfo: FileInfo;
+	private _fileInfo: FileInfo;
 
-	private readonly _cfgEnabled: BreadcrumbsConfig<boolean>;
 	private readonly _cfgFilePath: BreadcrumbsConfig<'on' | 'off' | 'last'>;
 	private readonly _cfgSymbolPath: BreadcrumbsConfig<'on' | 'off' | 'last'>;
 
-	private readonly _currentOutline = new MutableDisposable<IOutline<any>>();
+	private readonly _currentOutline = new MutableDisposable<IOutline<unknown>>();
 	private readonly _outlineDisposables = new DisposableStore();
 
 	private readonly _onDidUpdate = new Emitter<this>();
@@ -51,17 +56,24 @@ export class BreadcrumbsModel {
 
 	constructor(
 		readonly resource: URI,
-		editor: IEditorPane | undefined,
+		readonly editor: IEditorPane | undefined,
 		@IConfigurationService configurationService: IConfigurationService,
 		@IWorkspaceContextService private readonly _workspaceService: IWorkspaceContextService,
+		@IWorkspaceFolderLabelService private readonly _workspaceFolderLabelService: IWorkspaceFolderLabelService,
 		@IOutlineService private readonly _outlineService: IOutlineService,
+		@ILabelService private readonly _labelService: ILabelService,
 	) {
-		this._cfgEnabled = BreadcrumbsConfig.IsEnabled.bindTo(configurationService);
 		this._cfgFilePath = BreadcrumbsConfig.FilePath.bindTo(configurationService);
 		this._cfgSymbolPath = BreadcrumbsConfig.SymbolPath.bindTo(configurationService);
 
 		this._disposables.add(this._cfgFilePath.onDidChange(_ => this._onDidUpdate.fire(this)));
 		this._disposables.add(this._cfgSymbolPath.onDidChange(_ => this._onDidUpdate.fire(this)));
+		this._workspaceService.onDidChangeWorkspaceFolders(this._onDidChangeWorkspaceFolders, this, this._disposables);
+		this._disposables.add(this._labelService.onDidChangeFormatters(e => {
+			if (e.scheme === this.resource.scheme) {
+				this._updateFileInfo();
+			}
+		}));
 		this._fileInfo = this._initFilePathInfo(resource);
 
 		if (editor) {
@@ -73,17 +85,16 @@ export class BreadcrumbsModel {
 	}
 
 	dispose(): void {
-		this._cfgEnabled.dispose();
+		this._disposables.dispose();
 		this._cfgFilePath.dispose();
 		this._cfgSymbolPath.dispose();
 		this._currentOutline.dispose();
 		this._outlineDisposables.dispose();
-		this._disposables.dispose();
 		this._onDidUpdate.dispose();
 	}
 
 	isRelative(): boolean {
-		return Boolean(this._fileInfo.folder);
+		return Boolean(this._fileInfo.folder || this._fileInfo.home);
 	}
 
 	getElements(): ReadonlyArray<FileElement | OutlineElement2> {
@@ -106,7 +117,7 @@ export class BreadcrumbsModel {
 
 		const breadcrumbsElements = this._currentOutline.value.config.breadcrumbsDataSource.getBreadcrumbElements();
 		for (let i = this._cfgSymbolPath.getValue() === 'last' && breadcrumbsElements.length > 0 ? breadcrumbsElements.length - 1 : 0; i < breadcrumbsElements.length; i++) {
-			result.push(new OutlineElement2(breadcrumbsElements[i], this._currentOutline.value));
+			result.push(new OutlineElement2(breadcrumbsElements[i].element, this._currentOutline.value));
 		}
 
 		if (breadcrumbsElements.length === 0 && !this._currentOutline.value.isEmpty) {
@@ -118,35 +129,60 @@ export class BreadcrumbsModel {
 
 	private _initFilePathInfo(uri: URI): FileInfo {
 
-		if (uri.scheme === Schemas.untitled) {
+		if (matchesSomeScheme(uri, Schemas.untitled, Schemas.data)) {
 			return {
 				folder: undefined,
 				path: []
 			};
 		}
 
-		let info: FileInfo = {
-			folder: withNullAsUndefined(this._workspaceService.getWorkspaceFolder(uri)),
-			path: []
+		const info: FileInfo = {
+			folder: this._workspaceService.getWorkspaceFolder(uri) ?? undefined,
+			path: [],
+			home: this._labelService.getUriHome(uri),
 		};
 
 		let uriPrefix: URI | null = uri;
 		while (uriPrefix && uriPrefix.path !== '/') {
-			if (info.folder && isEqual(info.folder.uri, uriPrefix)) {
+			if ((info.folder && isEqual(info.folder.uri, uriPrefix)) || (info.home && isEqual(info.home, uriPrefix.with({ query: null, fragment: null })))) {
 				break;
 			}
 			info.path.unshift(new FileElement(uriPrefix, info.path.length === 0 ? FileKind.FILE : FileKind.FOLDER));
-			let prevPathLength = uriPrefix.path.length;
+			const prevPathLength = uriPrefix.path.length;
 			uriPrefix = dirname(uriPrefix);
 			if (uriPrefix.path.length === prevPathLength) {
 				break;
 			}
 		}
 
+		if (info.home) {
+			const separator = this._labelService.getSeparator(info.home.scheme, info.home.authority);
+			const labels = this._labelService.getUriLabel(info.home).split(separator).filter(Boolean);
+			for (let index = labels.length - 1; index >= 0; index--) {
+				info.path.unshift(new FileElement(info.home, index === 0 ? FileKind.ROOT_FOLDER : FileKind.FOLDER, labels[index]));
+			}
+		}
+
 		if (info.folder && this._workspaceService.getWorkbenchState() === WorkbenchState.WORKSPACE) {
-			info.path.unshift(new FileElement(info.folder.uri, FileKind.ROOT_FOLDER));
+			const folderCount = this._workspaceService.getWorkspace().folders.length;
+			if (folderCount > 1 || isEqual(info.folder.uri, this.resource)) {
+				info.path.unshift(new FileElement(
+					info.folder.uri,
+					FileKind.ROOT_FOLDER,
+					this._workspaceFolderLabelService.getWorkspaceFolderLabel(info.folder)
+				));
+			}
 		}
 		return info;
+	}
+
+	private _onDidChangeWorkspaceFolders() {
+		this._updateFileInfo();
+	}
+
+	private _updateFileInfo(): void {
+		this._fileInfo = this._initFilePathInfo(this.resource);
+		this._onDidUpdate.fire(this);
 	}
 
 	private _bindToEditor(editor: IEditorPane): void {

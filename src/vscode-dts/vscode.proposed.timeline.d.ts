@@ -28,7 +28,7 @@ declare module 'vscode' {
 		/**
 		 * The icon path or {@link ThemeIcon} for the timeline item.
 		 */
-		iconPath?: Uri | { light: Uri; dark: Uri; } | ThemeIcon;
+		iconPath?: Uri | { light: Uri; dark: Uri } | ThemeIcon;
 
 		/**
 		 * A human readable string describing less prominent details of the timeline item.
@@ -38,7 +38,7 @@ declare module 'vscode' {
 		/**
 		 * The tooltip text when you hover over the timeline item.
 		 */
-		detail?: string;
+		tooltip?: string | MarkdownString | undefined;
 
 		/**
 		 * The {@link Command} that should be executed when the timeline item is selected.
@@ -114,7 +114,7 @@ declare module 'vscode' {
 		 * An optional maximum number timeline items or the all timeline items newer (inclusive) than the timestamp or id that should be returned.
 		 * If `undefined` all timeline items should be returned.
 		 */
-		limit?: number | { timestamp: number; id?: string; };
+		limit?: number | { timestamp: number; id?: string };
 	}
 
 	export interface TimelineProvider {
@@ -122,7 +122,7 @@ declare module 'vscode' {
 		 * An optional event to signal that the timeline for a source has changed.
 		 * To signal that the timeline for all resources (uris) has changed, do not pass any argument or pass `undefined`.
 		 */
-		onDidChange?: Event<TimelineChangeEvent | undefined>;
+		readonly onDidChange?: Event<TimelineChangeEvent | undefined>;
 
 		/**
 		 * An identifier of the source of the timeline items. This can be used to filter sources.

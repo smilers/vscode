@@ -5,30 +5,43 @@
 
 import * as vscode from 'vscode';
 
-export function disposeAll(disposables: vscode.Disposable[]) {
-	while (disposables.length) {
-		const item = disposables.pop();
-		if (item) {
-			item.dispose();
+export function disposeAll(disposables: Iterable<vscode.Disposable>): void {
+	const errors: unknown[] = [];
+
+	for (const disposable of disposables) {
+		try {
+			disposable.dispose();
+		} catch (e) {
+			errors.push(e);
 		}
+	}
+
+	if (errors.length === 1) {
+		throw errors[0];
+	} else if (errors.length > 1) {
+		throw new AggregateError(errors, 'Encountered errors while disposing of store');
 	}
 }
 
+export interface IDisposable {
+	dispose(): void;
+}
+
 export abstract class Disposable {
-	private _isDisposed = false;
+	#isDisposed = false;
 
 	protected _disposables: vscode.Disposable[] = [];
 
-	public dispose(): any {
-		if (this._isDisposed) {
+	public dispose(): void {
+		if (this.#isDisposed) {
 			return;
 		}
-		this._isDisposed = true;
+		this.#isDisposed = true;
 		disposeAll(this._disposables);
 	}
 
-	protected _register<T extends vscode.Disposable>(value: T): T {
-		if (this._isDisposed) {
+	protected _register<T extends IDisposable>(value: T): T {
+		if (this.#isDisposed) {
 			value.dispose();
 		} else {
 			this._disposables.push(value);
@@ -37,6 +50,6 @@ export abstract class Disposable {
 	}
 
 	protected get isDisposed() {
-		return this._isDisposed;
+		return this.#isDisposed;
 	}
 }

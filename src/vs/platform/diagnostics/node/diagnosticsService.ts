@@ -2,35 +2,25 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+
+import * as fs from 'fs';
 import * as osLib from 'os';
-import { Iterable } from 'vs/base/common/iterator';
-import { Promises } from 'vs/base/common/async';
-import { getNodeType, parse, ParseError } from 'vs/base/common/json';
-import { Schemas } from 'vs/base/common/network';
-import { basename, join } from 'vs/base/common/path';
-import { isLinux, isWindows } from 'vs/base/common/platform';
-import { ProcessItem } from 'vs/base/common/processes';
-import { URI } from 'vs/base/common/uri';
-import { virtualMachineHint } from 'vs/base/node/id';
-import { IDirent, Promises as pfs } from 'vs/base/node/pfs';
-import { listProcesses } from 'vs/base/node/ps';
-import { IDiagnosticsService, IMachineInfo, IRemoteDiagnosticError, IRemoteDiagnosticInfo, isRemoteDiagnosticError, IWorkspaceInformation, PerformanceInfo, SystemInfo, WorkspaceStatItem, WorkspaceStats } from 'vs/platform/diagnostics/common/diagnostics';
-import { ByteSize } from 'vs/platform/files/common/files';
-import { IMainProcessInfo } from 'vs/platform/launch/common/launch';
-import { IProductService } from 'vs/platform/product/common/productService';
-import { ITelemetryService } from 'vs/platform/telemetry/common/telemetry';
-
-export interface VersionInfo {
-	vscodeVersion: string;
-	os: string;
-}
-
-export interface ProcessInfo {
-	cpu: number;
-	memory: number;
-	pid: number;
-	name: string;
-}
+import { Promises } from '../../../base/common/async.js';
+import { getNodeType, parse, ParseError } from '../../../base/common/json.js';
+import { Schemas } from '../../../base/common/network.js';
+import { basename, join } from '../../../base/common/path.js';
+import { isLinux, isWindows } from '../../../base/common/platform.js';
+import { ProcessItem } from '../../../base/common/processes.js';
+import { StopWatch } from '../../../base/common/stopwatch.js';
+import { URI } from '../../../base/common/uri.js';
+import { virtualMachineHint } from '../../../base/node/id.js';
+import { IDirent, Promises as pfs } from '../../../base/node/pfs.js';
+import { listProcesses } from '../../../base/node/ps.js';
+import { IDiagnosticsService, IMachineInfo, IMainProcessDiagnostics, IRemoteDiagnosticError, IRemoteDiagnosticInfo, isRemoteDiagnosticError, IWorkspaceInformation, PerformanceInfo, SystemInfo, WorkspaceStatItem, WorkspaceStats } from '../common/diagnostics.js';
+import { ByteSize } from '../../files/common/files.js';
+import { IProductService } from '../../product/common/productService.js';
+import { ITelemetryService } from '../../telemetry/common/telemetry.js';
+import { IWorkspace } from '../../workspace/common/workspace.js';
 
 interface ConfigFilePatterns {
 	tag: string;
@@ -38,7 +28,25 @@ interface ConfigFilePatterns {
 	relativePathPattern?: RegExp;
 }
 
-export async function collectWorkspaceStats(folder: string, filter: string[]): Promise<WorkspaceStats> {
+const workspaceStatsCache = new Map<string, Promise<WorkspaceStats>>();
+
+/** Sentinel key in {@link WorkspaceStats.fileTypes} for files with no extension. */
+const NO_EXT_KEY = '\0no-extension';
+
+export async function collectWorkspaceStats(folder: string, filter: string[], options?: { skipCache?: boolean; unbounded?: boolean }): Promise<WorkspaceStats> {
+	// Include `unbounded` in the cache key so a bounded (20k-cap) result is never
+	// returned for an unbounded request (which would silently truncate counts).
+	const cacheKey = `${folder}::${filter.join(':')}::${options?.unbounded ? 'unbounded' : 'bounded'}`;
+	if (!options?.skipCache) {
+		const cached = workspaceStatsCache.get(cacheKey);
+		if (cached) {
+			return cached;
+		}
+	} else {
+		// Drop any in-flight or stale entry so callers can be sure they get fresh data.
+		workspaceStatsCache.delete(cacheKey);
+	}
+
 	const configFilePatterns: ConfigFilePatterns[] = [
 		{ tag: 'grunt.js', filePattern: /^gruntfile\.js$/i },
 		{ tag: 'gulp.js', filePattern: /^gulpfile\.js$/i },
@@ -49,6 +57,7 @@ export async function collectWorkspaceStats(folder: string, filter: string[]): P
 		{ tag: 'eslint.json', filePattern: /^eslint\.json$/i },
 		{ tag: 'tasks.json', filePattern: /^tasks\.json$/i },
 		{ tag: 'launch.json', filePattern: /^launch\.json$/i },
+		{ tag: 'mcp.json', filePattern: /^mcp\.json$/i },
 		{ tag: 'settings.json', filePattern: /^settings\.json$/i },
 		{ tag: 'webpack.config.js', filePattern: /^webpack\.config\.js$/i },
 		{ tag: 'project.json', filePattern: /^project\.json$/i },
@@ -56,21 +65,49 @@ export async function collectWorkspaceStats(folder: string, filter: string[]): P
 		{ tag: 'sln', filePattern: /^.+\.sln$/i },
 		{ tag: 'csproj', filePattern: /^.+\.csproj$/i },
 		{ tag: 'cmake', filePattern: /^.+\.cmake$/i },
-		{ tag: 'github-actions', filePattern: /^.+\.yml$/i, relativePathPattern: /^\.github(?:\/|\\)workflows$/i },
+		{ tag: 'github-actions', filePattern: /^.+\.ya?ml$/i, relativePathPattern: /^\.github(?:\/|\\)workflows$/i },
 		{ tag: 'devcontainer.json', filePattern: /^devcontainer\.json$/i },
-		{ tag: 'dockerfile', filePattern: /^(dockerfile|docker\-compose\.ya?ml)$/i }
+		{ tag: 'dockerfile', filePattern: /^(dockerfile|docker\-compose\.ya?ml)$/i },
+		{ tag: 'cursorrules', filePattern: /^\.cursorrules$/i },
+		{ tag: 'cursorrules-dir', filePattern: /\.mdc$/i, relativePathPattern: /^\.cursor[\/\\]rules$/i },
+		{ tag: 'github-instructions-dir', filePattern: /\.instructions\.md$/i, relativePathPattern: /^\.github[\/\\]instructions$/i },
+		{ tag: 'github-prompts-dir', filePattern: /\.prompt\.md$/i, relativePathPattern: /^\.github[\/\\]prompts$/i },
+		{ tag: 'clinerules', filePattern: /^\.clinerules$/i },
+		{ tag: 'clinerules-dir', filePattern: /\.md$/i, relativePathPattern: /^\.clinerules$/i },
+		{ tag: 'agent.md', filePattern: /^agent\.md$/i },
+		{ tag: 'agents.md', filePattern: /^agents\.md$/i },
+		{ tag: 'claude.md', filePattern: /^claude\.md$/i },
+		{ tag: 'claude-settings', filePattern: /^settings\.json$/i, relativePathPattern: /^\.claude$/i },
+		{ tag: 'claude-settings-local', filePattern: /^settings\.local\.json$/i, relativePathPattern: /^\.claude$/i },
+		{ tag: 'claude-mcp', filePattern: /^mcp\.json$/i, relativePathPattern: /^\.claude$/i },
+		{ tag: 'claude-commands-dir', filePattern: /\.md$/i, relativePathPattern: /^\.claude[\/\\]commands$/i },
+		{ tag: 'claude-skills-dir', filePattern: /^SKILL\.md$/i, relativePathPattern: /^\.claude[\/\\]skills[\/\\]/i },
+		{ tag: 'claude-rules-dir', filePattern: /\.md$/i, relativePathPattern: /^\.claude[\/\\]rules$/i },
+		{ tag: 'gemini.md', filePattern: /^gemini\.md$/i },
+		{ tag: 'copilot-instructions.md', filePattern: /^copilot\-instructions\.md$/i, relativePathPattern: /^\.github$/i },
 	];
 
 	const fileTypes = new Map<string, number>();
 	const configFiles = new Map<string, number>();
 
-	const MAX_FILES = 20000;
+	const MAX_FILES = options?.unbounded ? Number.POSITIVE_INFINITY : 20000;
 
-	function collect(root: string, dir: string, filter: string[], token: { count: number, maxReached: boolean }): Promise<void> {
+	function collect(root: string, dir: string, filter: string[], token: { count: number; maxReached: boolean; readdirCount: number }): Promise<void> {
 		const relativePath = dir.substring(root.length + 1);
 
 		return Promises.withAsyncBody(async resolve => {
+			// Bail before touching the filesystem when the cap has already been hit so
+			// sibling-directory recursion doesn't pay readdir IO after the scan is
+			// effectively done.
+			if (token.count >= MAX_FILES) {
+				token.maxReached = true;
+				resolve();
+				return;
+			}
+
 			let files: IDirent[];
+
+			token.readdirCount++;
 			try {
 				files = await pfs.readdir(dir, { withFileTypes: true });
 			} catch (error) {
@@ -80,7 +117,6 @@ export async function collectWorkspaceStats(folder: string, filter: string[]): P
 			}
 
 			if (token.count >= MAX_FILES) {
-				token.count += files.length;
 				token.maxReached = true;
 				resolve();
 				return;
@@ -92,16 +128,7 @@ export async function collectWorkspaceStats(folder: string, filter: string[]): P
 				return;
 			}
 
-			let filesToRead = files;
-			if (token.count + files.length > MAX_FILES) {
-				token.maxReached = true;
-				pending = MAX_FILES - token.count;
-				filesToRead = files.slice(0, pending);
-			}
-
-			token.count += files.length;
-
-			for (const file of filesToRead) {
+			for (const file of files) {
 				if (file.isDirectory()) {
 					if (!filter.includes(file.name)) {
 						await collect(root, join(dir, file.name), filter, token);
@@ -112,13 +139,24 @@ export async function collectWorkspaceStats(folder: string, filter: string[]): P
 						return;
 					}
 				} else {
-					const index = file.name.lastIndexOf('.');
-					if (index >= 0) {
-						const fileType = file.name.substring(index + 1);
-						if (fileType) {
-							fileTypes.set(fileType, (fileTypes.get(fileType) ?? 0) + 1);
-						}
+					if (token.count >= MAX_FILES) {
+						token.maxReached = true;
+						resolve();
+						return;
 					}
+					token.count++;
+
+					const index = file.name.lastIndexOf('.');
+					let fileType: string | undefined;
+					if (index >= 0) {
+						fileType = file.name.substring(index + 1) || undefined;
+					}
+					// Track files with no usable extension under a sentinel key so they
+					// can be folded into the "other" bucket at render time. Without this,
+					// extension-less files (Makefile, LICENSE, scripts in bin/, etc.) would
+					// be silently dropped from the file-type counts and the totals would
+					// not reconcile with the overall file count.
+					fileTypes.set(fileType ?? NO_EXT_KEY, (fileTypes.get(fileType ?? NO_EXT_KEY) ?? 0) + 1);
 
 					for (const configFile of configFilePatterns) {
 						if (configFile.relativePathPattern?.test(relativePath) !== false && configFile.filePattern.test(file.name)) {
@@ -135,23 +173,29 @@ export async function collectWorkspaceStats(folder: string, filter: string[]): P
 		});
 	}
 
-	const token: { count: number, maxReached: boolean } = { count: 0, maxReached: false };
+	const statsPromise = Promises.withAsyncBody<WorkspaceStats>(async (resolve) => {
+		const token: { count: number; maxReached: boolean; readdirCount: number } = { count: 0, maxReached: false, readdirCount: 0 };
+		const sw = new StopWatch(true);
+		await collect(folder, folder, filter, token);
+		const launchConfigs = await collectLaunchConfigs(folder);
+		resolve({
+			configFiles: asSortedItems(configFiles),
+			fileTypes: asSortedItems(fileTypes),
+			fileCount: token.count,
+			maxFilesReached: token.maxReached,
+			launchConfigFiles: launchConfigs,
+			totalScanTime: sw.elapsed(),
+			totalReaddirCount: token.readdirCount
+		});
+	});
 
-	await collect(folder, folder, filter, token);
-	const launchConfigs = await collectLaunchConfigs(folder);
-	return {
-		configFiles: asSortedItems(configFiles),
-		fileTypes: asSortedItems(fileTypes),
-		fileCount: token.count,
-		maxFilesReached: token.maxReached,
-		launchConfigFiles: launchConfigs
-	};
+	workspaceStatsCache.set(cacheKey, statsPromise);
+	return statsPromise;
 }
 
 function asSortedItems(items: Map<string, number>): WorkspaceStatItem[] {
-	return [
-		...Iterable.map(items.entries(), ([name, count]) => ({ name: name, count: count }))
-	].sort((a, b) => b.count - a.count);
+	return Array.from(items.entries(), ([name, count]) => ({ name: name, count: count }))
+		.sort((a, b) => b.count - a.count);
 }
 
 export function getMachineInfo(): IMachineInfo {
@@ -175,7 +219,7 @@ export async function collectLaunchConfigs(folder: string): Promise<WorkspaceSta
 		const launchConfigs = new Map<string, number>();
 		const launchConfig = join(folder, '.vscode', 'launch.json');
 
-		const contents = await pfs.readFile(launchConfig);
+		const contents = await fs.promises.readFile(launchConfig);
 
 		const errors: ParseError[] = [];
 		const json = parse(contents.toString(), errors);
@@ -222,7 +266,7 @@ export class DiagnosticsService implements IDiagnosticsService {
 		return output.join('\n');
 	}
 
-	private formatEnvironment(info: IMainProcessInfo): string {
+	private formatEnvironment(info: IMainProcessDiagnostics): string {
 		const output: string[] = [];
 		output.push(`Version:          ${this.productService.nameShort} ${this.productService.version} (${this.productService.commit || 'Commit unknown'}, ${this.productService.date || 'Date unknown'})`);
 		output.push(`OS Version:       ${osLib.type()} ${osLib.arch()} ${osLib.release()}`);
@@ -238,12 +282,18 @@ export class DiagnosticsService implements IDiagnosticsService {
 		output.push(`Screen Reader:    ${info.screenReader ? 'yes' : 'no'}`);
 		output.push(`Process Argv:     ${info.mainArguments.join(' ')}`);
 		output.push(`GPU Status:       ${this.expandGPUFeatures(info.gpuFeatureStatus)}`);
+		if (info.gpuLogMessages && info.gpuLogMessages.length > 0) {
+			output.push(`GPU Log Messages:`);
+			info.gpuLogMessages.forEach(msg => {
+				output.push(`${msg.header}: ${msg.message}`);
+			});
+		}
 
 		return output.join('\n');
 	}
 
-	public async getPerformanceInfo(info: IMainProcessInfo, remoteData: (IRemoteDiagnosticInfo | IRemoteDiagnosticError)[]): Promise<PerformanceInfo> {
-		return Promise.all([listProcesses(info.mainPID), this.formatWorkspaceMetadata(info)]).then(async result => {
+	public async getPerformanceInfo(info: IMainProcessDiagnostics, remoteData: (IRemoteDiagnosticInfo | IRemoteDiagnosticError)[], options?: { skipCache?: boolean; unbounded?: boolean }): Promise<PerformanceInfo> {
+		return Promise.all([listProcesses(info.mainPID), this.formatWorkspaceMetadata(info, options)]).then(async result => {
 			let [rootProcess, workspaceInfo] = result;
 			let processInfo = this.formatProcessList(info, rootProcess);
 
@@ -281,7 +331,7 @@ export class DiagnosticsService implements IDiagnosticsService {
 		});
 	}
 
-	public async getSystemInfo(info: IMainProcessInfo, remoteData: (IRemoteDiagnosticInfo | IRemoteDiagnosticError)[]): Promise<SystemInfo> {
+	public async getSystemInfo(info: IMainProcessDiagnostics, remoteData: (IRemoteDiagnosticInfo | IRemoteDiagnosticError)[]): Promise<SystemInfo> {
 		const { memory, vmHint, os, cpus } = getMachineInfo();
 		const systemInfo: SystemInfo = {
 			os,
@@ -310,7 +360,7 @@ export class DiagnosticsService implements IDiagnosticsService {
 		return Promise.resolve(systemInfo);
 	}
 
-	public async getDiagnostics(info: IMainProcessInfo, remoteDiagnostics: (IRemoteDiagnosticInfo | IRemoteDiagnosticError)[]): Promise<string> {
+	public async getDiagnostics(info: IMainProcessDiagnostics, remoteDiagnostics: (IRemoteDiagnosticInfo | IRemoteDiagnosticError)[]): Promise<string> {
 		const output: string[] = [];
 		return listProcesses(info.mainPID).then(async rootProcess => {
 
@@ -384,12 +434,25 @@ export class DiagnosticsService implements IDiagnosticsService {
 		};
 
 		// File Types
+		// Skip the no-extension sentinel from the named list and fold its count into
+		// the "other" bucket so totals reconcile with fileCount.
 		let line = '|      File types:';
 		const maxShown = 10;
-		let max = workspaceStats.fileTypes.length > maxShown ? maxShown : workspaceStats.fileTypes.length;
+		const namedTypes = workspaceStats.fileTypes.filter(t => t.name !== NO_EXT_KEY);
+		const noExtCount = workspaceStats.fileTypes
+			.filter(t => t.name === NO_EXT_KEY)
+			.reduce((sum, t) => sum + t.count, 0);
+		const max = Math.min(namedTypes.length, maxShown);
 		for (let i = 0; i < max; i++) {
-			const item = workspaceStats.fileTypes[i];
+			const item = namedTypes[i];
 			appendAndWrap(item.name, item.count);
+		}
+		let otherCount = noExtCount;
+		for (let i = max; i < namedTypes.length; i++) {
+			otherCount += namedTypes[i].count;
+		}
+		if (otherCount > 0) {
+			appendAndWrap('other', otherCount);
 		}
 		output.push(line);
 
@@ -414,13 +477,13 @@ export class DiagnosticsService implements IDiagnosticsService {
 		return output.join('\n');
 	}
 
-	private expandGPUFeatures(gpuFeatures: any): string {
+	private expandGPUFeatures(gpuFeatures: Record<string, string>): string {
 		const longestFeatureName = Math.max(...Object.keys(gpuFeatures).map(feature => feature.length));
 		// Make columns aligned by adding spaces after feature name
 		return Object.keys(gpuFeatures).map(feature => `${feature}:  ${' '.repeat(longestFeatureName - feature.length)}  ${gpuFeatures[feature]}`).join('\n                  ');
 	}
 
-	private formatWorkspaceMetadata(info: IMainProcessInfo): Promise<string> {
+	private formatWorkspaceMetadata(info: IMainProcessDiagnostics, options?: { skipCache?: boolean; unbounded?: boolean }): Promise<string> {
 		const output: string[] = [];
 		const workspaceStatPromises: Promise<void>[] = [];
 
@@ -435,7 +498,7 @@ export class DiagnosticsService implements IDiagnosticsService {
 				const folderUri = URI.revive(uriComponents);
 				if (folderUri.scheme === Schemas.file) {
 					const folder = folderUri.fsPath;
-					workspaceStatPromises.push(collectWorkspaceStats(folder, ['node_modules', '.git']).then(stats => {
+					workspaceStatPromises.push(collectWorkspaceStats(folder, ['node_modules', '.git'], options).then(stats => {
 						let countMessage = `${stats.fileCount} files`;
 						if (stats.maxFilesReached) {
 							countMessage = `more than ${countMessage}`;
@@ -457,33 +520,34 @@ export class DiagnosticsService implements IDiagnosticsService {
 			.catch(e => `Unable to collect workspace stats: ${e}`);
 	}
 
-	private formatProcessList(info: IMainProcessInfo, rootProcess: ProcessItem): string {
-		const mapPidToWindowTitle = new Map<number, string>();
-		info.windows.forEach(window => mapPidToWindowTitle.set(window.pid, window.title));
+	private formatProcessList(info: IMainProcessDiagnostics, rootProcess: ProcessItem): string {
+		const mapProcessToName = new Map<number, string>();
+		info.windows.forEach(window => mapProcessToName.set(window.pid, `window [${window.id}] (${window.title})`));
+		info.pidToNames.forEach(({ pid, name }) => mapProcessToName.set(pid, name));
 
 		const output: string[] = [];
 
 		output.push('CPU %\tMem MB\t   PID\tProcess');
 
 		if (rootProcess) {
-			this.formatProcessItem(info.mainPID, mapPidToWindowTitle, output, rootProcess, 0);
+			this.formatProcessItem(info.mainPID, mapProcessToName, output, rootProcess, 0);
 		}
 
 		return output.join('\n');
 	}
 
-	private formatProcessItem(mainPid: number, mapPidToWindowTitle: Map<number, string>, output: string[], item: ProcessItem, indent: number): void {
+	private formatProcessItem(mainPid: number, mapProcessToName: Map<number, string>, output: string[], item: ProcessItem, indent: number): void {
 		const isRoot = (indent === 0);
 
 		// Format name with indent
 		let name: string;
 		if (isRoot) {
-			name = item.pid === mainPid ? `${this.productService.applicationName} main` : 'remote agent';
+			name = item.pid === mainPid ? this.productService.applicationName : 'remote-server';
 		} else {
-			name = `${'  '.repeat(indent)} ${item.name}`;
-
-			if (item.name === 'window') {
-				name = `${name} (${mapPidToWindowTitle.get(item.pid)})`;
+			if (mapProcessToName.has(item.pid)) {
+				name = mapProcessToName.get(item.pid)!;
+			} else {
+				name = `${'  '.repeat(indent)} ${item.name}`;
 			}
 		}
 
@@ -492,8 +556,28 @@ export class DiagnosticsService implements IDiagnosticsService {
 
 		// Recurse into children if any
 		if (Array.isArray(item.children)) {
-			item.children.forEach(child => this.formatProcessItem(mainPid, mapPidToWindowTitle, output, child, indent + 1));
+			item.children.forEach(child => this.formatProcessItem(mainPid, mapProcessToName, output, child, indent + 1));
 		}
+	}
+
+	public async getWorkspaceFileExtensions(workspace: IWorkspace): Promise<{ extensions: string[] }> {
+		const items = new Set<string>();
+		for (const { uri } of workspace.folders) {
+			const folderUri = URI.revive(uri);
+			if (folderUri.scheme !== Schemas.file) {
+				continue;
+			}
+			const folder = folderUri.fsPath;
+			try {
+				const stats = await collectWorkspaceStats(folder, ['node_modules', '.git']);
+				stats.fileTypes.forEach(item => {
+					if (item.name !== NO_EXT_KEY) {
+						items.add(item.name);
+					}
+				});
+			} catch { }
+		}
+		return { extensions: [...items] };
 	}
 
 	public async reportWorkspaceStats(workspace: IWorkspaceInformation): Promise<void> {
@@ -507,8 +591,10 @@ export class DiagnosticsService implements IDiagnosticsService {
 			try {
 				const stats = await collectWorkspaceStats(folder, ['node_modules', '.git']);
 				type WorkspaceStatsClassification = {
-					'workspace.id': { classification: 'SystemMetaData', purpose: 'FeatureInsight' };
-					rendererSessionId: { classification: 'SystemMetaData', purpose: 'FeatureInsight' };
+					owner: 'lramos15';
+					comment: 'Metadata related to the workspace';
+					'workspace.id': { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'A UUID given to a workspace to identify it.' };
+					rendererSessionId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The ID of the session' };
 				};
 				type WorkspaceStatsEvent = {
 					'workspace.id': string | undefined;
@@ -519,9 +605,11 @@ export class DiagnosticsService implements IDiagnosticsService {
 					rendererSessionId: workspace.rendererSessionId
 				});
 				type WorkspaceStatsFileClassification = {
-					rendererSessionId: { classification: 'SystemMetaData', purpose: 'FeatureInsight' };
-					type: { classification: 'SystemMetaData', purpose: 'FeatureInsight', isMeasurement: true };
-					count: { classification: 'SystemMetaData', purpose: 'FeatureInsight', isMeasurement: true };
+					owner: 'lramos15';
+					comment: 'Helps us gain insights into what type of files are being used in a workspace';
+					rendererSessionId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The ID of the session.' };
+					type: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The type of file' };
+					count: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'How many types of that file are present' };
 				};
 				type WorkspaceStatsFileEvent = {
 					rendererSessionId: string;
@@ -529,6 +617,9 @@ export class DiagnosticsService implements IDiagnosticsService {
 					count: number;
 				};
 				stats.fileTypes.forEach(e => {
+					if (e.name === NO_EXT_KEY) {
+						return;
+					}
 					this.telemetryService.publicLog2<WorkspaceStatsFileEvent, WorkspaceStatsFileClassification>('workspace.stats.file', {
 						rendererSessionId: workspace.rendererSessionId,
 						type: e.name,
@@ -549,6 +640,23 @@ export class DiagnosticsService implements IDiagnosticsService {
 						count: e.count
 					});
 				});
+
+				// Workspace stats metadata
+				type WorkspaceStatsMetadataClassification = {
+					owner: 'jrieken';
+					comment: 'Metadata about workspace metadata collection';
+					duration: { classification: 'SystemMetaData'; purpose: 'PerformanceAndHealth'; comment: 'How did it take to make workspace stats' };
+					reachedLimit: { classification: 'SystemMetaData'; purpose: 'PerformanceAndHealth'; comment: 'Did making workspace stats reach its limits' };
+					fileCount: { classification: 'SystemMetaData'; purpose: 'PerformanceAndHealth'; comment: 'How many files did workspace stats discover' };
+					readdirCount: { classification: 'SystemMetaData'; purpose: 'PerformanceAndHealth'; comment: 'How many readdir call were needed' };
+				};
+				type WorkspaceStatsMetadata = {
+					duration: number;
+					reachedLimit: boolean;
+					fileCount: number;
+					readdirCount: number;
+				};
+				this.telemetryService.publicLog2<WorkspaceStatsMetadata, WorkspaceStatsMetadataClassification>('workspace.stats.metadata', { duration: stats.totalScanTime, reachedLimit: stats.maxFilesReached, fileCount: stats.fileCount, readdirCount: stats.totalReaddirCount });
 			} catch {
 				// Report nothing if collecting metadata fails.
 			}

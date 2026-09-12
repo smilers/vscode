@@ -3,50 +3,134 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as assert from 'assert';
-import { CharCode } from 'vs/base/common/charCode';
-import * as strings from 'vs/base/common/strings';
-import { IViewLineTokens } from 'vs/editor/common/core/lineTokens';
-import { MetadataConsts } from 'vs/editor/common/modes';
-import { LineDecoration } from 'vs/editor/common/viewLayout/lineDecorations';
-import { CharacterMapping, RenderLineInput, renderViewLine2 as renderViewLine, LineRange, DomPosition } from 'vs/editor/common/viewLayout/viewLineRenderer';
-import { InlineDecorationType } from 'vs/editor/common/viewModel/viewModel';
-import { ViewLineToken, ViewLineTokens } from 'vs/editor/test/common/core/viewLineToken';
+import assert from 'assert';
+import { CharCode } from '../../../../base/common/charCode.js';
+import * as strings from '../../../../base/common/strings.js';
+import { assertSnapshot } from '../../../../base/test/common/snapshot.js';
+import { ensureNoDisposablesAreLeakedInTestSuite } from '../../../../base/test/common/utils.js';
+import { OffsetRange } from '../../../common/core/ranges/offsetRange.js';
+import { MetadataConsts } from '../../../common/encodedTokenAttributes.js';
+import { IViewLineTokens } from '../../../common/tokens/lineTokens.js';
+import { LineDecoration } from '../../../common/viewLayout/lineDecorations.js';
+import { CharacterMapping, DomPosition, IRenderLineInputOptions, RenderLineInput, RenderLineOutput2, renderViewLine2 as renderViewLine } from '../../../common/viewLayout/viewLineRenderer.js';
+import { InlineDecorationType } from '../../../common/viewModel/inlineDecorations.js';
+import { TestLineToken, TestLineTokens } from '../core/testLineToken.js';
 
-function createViewLineTokens(viewLineTokens: ViewLineToken[]): IViewLineTokens {
-	return new ViewLineTokens(viewLineTokens);
+const HTML_EXTENSION = { extension: 'html' };
+
+function createViewLineTokens(viewLineTokens: TestLineToken[]): IViewLineTokens {
+	return new TestLineTokens(viewLineTokens);
 }
 
-function createPart(endIndex: number, foreground: number): ViewLineToken {
-	return new ViewLineToken(endIndex, (
+function createPart(endIndex: number, foreground: number): TestLineToken {
+	return new TestLineToken(endIndex, (
 		foreground << MetadataConsts.FOREGROUND_OFFSET
 	) >>> 0);
 }
 
-suite('viewLineRenderer.renderLine', () => {
+function inflateRenderLineOutput(renderLineOutput: RenderLineOutput2) {
+	// remove encompassing <span> to simplify test writing.
+	let html = renderLineOutput.html;
+	if (html.startsWith('<span>')) {
+		html = html.replace(/^<span>/, '');
+	}
+	html = html.replace(/<\/span>$/, '');
+	const spans: string[] = [];
+	let lastIndex = 0;
+	do {
+		const newIndex = html.indexOf('<span', lastIndex + 1);
+		if (newIndex === -1) {
+			break;
+		}
+		spans.push(html.substring(lastIndex, newIndex));
+		lastIndex = newIndex;
+	} while (true);
+	spans.push(html.substring(lastIndex));
+
+	return {
+		html: spans,
+		mapping: renderLineOutput.characterMapping.inflate(),
+	};
+}
+
+type IRelaxedRenderLineInputOptions = Partial<IRenderLineInputOptions>;
+
+const defaultRenderLineInputOptions: IRenderLineInputOptions = {
+	useMonospaceOptimizations: false,
+	canUseHalfwidthRightwardsArrow: true,
+	lineContent: '',
+	continuesWithWrappedLine: false,
+	isBasicASCII: true,
+	containsRTL: false,
+	fauxIndentLength: 0,
+	lineTokens: createViewLineTokens([]),
+	lineDecorations: [],
+	tabSize: 4,
+	startVisibleColumn: 0,
+	spaceWidth: 10,
+	middotWidth: 10,
+	wsmiddotWidth: 10,
+	stopRenderingLineAfter: -1,
+	renderWhitespace: 'none',
+	renderControlCharacters: false,
+	fontLigatures: false,
+	selectionsOnLine: null,
+	textDirection: null,
+	verticalScrollbarSize: 14,
+	renderNewLineWhenEmpty: false,
+	useTwoCellFullwidthCharacters: false
+};
+
+function createRenderLineInputOptions(opts: IRelaxedRenderLineInputOptions): IRenderLineInputOptions {
+	return {
+		...defaultRenderLineInputOptions,
+		...opts
+	};
+}
+
+function createRenderLineInput(opts: IRelaxedRenderLineInputOptions): RenderLineInput {
+	const options = createRenderLineInputOptions(opts);
+	return new RenderLineInput(
+		options.useMonospaceOptimizations,
+		options.canUseHalfwidthRightwardsArrow,
+		options.lineContent,
+		options.continuesWithWrappedLine,
+		options.isBasicASCII,
+		options.containsRTL,
+		options.fauxIndentLength,
+		options.lineTokens,
+		options.lineDecorations,
+		options.tabSize,
+		options.startVisibleColumn,
+		options.spaceWidth,
+		options.middotWidth,
+		options.wsmiddotWidth,
+		options.stopRenderingLineAfter,
+		options.renderWhitespace,
+		options.renderControlCharacters,
+		options.fontLigatures,
+		options.selectionsOnLine,
+		options.textDirection,
+		options.verticalScrollbarSize,
+		options.renderNewLineWhenEmpty,
+		options.useTwoCellFullwidthCharacters
+	);
+}
+
+suite('renderViewLine', () => {
+
+	ensureNoDisposablesAreLeakedInTestSuite();
 
 	function assertCharacterReplacement(lineContent: string, tabSize: number, expected: string, expectedCharOffsetInPart: number[]): void {
-		const _actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
+		const _actual = renderViewLine(createRenderLineInput({
 			lineContent,
-			false,
-			strings.isBasicASCII(lineContent),
-			false,
-			0,
-			createViewLineTokens([new ViewLineToken(lineContent.length, 0)]),
-			[],
+			isBasicASCII: strings.isBasicASCII(lineContent),
+			lineTokens: createViewLineTokens([new TestLineToken(lineContent.length, 0)]),
 			tabSize,
-			0,
-			0,
-			0,
-			0,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
+			spaceWidth: 0,
+			middotWidth: 0,
+			wsmiddotWidth: 0
+		}));
 
 		assert.strictEqual(_actual.html, '<span><span class="mtk0">' + expected + '</span></span>');
 		const info = expectedCharOffsetInPart.map<CharacterMappingInfo>((absoluteOffset) => [absoluteOffset, [0, absoluteOffset]]);
@@ -79,28 +163,15 @@ suite('viewLineRenderer.renderLine', () => {
 		assertCharacterReplacement('xxxx\t', 4, 'xxxx\u00a0\u00a0\u00a0\u00a0', [0, 1, 2, 3, 4, 8]);
 	});
 
-	function assertParts(lineContent: string, tabSize: number, parts: ViewLineToken[], expected: string, info: CharacterMappingInfo[]): void {
-		let _actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
+	function assertParts(lineContent: string, tabSize: number, parts: TestLineToken[], expected: string, info: CharacterMappingInfo[]): void {
+		const _actual = renderViewLine(createRenderLineInput({
 			lineContent,
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens(parts),
-			[],
+			lineTokens: createViewLineTokens(parts),
 			tabSize,
-			0,
-			0,
-			0,
-			0,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
+			spaceWidth: 0,
+			middotWidth: 0,
+			wsmiddotWidth: 0
+		}));
 
 		assert.strictEqual(_actual.html, '<span>' + expected + '</span>');
 		assertCharacterMapping3(_actual.characterMapping, info);
@@ -122,16 +193,11 @@ suite('viewLineRenderer.renderLine', () => {
 		assertParts('xyz', 4, [createPart(2, 1), createPart(3, 2)], '<span class="mtk1">xy</span><span class="mtk2">z</span>', [[0, [0, 0]], [1, [0, 1]], [2, [1, 0]], [3, [1, 1]]]);
 	});
 
-	test('overflow', () => {
-		let _actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
-			'Hello world!',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([
+	// overflow
+	test('overflow', async () => {
+		const _actual = renderViewLine(createRenderLineInput({
+			lineContent: 'Hello world!',
+			lineTokens: createViewLineTokens([
 				createPart(1, 0),
 				createPart(2, 1),
 				createPart(3, 2),
@@ -145,47 +211,19 @@ suite('viewLineRenderer.renderLine', () => {
 				createPart(11, 10),
 				createPart(12, 11),
 			]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			6,
-			'boundary',
-			false,
-			false,
-			null
-		));
+			stopRenderingLineAfter: 6,
+			renderWhitespace: 'boundary'
+		}));
 
-		let expectedOutput = [
-			'<span class="mtk0">H</span>',
-			'<span class="mtk1">e</span>',
-			'<span class="mtk2">l</span>',
-			'<span class="mtk3">l</span>',
-			'<span class="mtk4">o</span>',
-			'<span class="mtk5">\u00a0</span>',
-			'<span>&hellip;</span>'
-		].join('');
-
-		assert.strictEqual(_actual.html, '<span>' + expectedOutput + '</span>');
-		assertCharacterMapping3(
-			_actual.characterMapping,
-			[
-				[0, [0, 0]],
-				[1, [1, 0]],
-				[2, [2, 0]],
-				[3, [3, 0]],
-				[4, [4, 0]],
-				[5, [5, 0]],
-				[6, [5, 1]],
-			]
-		);
+		const inflated = inflateRenderLineOutput(_actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('typical line', () => {
-		let lineText = '\t    export class Game { // http://test.com     ';
-		let lineParts = createViewLineTokens([
+	// typical line
+	test('typical', async () => {
+		const lineContent = '\t    export class Game { // http://test.com     ';
+		const lineTokens = createViewLineTokens([
 			createPart(5, 1),
 			createPart(11, 2),
 			createPart(12, 3),
@@ -199,70 +237,21 @@ suite('viewLineRenderer.renderLine', () => {
 			createPart(43, 11),
 			createPart(48, 12),
 		]);
-		let expectedOutput = [
-			'<span class="mtkz" style="width:40px">\u2192\u00a0\u00a0\u00a0</span>',
-			'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-			'<span class="mtk2">export</span>',
-			'<span class="mtk3">\u00a0</span>',
-			'<span class="mtk4">class</span>',
-			'<span class="mtk5">\u00a0</span>',
-			'<span class="mtk6">Game</span>',
-			'<span class="mtk7">\u00a0</span>',
-			'<span class="mtk8">{</span>',
-			'<span class="mtk9">\u00a0</span>',
-			'<span class="mtk10">//\u00a0</span>',
-			'<span class="mtk11">http://test.com</span>',
-			'<span class="mtkz" style="width:20px">\u00b7\u00b7</span>',
-			'<span class="mtkz" style="width:30px">\u00b7\u00b7\u00b7</span>'
-		].join('');
+		const _actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			lineTokens,
+			renderWhitespace: 'boundary'
+		}));
 
-		const info: CharacterMappingInfo[] = [
-			[0, [0, 0]],
-			[4, [1, 0]], [5, [1, 1]], [6, [1, 2]], [7, [1, 3]],
-			[8, [2, 0]], [9, [2, 1]], [10, [2, 2]], [11, [2, 3]], [12, [2, 4]], [13, [2, 5]],
-			[14, [3, 0]],
-			[15, [4, 0]], [16, [4, 1]], [17, [4, 2]], [18, [4, 3]], [19, [4, 4]],
-			[20, [5, 0]],
-			[21, [6, 0]], [22, [6, 1]], [23, [6, 2]], [24, [6, 3]],
-			[25, [7, 0]],
-			[26, [8, 0]],
-			[27, [9, 0]],
-			[28, [10, 0]], [29, [10, 1]], [30, [10, 2]],
-			[31, [11, 0]], [32, [11, 1]], [33, [11, 2]], [34, [11, 3]], [35, [11, 4]], [36, [11, 5]], [37, [11, 6]], [38, [11, 7]], [39, [11, 8]], [40, [11, 9]], [41, [11, 10]], [42, [11, 11]], [43, [11, 12]], [44, [11, 13]], [45, [11, 14]],
-			[46, [12, 0]], [47, [12, 1]],
-			[48, [13, 0]], [49, [13, 1]], [50, [13, 2]], [51, [13, 3]],
-		];
-
-		const _actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
-			lineText,
-			false,
-			true,
-			false,
-			0,
-			lineParts,
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'boundary',
-			false,
-			false,
-			null
-		));
-
-		assert.strictEqual(_actual.html, '<span>' + expectedOutput + '</span>');
-		assertCharacterMapping3(_actual.characterMapping, info);
+		const inflated = inflateRenderLineOutput(_actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #2255: Weird line rendering part 1', () => {
-		let lineText = '\t\t\tcursorStyle:\t\t\t\t\t\t(prevOpts.cursorStyle !== newOpts.cursorStyle),';
-
-		let lineParts = createViewLineTokens([
+	// issue #2255: Weird line rendering part 1
+	test('issue-2255-1', async () => {
+		const lineContent = '\t\t\tcursorStyle:\t\t\t\t\t\t(prevOpts.cursorStyle !== newOpts.cursorStyle),';
+		const lineTokens = createViewLineTokens([
 			createPart(3, 1), // 3 chars
 			createPart(15, 2), // 12 chars
 			createPart(21, 3), // 6 chars
@@ -274,62 +263,21 @@ suite('viewLineRenderer.renderLine', () => {
 			createPart(67, 9), // 1 char
 			createPart(68, 10), // 2 chars
 		]);
-		let expectedOutput = [
-			'<span class="mtk1">\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0</span>',
-			'<span class="mtk2">cursorStyle:</span>',
-			'<span class="mtk3">\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0</span>',
-			'<span class="mtk4">(</span>',
-			'<span class="mtk5">prevOpts.cursorStyle\u00a0</span>',
-			'<span class="mtk6">!=</span>',
-			'<span class="mtk7">=</span>',
-			'<span class="mtk8">\u00a0newOpts.cursorStyle</span>',
-			'<span class="mtk9">)</span>',
-			'<span class="mtk10">,</span>',
-		].join('');
+		const _actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			lineTokens
+		}));
 
-		const info: CharacterMappingInfo[] = [
-			[0, [0, 0]], [4, [0, 4]], [8, [0, 8]],
-			[12, [1, 0]], [13, [1, 1]], [14, [1, 2]], [15, [1, 3]], [16, [1, 4]], [17, [1, 5]], [18, [1, 6]], [19, [1, 7]], [20, [1, 8]], [21, [1, 9]], [22, [1, 10]], [23, [1, 11]],
-			[24, [2, 0]], [28, [2, 4]], [32, [2, 8]], [36, [2, 12]], [40, [2, 16]], [44, [2, 20]],
-			[48, [3, 0]],
-			[49, [4, 0]], [50, [4, 1]], [51, [4, 2]], [52, [4, 3]], [53, [4, 4]], [54, [4, 5]], [55, [4, 6]], [56, [4, 7]], [57, [4, 8]], [58, [4, 9]], [59, [4, 10]], [60, [4, 11]], [61, [4, 12]], [62, [4, 13]], [63, [4, 14]], [64, [4, 15]], [65, [4, 16]], [66, [4, 17]], [67, [4, 18]], [68, [4, 19]], [69, [4, 20]],
-			[70, [5, 0]], [71, [5, 1]],
-			[72, [6, 0]],
-			[73, [7, 0]], [74, [7, 1]], [75, [7, 2]], [76, [7, 3]], [77, [7, 4]], [78, [7, 5]], [79, [7, 6]], [80, [7, 7]], [81, [7, 8]], [82, [7, 9]], [83, [7, 10]], [84, [7, 11]], [85, [7, 12]], [86, [7, 13]], [87, [7, 14]], [88, [7, 15]], [89, [7, 16]], [90, [7, 17]], [91, [7, 18]], [92, [7, 19]],
-			[93, [8, 0]],
-			[94, [9, 0]], [95, [9, 1]],
-		];
-
-		const _actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
-			lineText,
-			false,
-			true,
-			false,
-			0,
-			lineParts,
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
-
-		assert.strictEqual(_actual.html, '<span>' + expectedOutput + '</span>');
-		assertCharacterMapping3(_actual.characterMapping, info);
+		const inflated = inflateRenderLineOutput(_actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #2255: Weird line rendering part 2', () => {
-		let lineText = ' \t\t\tcursorStyle:\t\t\t\t\t\t(prevOpts.cursorStyle !== newOpts.cursorStyle),';
+	// issue #2255: Weird line rendering part 2
+	test('issue-2255-2', async () => {
+		const lineContent = ' \t\t\tcursorStyle:\t\t\t\t\t\t(prevOpts.cursorStyle !== newOpts.cursorStyle),';
 
-		let lineParts = createViewLineTokens([
+		const lineTokens = createViewLineTokens([
 			createPart(4, 1), // 4 chars
 			createPart(16, 2), // 12 chars
 			createPart(22, 3), // 6 chars
@@ -341,144 +289,147 @@ suite('viewLineRenderer.renderLine', () => {
 			createPart(68, 9), // 1 char
 			createPart(69, 10), // 2 chars
 		]);
-		let expectedOutput = [
-			'<span class="mtk1">\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0</span>',
-			'<span class="mtk2">cursorStyle:</span>',
-			'<span class="mtk3">\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0</span>',
-			'<span class="mtk4">(</span>',
-			'<span class="mtk5">prevOpts.cursorStyle\u00a0</span>',
-			'<span class="mtk6">!=</span>',
-			'<span class="mtk7">=</span>',
-			'<span class="mtk8">\u00a0newOpts.cursorStyle</span>',
-			'<span class="mtk9">)</span>',
-			'<span class="mtk10">,</span>',
-		].join('');
+		const _actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			lineTokens
+		}));
 
-		const info: CharacterMappingInfo[] = [
-			[0, [0, 0]], [1, [0, 1]], [4, [0, 4]], [8, [0, 8]],
-			[12, [1, 0]], [13, [1, 1]], [14, [1, 2]], [15, [1, 3]], [16, [1, 4]], [17, [1, 5]], [18, [1, 6]], [19, [1, 7]], [20, [1, 8]], [21, [1, 9]], [22, [1, 10]], [23, [1, 11]],
-			[24, [2, 0]], [28, [2, 4]], [32, [2, 8]], [36, [2, 12]], [40, [2, 16]], [44, [2, 20]],
-			[48, [3, 0]],
-			[49, [4, 0]], [50, [4, 1]], [51, [4, 2]], [52, [4, 3]], [53, [4, 4]], [54, [4, 5]], [55, [4, 6]], [56, [4, 7]], [57, [4, 8]], [58, [4, 9]], [59, [4, 10]], [60, [4, 11]], [61, [4, 12]], [62, [4, 13]], [63, [4, 14]], [64, [4, 15]], [65, [4, 16]], [66, [4, 17]], [67, [4, 18]], [68, [4, 19]], [69, [4, 20]],
-			[70, [5, 0]], [71, [5, 1]],
-			[72, [6, 0]],
-			[73, [7, 0]], [74, [7, 1]], [75, [7, 2]], [76, [7, 3]], [77, [7, 4]], [78, [7, 5]], [79, [7, 6]], [80, [7, 7]], [81, [7, 8]], [82, [7, 9]], [83, [7, 10]], [84, [7, 11]], [85, [7, 12]], [86, [7, 13]], [87, [7, 14]], [88, [7, 15]], [89, [7, 16]], [90, [7, 17]], [91, [7, 18]], [92, [7, 19]],
-			[93, [8, 0]],
-			[94, [9, 0]], [95, [9, 1]],
-		];
-
-		const _actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
-			lineText,
-			false,
-			true,
-			false,
-			0,
-			lineParts,
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
-
-		assert.strictEqual(_actual.html, '<span>' + expectedOutput + '</span>');
-		assertCharacterMapping3(_actual.characterMapping, info);
+		const inflated = inflateRenderLineOutput(_actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #91178: after decoration type shown before cursor', () => {
-		const lineText = '//just a comment';
-		const lineParts = createViewLineTokens([
+	// issue #91178: after decoration type shown before cursor
+	test('issue-91178', async () => {
+		const lineContent = '//just a comment';
+		const lineTokens = createViewLineTokens([
 			createPart(16, 1)
 		]);
-		const expectedOutput = [
-			'<span class="mtk1">//just\u00a0a\u00a0com</span>',
-			'<span class="mtk1 dec2"></span>',
-			'<span class="mtk1 dec1"></span>',
-			'<span class="mtk1">ment</span>',
-		].join('');
-
-		const expectedCharacterMapping = new CharacterMapping(17, 4);
-		expectedCharacterMapping.setColumnInfo(1, 0, 0, 0);
-		expectedCharacterMapping.setColumnInfo(2, 0, 1, 0);
-		expectedCharacterMapping.setColumnInfo(3, 0, 2, 0);
-		expectedCharacterMapping.setColumnInfo(4, 0, 3, 0);
-		expectedCharacterMapping.setColumnInfo(5, 0, 4, 0);
-		expectedCharacterMapping.setColumnInfo(6, 0, 5, 0);
-		expectedCharacterMapping.setColumnInfo(7, 0, 6, 0);
-		expectedCharacterMapping.setColumnInfo(8, 0, 7, 0);
-		expectedCharacterMapping.setColumnInfo(9, 0, 8, 0);
-		expectedCharacterMapping.setColumnInfo(10, 0, 9, 0);
-		expectedCharacterMapping.setColumnInfo(11, 0, 10, 0);
-		expectedCharacterMapping.setColumnInfo(12, 0, 11, 0);
-		expectedCharacterMapping.setColumnInfo(13, 2, 0, 12);
-		expectedCharacterMapping.setColumnInfo(14, 3, 1, 12);
-		expectedCharacterMapping.setColumnInfo(15, 3, 2, 12);
-		expectedCharacterMapping.setColumnInfo(16, 3, 3, 12);
-		expectedCharacterMapping.setColumnInfo(17, 3, 4, 12);
-
-		const actual = renderViewLine(new RenderLineInput(
-			true,
-			false,
-			lineText,
-			false,
-			true,
-			false,
-			0,
-			lineParts,
-			[
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			canUseHalfwidthRightwardsArrow: false,
+			lineContent,
+			lineTokens,
+			lineDecorations: [
 				new LineDecoration(13, 13, 'dec1', InlineDecorationType.After),
 				new LineDecoration(13, 13, 'dec2', InlineDecorationType.Before),
-			],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
+			]
+		}));
 
-		assert.strictEqual(actual.html, '<span>' + expectedOutput + '</span>');
-		assertCharacterMapping2(actual.characterMapping, expectedCharacterMapping);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue microsoft/monaco-editor#280: Improved source code rendering for RTL languages', () => {
-		let lineText = 'var קודמות = \"מיותר קודמות צ\'ט של, אם לשון העברית שינויים ויש, אם\";';
-
-		let lineParts = createViewLineTokens([
+	// issue microsoft/monaco-editor#280: Improved source code rendering for RTL languages
+	test('monaco-280', async () => {
+		const lineContent = 'var קודמות = \"מיותר קודמות צ\'ט של, אם לשון העברית שינויים ויש, אם\";';
+		const lineTokens = createViewLineTokens([
 			createPart(3, 6),
 			createPart(13, 1),
 			createPart(66, 20),
 			createPart(67, 1),
 		]);
+		const _actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			isBasicASCII: false,
+			containsRTL: true,
+			lineTokens
+		}));
 
-		let expectedOutput = [
-			'<span class="mtk6">var</span>',
-			'<span class="mtk1">\u00a0קודמות\u00a0=\u00a0</span>',
-			'<span class="mtk20">"מיותר\u00a0קודמות\u00a0צ\'ט\u00a0של,\u00a0אם\u00a0לשון\u00a0העברית\u00a0שינויים\u00a0ויש,\u00a0אם"</span>',
-			'<span class="mtk1">;</span>'
-		].join('');
+		const inflated = inflateRenderLineOutput(_actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
+	});
 
-		let _actual = renderViewLine(new RenderLineInput(
+	// issue #137036: Issue in RTL languages in recent versions
+	test('issue-137036', async () => {
+		const lineContent = '<option value=\"العربية\">العربية</option>';
+		const lineTokens = createViewLineTokens([
+			createPart(1, 2),
+			createPart(7, 3),
+			createPart(8, 4),
+			createPart(13, 5),
+			createPart(14, 4),
+			createPart(23, 6),
+			createPart(24, 2),
+			createPart(31, 4),
+			createPart(33, 2),
+			createPart(39, 3),
+			createPart(40, 2),
+		]);
+		const _actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			isBasicASCII: false,
+			containsRTL: true,
+			lineTokens
+		}));
+
+		const inflated = inflateRenderLineOutput(_actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
+	});
+
+	// issue #99589: Rendering whitespace influences bidi layout
+	test('issue-99589', async () => {
+		const lineContent = '    [\"🖨️ چاپ فاکتور\",\"🎨 تنظیمات\"]';
+		const lineTokens = createViewLineTokens([
+			createPart(5, 2),
+			createPart(21, 3),
+			createPart(22, 2),
+			createPart(34, 3),
+			createPart(35, 2),
+		]);
+		const _actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent,
+			isBasicASCII: false,
+			containsRTL: true,
+			lineTokens,
+			renderWhitespace: 'all'
+		}));
+
+		const inflated = inflateRenderLineOutput(_actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
+	});
+
+	// issue #260239: HTML containing bidirectional text is rendered incorrectly
+	test('issue-260239', async () => {
+		// Simulating HTML like: <p class="myclass" title="العربي">نشاط التدويل!</p>
+		// The line contains both LTR (class="myclass") and RTL (title="العربي") attribute values
+		const lineContent = '<p class="myclass" title="العربي">نشاط التدويل!</p>';
+		const lineTokens = createViewLineTokens([
+			createPart(1, 1),   // <
+			createPart(2, 2),   // p
+			createPart(3, 3),   // (space)
+			createPart(8, 4),   // class
+			createPart(9, 5),   // =
+			createPart(10, 6),  // "
+			createPart(17, 7),  // myclass
+			createPart(18, 6),  // "
+			createPart(19, 3),  // (space)
+			createPart(24, 4),  // title
+			createPart(25, 5),  // =
+			createPart(26, 6),  // "
+			createPart(32, 8),  // العربي (RTL text) - 6 Arabic characters from position 26-31
+			createPart(33, 6),  // " - closing quote at position 32
+			createPart(34, 1),  // >
+			createPart(47, 9),  // نشاط التدويل! (RTL text) - 13 characters from position 34-46
+			createPart(48, 1),  // <
+			createPart(49, 2),  // /
+			createPart(50, 2),  // p
+			createPart(51, 1),  // >
+		]);
+		const _actual = renderViewLine(new RenderLineInput(
 			false,
 			true,
-			lineText,
+			lineContent,
 			false,
 			false,
 			true,
 			0,
-			lineParts,
+			lineTokens,
 			[],
 			4,
 			0,
@@ -489,42 +440,71 @@ suite('viewLineRenderer.renderLine', () => {
 			'none',
 			false,
 			false,
-			null
+			null,
+			null,
+			14
 		));
 
-		assert.strictEqual(_actual.html, '<span dir="ltr">' + expectedOutput + '</span>');
-		assert.strictEqual(_actual.containsRTL, true);
+		const inflated = inflateRenderLineOutput(_actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #6885: Splits large tokens', () => {
+	// issue #274604: Mixed LTR and RTL in a single token
+	test('issue-274604', async () => {
+		const lineContent = 'test.com##a:-abp-contains(إ)';
+		const lineTokens = createViewLineTokens([
+			createPart(lineContent.length, 1)
+		]);
+		const actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			isBasicASCII: false,
+			containsRTL: true,
+			lineTokens
+		}));
+
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
+	});
+
+	// issue #277693: Mixed LTR and RTL in a single token with template literal
+	test('issue-277693', async () => {
+		const lineContent = 'نام کاربر: ${user.firstName}';
+		const lineTokens = createViewLineTokens([
+			createPart(9, 1),   // نام کاربر (RTL string content)
+			createPart(11, 1),  // : (space)
+			createPart(13, 2),  // ${ (template expression punctuation)
+			createPart(17, 3),  // user (variable)
+			createPart(18, 4),  // . (punctuation)
+			createPart(27, 3),  // firstName (property)
+			createPart(28, 2),  // } (template expression punctuation)
+		]);
+		const actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			isBasicASCII: false,
+			containsRTL: true,
+			lineTokens
+		}));
+
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
+	});
+
+	// issue #6885: Splits large tokens
+	test('issue-6885', async () => {
 		//                                                                                                                  1         1         1
 		//                        1         2         3         4         5         6         7         8         9         0         1         2
 		//               1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234
-		let _lineText = 'This is just a long line that contains very interesting text. This is just a long line that contains very interesting text.';
+		const _lineText = 'This is just a long line that contains very interesting text. This is just a long line that contains very interesting text.';
 
-		function assertSplitsTokens(message: string, lineText: string, expectedOutput: string[]): void {
-			let lineParts = createViewLineTokens([createPart(lineText.length, 1)]);
-			let actual = renderViewLine(new RenderLineInput(
-				false,
-				true,
-				lineText,
-				false,
-				true,
-				false,
-				0,
-				lineParts,
-				[],
-				4,
-				0,
-				10,
-				10,
-				10,
-				-1,
-				'none',
-				false,
-				false,
-				null
-			));
+		function assertSplitsTokens(message: string, lineContent: string, expectedOutput: string[]): void {
+			const lineTokens = createViewLineTokens([createPart(lineContent.length, 1)]);
+			const actual = renderViewLine(createRenderLineInput({
+				lineContent,
+				lineTokens
+			}));
 			assert.strictEqual(actual.html, '<span>' + expectedOutput.join('') + '</span>', message);
 		}
 
@@ -600,35 +580,20 @@ suite('viewLineRenderer.renderLine', () => {
 		}
 	});
 
-	test('issue #21476: Does not split large tokens when ligatures are on', () => {
+	// issue #21476: Does not split large tokens when ligatures are on
+	test('issue-21476', async () => {
 		//                                                                                                                  1         1         1
 		//                        1         2         3         4         5         6         7         8         9         0         1         2
 		//               1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234
-		let _lineText = 'This is just a long line that contains very interesting text. This is just a long line that contains very interesting text.';
+		const _lineText = 'This is just a long line that contains very interesting text. This is just a long line that contains very interesting text.';
 
-		function assertSplitsTokens(message: string, lineText: string, expectedOutput: string[]): void {
-			let lineParts = createViewLineTokens([createPart(lineText.length, 1)]);
-			let actual = renderViewLine(new RenderLineInput(
-				false,
-				true,
-				lineText,
-				false,
-				true,
-				false,
-				0,
-				lineParts,
-				[],
-				4,
-				0,
-				10,
-				10,
-				10,
-				-1,
-				'none',
-				false,
-				true,
-				null
-			));
+		function assertSplitsTokens(message: string, lineContent: string, expectedOutput: string[]): void {
+			const lineTokens = createViewLineTokens([createPart(lineContent.length, 1)]);
+			const actual = renderViewLine(createRenderLineInput({
+				lineContent,
+				lineTokens,
+				fontLigatures: true
+			}));
 			assert.strictEqual(actual.html, '<span>' + expectedOutput.join('') + '</span>', message);
 		}
 
@@ -646,102 +611,51 @@ suite('viewLineRenderer.renderLine', () => {
 		}
 	});
 
-	test('issue #20624: Unaligned surrogate pairs are corrupted at multiples of 50 columns', () => {
-		let lineText = 'a𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷';
+	// issue #20624: Unaligned surrogate pairs are corrupted at multiples of 50 columns
+	test('issue-20624', async () => {
+		const lineContent = 'a𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷';
+		const lineTokens = createViewLineTokens([createPart(lineContent.length, 1)]);
+		const actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			isBasicASCII: false,
+			lineTokens
+		}));
 
-		let lineParts = createViewLineTokens([createPart(lineText.length, 1)]);
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
-			lineText,
-			false,
-			false,
-			false,
-			0,
-			lineParts,
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
-		let expectedOutput = [
-			'<span class="mtk1">a𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷𠮷</span>',
-		];
-		assert.strictEqual(actual.html, '<span>' + expectedOutput.join('') + '</span>');
+		await assertSnapshot(inflateRenderLineOutput(actual).html.join(''), HTML_EXTENSION);
 	});
 
-	test('issue #6885: Does not split large tokens in RTL text', () => {
-		let lineText = 'את גרמנית בהתייחסות שמו, שנתי המשפט אל חפש, אם כתב אחרים ולחבר. של התוכן אודות בויקיפדיה כלל, של עזרה כימיה היא. על עמוד יוצרים מיתולוגיה סדר, אם שכל שתפו לעברית שינויים, אם שאלות אנגלית עזה. שמות בקלות מה סדר.';
-		let lineParts = createViewLineTokens([createPart(lineText.length, 1)]);
-		let expectedOutput = [
-			'<span class="mtk1">את\u00a0גרמנית\u00a0בהתייחסות\u00a0שמו,\u00a0שנתי\u00a0המשפט\u00a0אל\u00a0חפש,\u00a0אם\u00a0כתב\u00a0אחרים\u00a0ולחבר.\u00a0של\u00a0התוכן\u00a0אודות\u00a0בויקיפדיה\u00a0כלל,\u00a0של\u00a0עזרה\u00a0כימיה\u00a0היא.\u00a0על\u00a0עמוד\u00a0יוצרים\u00a0מיתולוגיה\u00a0סדר,\u00a0אם\u00a0שכל\u00a0שתפו\u00a0לעברית\u00a0שינויים,\u00a0אם\u00a0שאלות\u00a0אנגלית\u00a0עזה.\u00a0שמות\u00a0בקלות\u00a0מה\u00a0סדר.</span>'
-		];
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
-			lineText,
-			false,
-			false,
-			true,
-			0,
-			lineParts,
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
-		assert.strictEqual(actual.html, '<span dir="ltr">' + expectedOutput.join('') + '</span>');
-		assert.strictEqual(actual.containsRTL, true);
+	// issue #6885: Does not split large tokens in RTL text
+	test('issue-6885-rtl', async () => {
+		const lineContent = 'את גרמנית בהתייחסות שמו, שנתי המשפט אל חפש, אם כתב אחרים ולחבר. של התוכן אודות בויקיפדיה כלל, של עזרה כימיה היא. על עמוד יוצרים מיתולוגיה סדר, אם שכל שתפו לעברית שינויים, אם שאלות אנגלית עזה. שמות בקלות מה סדר.';
+		const lineTokens = createViewLineTokens([createPart(lineContent.length, 1)]);
+		const actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			isBasicASCII: false,
+			containsRTL: true,
+			lineTokens
+		}));
+
+		await assertSnapshot(actual.html, HTML_EXTENSION);
 	});
 
-	test('issue #95685: Uses unicode replacement character for Paragraph Separator', () => {
-		const lineText = 'var ftext = [\u2029"Und", "dann", "eines"];';
-		const lineParts = createViewLineTokens([createPart(lineText.length, 1)]);
-		const expectedOutput = [
-			'<span class="mtk1">var\u00a0ftext\u00a0=\u00a0[\uFFFD"Und",\u00a0"dann",\u00a0"eines"];</span>'
-		];
-		const actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
-			lineText,
-			false,
-			false,
-			false,
-			0,
-			lineParts,
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
-		assert.strictEqual(actual.html, '<span>' + expectedOutput.join('') + '</span>');
+	// issue #95685: Uses unicode replacement character for Paragraph Separator
+	test('issue-95685', async () => {
+		const lineContent = 'var ftext = [\u2029"Und", "dann", "eines"];';
+		const lineTokens = createViewLineTokens([createPart(lineContent.length, 1)]);
+		const actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			isBasicASCII: false,
+			lineTokens
+		}));
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #19673: Monokai Theme bad-highlighting in line wrap', () => {
-		let lineText = '    MongoCallback<string>): void {';
-
-		let lineParts = createViewLineTokens([
+	// issue #19673: Monokai Theme bad-highlighting in line wrap
+	test('issue-19673', async () => {
+		const lineContent = '    MongoCallback<string>): void {';
+		const lineTokens = createViewLineTokens([
 			createPart(17, 1),
 			createPart(18, 2),
 			createPart(24, 3),
@@ -751,74 +665,24 @@ suite('viewLineRenderer.renderLine', () => {
 			createPart(32, 7),
 			createPart(34, 8),
 		]);
-		let expectedOutput = [
-			'<span class="">\u00a0\u00a0\u00a0\u00a0</span>',
-			'<span class="mtk1">MongoCallback</span>',
-			'<span class="mtk2">&lt;</span>',
-			'<span class="mtk3">string</span>',
-			'<span class="mtk4">&gt;)</span>',
-			'<span class="mtk5">:</span>',
-			'<span class="mtk6">\u00a0</span>',
-			'<span class="mtk7">void</span>',
-			'<span class="mtk8">\u00a0{</span>'
-		].join('');
+		const _actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent,
+			fauxIndentLength: 4,
+			lineTokens
+		}));
 
-		let _actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			lineText,
-			false,
-			true,
-			false,
-			4,
-			lineParts,
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
-
-		assert.strictEqual(_actual.html, '<span>' + expectedOutput + '</span>');
+		const inflated = inflateRenderLineOutput(_actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
-
-	interface ICharMappingData {
-		charOffset: number;
-		partIndex: number;
-		charIndex: number;
-	}
-
-	function decodeCharacterMapping(source: CharacterMapping) {
-		const mapping: ICharMappingData[] = [];
-		for (let charOffset = 0; charOffset < source.length; charOffset++) {
-			const domPosition = source.getDomPosition(charOffset + 1);
-			mapping.push({ charOffset, partIndex: domPosition.partIndex, charIndex: domPosition.charIndex });
-		}
-		const absoluteOffsets: number[] = [];
-		for (let i = 0; i < source.length; i++) {
-			absoluteOffsets[i] = source.getAbsoluteOffset(i + 1);
-		}
-		return { mapping, absoluteOffsets };
-	}
-
-	function assertCharacterMapping2(actual: CharacterMapping, expected: CharacterMapping): void {
-		const _actual = decodeCharacterMapping(actual);
-		const _expected = decodeCharacterMapping(expected);
-		assert.deepStrictEqual(_actual, _expected);
-	}
 });
 
 type CharacterMappingInfo = [number, [number, number]];
 
 function assertCharacterMapping3(actual: CharacterMapping, expectedInfo: CharacterMappingInfo[]): void {
 	for (let i = 0; i < expectedInfo.length; i++) {
-		const [absoluteOffset, [partIndex, charIndex]] = expectedInfo[i];
+		const [horizontalOffset, [partIndex, charIndex]] = expectedInfo[i];
 
 		const actualDomPosition = actual.getDomPosition(i + 1);
 		assert.deepStrictEqual(actualDomPosition, new DomPosition(partIndex, charIndex), `getDomPosition(${i + 1})`);
@@ -836,127 +700,69 @@ function assertCharacterMapping3(actual: CharacterMapping, expectedInfo: Charact
 		const actualColumn = actual.getColumn(new DomPosition(partIndex, charIndex), partLength);
 		assert.strictEqual(actualColumn, i + 1, `actual.getColumn(${partIndex}, ${charIndex})`);
 
-		const actualAbsoluteOffset = actual.getAbsoluteOffset(i + 1);
-		assert.strictEqual(actualAbsoluteOffset, absoluteOffset, `actual.getAbsoluteOffset(${i + 1})`);
+		const actualHorizontalOffset = actual.getHorizontalOffset(i + 1);
+		assert.strictEqual(actualHorizontalOffset, horizontalOffset, `actual.getHorizontalOffset(${i + 1})`);
 	}
 
 	assert.strictEqual(actual.length, expectedInfo.length, `length mismatch`);
 }
 
-suite('viewLineRenderer.renderLine 2', () => {
+suite('renderViewLine2', () => {
 
-	function testCreateLineParts(fontIsMonospace: boolean, lineContent: string, tokens: ViewLineToken[], fauxIndentLength: number, renderWhitespace: 'none' | 'boundary' | 'selection' | 'trailing' | 'all', selections: LineRange[] | null, expected: string): void {
-		let actual = renderViewLine(new RenderLineInput(
-			fontIsMonospace,
-			true,
+	ensureNoDisposablesAreLeakedInTestSuite();
+
+	function testCreateLineParts(fontIsMonospace: boolean, lineContent: string, tokens: TestLineToken[], fauxIndentLength: number, renderWhitespace: 'none' | 'boundary' | 'selection' | 'trailing' | 'all', selections: OffsetRange[] | null) {
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: fontIsMonospace,
 			lineContent,
-			false,
-			true,
-			false,
 			fauxIndentLength,
-			createViewLineTokens(tokens),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
+			lineTokens: createViewLineTokens(tokens),
 			renderWhitespace,
-			false,
-			false,
-			selections
-		));
-
-		assert.deepStrictEqual(actual.html, expected);
+			selectionsOnLine: selections
+		}));
+		return inflateRenderLineOutput(actual);
 	}
 
-	test('issue #18616: Inline decorations ending at the text length are no longer rendered', () => {
-
-		let lineContent = 'https://microsoft.com';
-
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
+	// issue #18616: Inline decorations ending at the text length are no longer rendered
+	test('issue-18616', async () => {
+		const lineContent = 'https://microsoft.com';
+		const actual = renderViewLine(createRenderLineInput({
 			lineContent,
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(21, 3)]),
-			[new LineDecoration(1, 22, 'link', InlineDecorationType.Regular)],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
+			lineTokens: createViewLineTokens([createPart(21, 3)]),
+			lineDecorations: [new LineDecoration(1, 22, 'link', InlineDecorationType.Regular)]
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3 link">https://microsoft.com</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #19207: Link in Monokai is not rendered correctly', () => {
-
-		let lineContent = '\'let url = `http://***/_api/web/lists/GetByTitle(\\\'Teambuildingaanvragen\\\')/items`;\'';
-
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
+	// issue #19207: Link in Monokai is not rendered correctly
+	test('issue-19207', async () => {
+		const lineContent = '\'let url = `http://***/_api/web/lists/GetByTitle(\\\'Teambuildingaanvragen\\\')/items`;\'';
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
 			lineContent,
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([
+			lineTokens: createViewLineTokens([
 				createPart(49, 6),
 				createPart(51, 4),
 				createPart(72, 6),
 				createPart(74, 4),
 				createPart(84, 6),
 			]),
-			[
+			lineDecorations: [
 				new LineDecoration(13, 51, 'detected-link', InlineDecorationType.Regular)
-			],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
+			]
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk6">\'let\u00a0url\u00a0=\u00a0`</span>',
-			'<span class="mtk6 detected-link">http://***/_api/web/lists/GetByTitle(</span>',
-			'<span class="mtk4 detected-link">\\</span>',
-			'<span class="mtk4">\'</span>',
-			'<span class="mtk6">Teambuildingaanvragen</span>',
-			'<span class="mtk4">\\\'</span>',
-			'<span class="mtk6">)/items`;\'</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('createLineParts simple', () => {
-		testCreateLineParts(
+	// createLineParts simple
+	test('simple', async () => {
+		const actual = testCreateLineParts(
 			false,
 			'Hello world!',
 			[
@@ -964,16 +770,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'none',
-			null,
-			[
-				'<span>',
-				'<span class="mtk1">Hello\u00a0world!</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
-	test('createLineParts simple two tokens', () => {
-		testCreateLineParts(
+
+	// createLineParts simple two tokens
+	test('two-tokens', async () => {
+		const actual = testCreateLineParts(
 			false,
 			'Hello world!',
 			[
@@ -982,17 +787,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'none',
-			null,
-			[
-				'<span>',
-				'<span class="mtk1">Hello\u00a0</span>',
-				'<span class="mtk2">world!</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
-	test('createLineParts render whitespace - 4 leading spaces', () => {
-		testCreateLineParts(
+
+	// createLineParts render whitespace - 4 leading spaces
+	test('ws-4-leading', async () => {
+		const actual = testCreateLineParts(
 			false,
 			'    Hello world!    ',
 			[
@@ -1002,19 +805,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'boundary',
-			null,
-			[
-				'<span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'<span class="mtk2">He</span>',
-				'<span class="mtk3">llo\u00a0world!</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
-	test('createLineParts render whitespace - 8 leading spaces', () => {
-		testCreateLineParts(
+
+	// createLineParts render whitespace - 8 leading spaces
+	test('ws-8-leading', async () => {
+		const actual = testCreateLineParts(
 			false,
 			'        Hello world!        ',
 			[
@@ -1024,21 +823,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'boundary',
-			null,
-			[
-				'<span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'<span class="mtk2">He</span>',
-				'<span class="mtk3">llo\u00a0world!</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
-	test('createLineParts render whitespace - 2 leading tabs', () => {
-		testCreateLineParts(
+
+	// createLineParts render whitespace - 2 leading tabs
+	test('ws-2-tabs', async () => {
+		const actual = testCreateLineParts(
 			false,
 			'\t\tHello world!\t',
 			[
@@ -1048,20 +841,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'boundary',
-			null,
-			[
-				'<span>',
-				'<span class="mtkz" style="width:40px">\u2192\u00a0\u00a0\u00a0</span>',
-				'<span class="mtkz" style="width:40px">\u2192\u00a0\u00a0\u00a0</span>',
-				'<span class="mtk2">He</span>',
-				'<span class="mtk3">llo\u00a0world!</span>',
-				'<span class="mtkz" style="width:40px">\u2192\u00a0\u00a0\u00a0</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
-	test('createLineParts render whitespace - mixed leading spaces and tabs', () => {
-		testCreateLineParts(
+
+	// createLineParts render whitespace - mixed leading spaces and tabs
+	test('ws-mixed', async () => {
+		const actual = testCreateLineParts(
 			false,
 			'  \t\t  Hello world! \t  \t   \t    ',
 			[
@@ -1071,25 +859,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'boundary',
-			null,
-			[
-				'<span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u2192\u00a0</span>',
-				'<span class="mtkz" style="width:40px">\u2192\u00a0\u00a0\u00a0</span>',
-				'<span class="mtkz" style="width:20px">\u00b7\u00b7</span>',
-				'<span class="mtk2">He</span>',
-				'<span class="mtk3">llo\u00a0world!</span>',
-				'<span class="mtkz" style="width:20px">\u00b7\uffeb</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u2192\u00a0</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\uffeb</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace skips faux indent', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace skips faux indent
+	test('ws-faux-indent', async () => {
+		const actual = testCreateLineParts(
 			false,
 			'\t\t  Hello world! \t  \t   \t    ',
 			[
@@ -1099,24 +877,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			2,
 			'boundary',
-			null,
-			[
-				'<span>',
-				'<span class="">\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0</span>',
-				'<span class="mtkz" style="width:20px">\u00b7\u00b7</span>',
-				'<span class="mtk2">He</span>',
-				'<span class="mtk3">llo\u00a0world!</span>',
-				'<span class="mtkz" style="width:20px">\u00b7\uffeb</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u2192\u00a0</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\uffeb</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts does not emit width for monospace fonts', () => {
-		testCreateLineParts(
+	// createLineParts does not emit width for monospace fonts
+	test('ws-monospace', async () => {
+		const actual = testCreateLineParts(
 			true,
 			'\t\t  Hello world! \t  \t   \t    ',
 			[
@@ -1126,21 +895,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			2,
 			'boundary',
-			null,
-			[
-				'<span>',
-				'<span class="">\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0</span>',
-				'<span class="mtkw">\u00b7\u00b7</span>',
-				'<span class="mtk2">He</span>',
-				'<span class="mtk3">llo\u00a0world!</span>',
-				'<span class="mtkw">\u00b7\uffeb\u00b7\u00b7\u2192\u00a0\u00b7\u00b7\u00b7\uffeb\u00b7\u00b7\u00b7\u00b7</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace in middle but not for one space', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace in middle but not for one space
+	test('ws-middle', async () => {
+		const actual = testCreateLineParts(
 			false,
 			'it  it it  it',
 			[
@@ -1150,23 +913,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'boundary',
-			null,
-			[
-				'<span>',
-				'<span class="mtk1">it</span>',
-				'<span class="mtkz" style="width:20px">\u00b7\u00b7</span>',
-				'<span class="mtk1">it</span>',
-				'<span class="mtk2">\u00a0</span>',
-				'<span class="mtk3">it</span>',
-				'<span class="mtkz" style="width:20px">\u00b7\u00b7</span>',
-				'<span class="mtk3">it</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace for all in middle', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for all in middle
+	test('ws-all-middle', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' Hello world!\t',
 			[
@@ -1176,22 +931,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'all',
-			null,
-			[
-				'<span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'<span class="mtk0">Hel</span>',
-				'<span class="mtk1">lo</span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'<span class="mtk2">world!</span>',
-				'<span class="mtkz" style="width:30px">\u2192\u00a0\u00a0</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace for selection with no selections', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for selection with no selections
+	test('ws-sel-none', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' Hello world!\t',
 			[
@@ -1201,19 +949,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'selection',
-			null,
-			[
-				'<span>',
-				'<span class="mtk0">\u00a0Hel</span>',
-				'<span class="mtk1">lo</span>',
-				'<span class="mtk2">\u00a0world!\u00a0\u00a0\u00a0</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace for selection with whole line selection', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for selection with whole line selection
+	test('ws-sel-whole', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' Hello world!\t',
 			[
@@ -1223,22 +967,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'selection',
-			[new LineRange(0, 14)],
-			[
-				'<span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'<span class="mtk0">Hel</span>',
-				'<span class="mtk1">lo</span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'<span class="mtk2">world!</span>',
-				'<span class="mtkz" style="width:30px">\u2192\u00a0\u00a0</span>',
-				'</span>',
-			].join('')
+			[new OffsetRange(0, 14)]
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace for selection with selection spanning part of whitespace', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for selection with selection spanning part of whitespace
+	test('ws-sel-partial', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' Hello world!\t',
 			[
@@ -1248,21 +985,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'selection',
-			[new LineRange(0, 5)],
-			[
-				'<span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'<span class="mtk0">Hel</span>',
-				'<span class="mtk1">lo</span>',
-				'<span class="mtk2">\u00a0world!\u00a0\u00a0\u00a0</span>',
-				'</span>',
-			].join('')
+			[new OffsetRange(0, 5)]
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-
-	test('createLineParts render whitespace for selection with multiple selections', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for selection with multiple selections
+	test('ws-sel-multiple', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' Hello world!\t',
 			[
@@ -1272,22 +1003,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'selection',
-			[new LineRange(0, 5), new LineRange(9, 14)],
-			[
-				'<span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'<span class="mtk0">Hel</span>',
-				'<span class="mtk1">lo</span>',
-				'<span class="mtk2">\u00a0world!</span>',
-				'<span class="mtkz" style="width:30px">\u2192\u00a0\u00a0</span>',
-				'</span>',
-			].join('')
+			[new OffsetRange(0, 5), new OffsetRange(9, 14)]
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-
-	test('createLineParts render whitespace for selection with multiple, initially unsorted selections', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for selection with multiple, initially unsorted selections
+	test('ws-sel-unsorted', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' Hello world!\t',
 			[
@@ -1297,21 +1021,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'selection',
-			[new LineRange(9, 14), new LineRange(0, 5)],
-			[
-				'<span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'<span class="mtk0">Hel</span>',
-				'<span class="mtk1">lo</span>',
-				'<span class="mtk2">\u00a0world!</span>',
-				'<span class="mtkz" style="width:30px">\u2192\u00a0\u00a0</span>',
-				'</span>',
-			].join('')
+			[new OffsetRange(9, 14), new OffsetRange(0, 5)]
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace for selection with selections next to each other', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for selection with selections next to each other
+	test('ws-sel-adjacent', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' * S',
 			[
@@ -1319,20 +1037,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'selection',
-			[new LineRange(0, 1), new LineRange(1, 2), new LineRange(2, 3)],
-			[
-				'<span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'<span class="mtk0">*</span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'<span class="mtk0">S</span>',
-				'</span>',
-			].join('')
+			[new OffsetRange(0, 1), new OffsetRange(1, 2), new OffsetRange(2, 3)]
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace for trailing with leading, inner, and without trailing whitespace', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for trailing with leading, inner, and without trailing whitespace
+	test('ws-trail-no-trail', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' Hello world!',
 			[
@@ -1342,19 +1055,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'trailing',
-			null,
-			[
-				'<span>',
-				'<span class="mtk0">\u00a0Hel</span>',
-				'<span class="mtk1">lo</span>',
-				'<span class="mtk2">\u00a0world!</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace for trailing with leading, inner, and trailing whitespace', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for trailing with leading, inner, and trailing whitespace
+	test('ws-trail-with-trail', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' Hello world! \t',
 			[
@@ -1364,20 +1073,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'trailing',
-			null,
-			[
-				'<span>',
-				'<span class="mtk0">\u00a0Hel</span>',
-				'<span class="mtk1">lo</span>',
-				'<span class="mtk2">\u00a0world!</span>',
-				'<span class="mtkz" style="width:30px">\u00b7\u2192\u00a0</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace for trailing with 8 leading and 8 trailing whitespaces', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for trailing with 8 leading and 8 trailing whitespaces
+	test('ws-trail-8-8', async () => {
+		const actual = testCreateLineParts(
 			false,
 			'        Hello world!        ',
 			[
@@ -1387,21 +1091,15 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'trailing',
-			null,
-			[
-				'<span>',
-				'<span class="mtk1">\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0</span>',
-				'<span class="mtk2">He</span>',
-				'<span class="mtk3">llo\u00a0world!</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u00b7\u00b7\u00b7</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts render whitespace for trailing with line containing only whitespaces', () => {
-		testCreateLineParts(
+	// createLineParts render whitespace for trailing with line containing only whitespaces
+	test('ws-trail-only', async () => {
+		const actual = testCreateLineParts(
 			false,
 			' \t ',
 			[
@@ -1410,42 +1108,23 @@ suite('viewLineRenderer.renderLine 2', () => {
 			],
 			0,
 			'trailing',
-			null,
-			[
-				'<span>',
-				'<span class="mtkz" style="width:40px">\u00b7\u2192\u00a0\u00a0</span>',
-				'<span class="mtkz" style="width:10px">\u00b7</span>',
-				'</span>',
-			].join('')
+			null
 		);
+		await assertSnapshot(actual.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(actual.mapping);
 	});
 
-	test('createLineParts can handle unsorted inline decorations', () => {
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
-			'Hello world',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(11, 0)]),
-			[
+	// createLineParts can handle unsorted inline decorations
+	test('unsorted-deco', async () => {
+		const actual = renderViewLine(createRenderLineInput({
+			lineContent: 'Hello world',
+			lineTokens: createViewLineTokens([createPart(11, 0)]),
+			lineDecorations: [
 				new LineDecoration(5, 7, 'a', InlineDecorationType.Regular),
 				new LineDecoration(1, 3, 'b', InlineDecorationType.Regular),
 				new LineDecoration(2, 8, 'c', InlineDecorationType.Regular),
-			],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
+			]
+		}));
 
 		// 01234567890
 		// Hello world
@@ -1453,600 +1132,297 @@ suite('viewLineRenderer.renderLine 2', () => {
 		// bb---------
 		// -cccccc----
 
-		assert.deepStrictEqual(actual.html, [
-			'<span>',
-			'<span class="mtk0 b">H</span>',
-			'<span class="mtk0 b c">e</span>',
-			'<span class="mtk0 c">ll</span>',
-			'<span class="mtk0 a c">o\u00a0</span>',
-			'<span class="mtk0 c">w</span>',
-			'<span class="mtk0">orld</span>',
-			'</span>',
-		].join(''));
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #11485: Visible whitespace conflicts with before decorator attachment', () => {
+	// issue #11485: Visible whitespace conflicts with before decorator attachment
+	test('issue-11485', async () => {
 
-		let lineContent = '\tbla';
+		const lineContent = '\tbla';
 
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
+		const actual = renderViewLine(createRenderLineInput({
 			lineContent,
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(4, 3)]),
-			[new LineDecoration(1, 2, 'before', InlineDecorationType.Before)],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'all',
-			false,
-			true,
-			null
-		));
+			lineTokens: createViewLineTokens([createPart(4, 3)]),
+			lineDecorations: [new LineDecoration(1, 2, 'before', InlineDecorationType.Before)],
+			renderWhitespace: 'all',
+			fontLigatures: true
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtkw before">\u2192\u00a0\u00a0\u00a0</span>',
-			'<span class="mtk3">bla</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #32436: Non-monospace font + visible whitespace + After decorator causes line to "jump"', () => {
+	// issue #32436: Non-monospace font + visible whitespace + After decorator causes line to "jump"
+	test('issue-32436', async () => {
 
-		let lineContent = '\tbla';
+		const lineContent = '\tbla';
 
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
+		const actual = renderViewLine(createRenderLineInput({
 			lineContent,
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(4, 3)]),
-			[new LineDecoration(2, 3, 'before', InlineDecorationType.Before)],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'all',
-			false,
-			true,
-			null
-		));
+			lineTokens: createViewLineTokens([createPart(4, 3)]),
+			lineDecorations: [new LineDecoration(2, 3, 'before', InlineDecorationType.Before)],
+			renderWhitespace: 'all',
+			fontLigatures: true
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtkz" style="width:40px">\u2192\u00a0\u00a0\u00a0</span>',
-			'<span class="mtk3 before">b</span>',
-			'<span class="mtk3">la</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #30133: Empty lines don\'t render inline decorations', () => {
+	// issue #30133: Empty lines don't render inline decorations
+	test('issue-30133', async () => {
 
-		let lineContent = '';
+		const lineContent = '';
 
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
+		const actual = renderViewLine(createRenderLineInput({
 			lineContent,
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(0, 3)]),
-			[new LineDecoration(1, 2, 'before', InlineDecorationType.Before)],
-			4,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'all',
-			false,
-			true,
-			null
-		));
+			lineTokens: createViewLineTokens([createPart(0, 3)]),
+			lineDecorations: [new LineDecoration(1, 2, 'before', InlineDecorationType.Before)],
+			renderWhitespace: 'all',
+			fontLigatures: true
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="before"></span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #37208: Collapsing bullet point containing emoji in Markdown document results in [??] character', () => {
+	// issue #37208: Collapsing bullet point containing emoji in Markdown document results in [??] character
+	test('issue-37208', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			'  1. 🙏',
-			false,
-			false,
-			false,
-			0,
-			createViewLineTokens([createPart(7, 3)]),
-			[new LineDecoration(7, 8, 'inline-folded', InlineDecorationType.After)],
-			2,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			false,
-			null
-		));
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: '  1. 🙏',
+			isBasicASCII: false,
+			lineTokens: createViewLineTokens([createPart(7, 3)]),
+			lineDecorations: [new LineDecoration(7, 8, 'inline-folded', InlineDecorationType.After)],
+			tabSize: 2,
+			stopRenderingLineAfter: 10000
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">\u00a0\u00a01.\u00a0</span>',
-			'<span class="mtk3 inline-folded">🙏</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #37401 #40127: Allow both before and after decorations on empty line', () => {
+	// issue #37401 #40127: Allow both before and after decorations on empty line
+	test('issue-37401', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			'',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(0, 3)]),
-			[
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: '',
+			lineTokens: createViewLineTokens([createPart(0, 3)]),
+			lineDecorations: [
 				new LineDecoration(1, 1, 'before', InlineDecorationType.Before),
 				new LineDecoration(1, 1, 'after', InlineDecorationType.After),
 			],
-			2,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			false,
-			null
-		));
+			tabSize: 2,
+			stopRenderingLineAfter: 10000
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="before"></span>',
-			'<span class="after"></span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #118759: enable multiple text editor decorations in empty lines', () => {
+	// issue #118759: enable multiple text editor decorations in empty lines
+	test('issue-118759', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			'',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(0, 3)]),
-			[
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: '',
+			lineTokens: createViewLineTokens([createPart(0, 3)]),
+			lineDecorations: [
 				new LineDecoration(1, 1, 'after1', InlineDecorationType.After),
 				new LineDecoration(1, 1, 'after2', InlineDecorationType.After),
 				new LineDecoration(1, 1, 'before1', InlineDecorationType.Before),
 				new LineDecoration(1, 1, 'before2', InlineDecorationType.Before),
 			],
-			2,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			false,
-			null
-		));
+			tabSize: 2,
+			stopRenderingLineAfter: 10000
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="before1"></span>',
-			'<span class="before2"></span>',
-			'<span class="after1"></span>',
-			'<span class="after2"></span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #38935: GitLens end-of-line blame no longer rendering', () => {
+	// issue #38935: GitLens end-of-line blame no longer rendering
+	test('issue-38935', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			'\t}',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(2, 3)]),
-			[
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: '\t}',
+			lineTokens: createViewLineTokens([createPart(2, 3)]),
+			lineDecorations: [
 				new LineDecoration(3, 3, 'ced-TextEditorDecorationType2-5e9b9b3f-3 ced-TextEditorDecorationType2-3', InlineDecorationType.Before),
 				new LineDecoration(3, 3, 'ced-TextEditorDecorationType2-5e9b9b3f-4 ced-TextEditorDecorationType2-4', InlineDecorationType.After),
 			],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			false,
-			null
-		));
+			stopRenderingLineAfter: 10000
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">\u00a0\u00a0\u00a0\u00a0}</span>',
-			'<span class="ced-TextEditorDecorationType2-5e9b9b3f-3 ced-TextEditorDecorationType2-3"></span><span class="ced-TextEditorDecorationType2-5e9b9b3f-4 ced-TextEditorDecorationType2-4"></span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #136622: Inline decorations are not rendering on non-ASCII lines when renderControlCharacters is on', () => {
+	// issue #136622: Inline decorations are not rendering on non-ASCII lines when renderControlCharacters is on
+	test('issue-136622', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			'some text £',
-			false,
-			false,
-			false,
-			0,
-			createViewLineTokens([createPart(11, 3)]),
-			[
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: 'some text £',
+			isBasicASCII: false,
+			lineTokens: createViewLineTokens([createPart(11, 3)]),
+			lineDecorations: [
 				new LineDecoration(5, 5, 'inlineDec1', InlineDecorationType.After),
 				new LineDecoration(6, 6, 'inlineDec2', InlineDecorationType.Before),
 			],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			true,
-			false,
-			null
-		));
+			stopRenderingLineAfter: 10000,
+			renderControlCharacters: true
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">some</span>',
-			'<span class="mtk3 inlineDec1"></span>',
-			'<span class="mtk3">\u00a0</span>',
-			'<span class="mtk3 inlineDec2"></span>',
-			'<span class="mtk3">text\u00a0£</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #22832: Consider fullwidth characters when rendering tabs', () => {
+	// issue #22832: Consider fullwidth characters when rendering tabs
+	test('issue-22832-1', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			'asd = "擦"\t\t#asd',
-			false,
-			false,
-			false,
-			0,
-			createViewLineTokens([createPart(15, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			false,
-			null
-		));
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: 'asd = "擦"\t\t#asd',
+			isBasicASCII: false,
+			lineTokens: createViewLineTokens([createPart(15, 3)]),
+			stopRenderingLineAfter: 10000
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">asd\u00a0=\u00a0"擦"\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0#asd</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #22832: Consider fullwidth characters when rendering tabs (render whitespace)', () => {
+	// issue #22832: Consider fullwidth characters when rendering tabs (render whitespace)
+	test('issue-22832-2', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			'asd = "擦"\t\t#asd',
-			false,
-			false,
-			false,
-			0,
-			createViewLineTokens([createPart(15, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'all',
-			false,
-			false,
-			null
-		));
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: 'asd = "擦"\t\t#asd',
+			isBasicASCII: false,
+			lineTokens: createViewLineTokens([createPart(15, 3)]),
+			stopRenderingLineAfter: 10000,
+			renderWhitespace: 'all'
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">asd</span>',
-			'<span class="mtkw">\u00b7</span>',
-			'<span class="mtk3">=</span>',
-			'<span class="mtkw">\u00b7</span>',
-			'<span class="mtk3">"擦"</span>',
-			'<span class="mtkw">\u2192\u00a0\u2192\u00a0\u00a0\u00a0</span>',
-			'<span class="mtk3">#asd</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #22352: COMBINING ACUTE ACCENT (U+0301)', () => {
+	// issue #22352: COMBINING ACUTE ACCENT (U+0301)
+	test('issue-22352-1', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			'12345689012345678901234568901234567890123456890abába',
-			false,
-			false,
-			false,
-			0,
-			createViewLineTokens([createPart(53, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			false,
-			null
-		));
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: '12345689012345678901234568901234567890123456890abába',
+			isBasicASCII: false,
+			lineTokens: createViewLineTokens([createPart(53, 3)]),
+			stopRenderingLineAfter: 10000
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">12345689012345678901234568901234567890123456890abába</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #22352: Partially Broken Complex Script Rendering of Tamil', () => {
+	// issue #22352: Partially Broken Complex Script Rendering of Tamil
+	test('issue-22352-2', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			' JoyShareல் பின்தொடர்ந்து, விடீயோ, ஜோக்குகள், அனிமேசன், நகைச்சுவை படங்கள் மற்றும் செய்திகளை பெறுவீர்',
-			false,
-			false,
-			false,
-			0,
-			createViewLineTokens([createPart(100, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			false,
-			null
-		));
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: ' JoyShareல் பின்தொடர்ந்து, விடீயோ, ஜோக்குகள், அனிமேசன், நகைச்சுவை படங்கள் மற்றும் செய்திகளை பெறுவீர்',
+			isBasicASCII: false,
+			lineTokens: createViewLineTokens([createPart(100, 3)]),
+			stopRenderingLineAfter: 10000
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">\u00a0JoyShareல்\u00a0பின்தொடர்ந்து,\u00a0விடீயோ,\u00a0ஜோக்குகள்,\u00a0</span>',
-			'<span class="mtk3">அனிமேசன்,\u00a0நகைச்சுவை\u00a0படங்கள்\u00a0மற்றும்\u00a0செய்திகளை\u00a0</span>',
-			'<span class="mtk3">பெறுவீர்</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #42700: Hindi characters are not being rendered properly', () => {
+	// issue #42700: Hindi characters are not being rendered properly
+	test('issue-42700', async () => {
 
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			' वो ऐसा क्या है जो हमारे अंदर भी है और बाहर भी है। जिसकी वजह से हम सब हैं। जिसने इस सृष्टि की रचना की है।',
-			false,
-			false,
-			false,
-			0,
-			createViewLineTokens([createPart(105, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			false,
-			null
-		));
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: ' वो ऐसा क्या है जो हमारे अंदर भी है और बाहर भी है। जिसकी वजह से हम सब हैं। जिसने इस सृष्टि की रचना की है।',
+			isBasicASCII: false,
+			lineTokens: createViewLineTokens([createPart(105, 3)]),
+			stopRenderingLineAfter: 10000
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">\u00a0वो\u00a0ऐसा\u00a0क्या\u00a0है\u00a0जो\u00a0हमारे\u00a0अंदर\u00a0भी\u00a0है\u00a0और\u00a0बाहर\u00a0भी\u00a0है।\u00a0</span>',
-			'<span class="mtk3">जिसकी\u00a0वजह\u00a0से\u00a0हम\u00a0सब\u00a0हैं।\u00a0जिसने\u00a0इस\u00a0सृष्टि\u00a0की\u00a0रचना\u00a0की\u00a0</span>',
-			'<span class="mtk3">है।</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #38123: editor.renderWhitespace: "boundary" renders whitespace at line wrap point when line is wrapped', () => {
-		let actual = renderViewLine(new RenderLineInput(
-			true,
-			true,
-			'This is a long line which never uses more than two spaces. ',
-			true,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(59, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'boundary',
-			false,
-			false,
-			null
-		));
+	// issue #38123: editor.renderWhitespace: "boundary" renders whitespace at line wrap point when line is wrapped
+	test('issue-38123', async () => {
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			lineContent: 'This is a long line which never uses more than two spaces. ',
+			continuesWithWrappedLine: true,
+			lineTokens: createViewLineTokens([createPart(59, 3)]),
+			stopRenderingLineAfter: 10000,
+			renderWhitespace: 'boundary'
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">This\u00a0is\u00a0a\u00a0long\u00a0line\u00a0which\u00a0never\u00a0uses\u00a0more\u00a0than\u00a0two</span><span class="mtk3">\u00a0spaces.</span><span class="mtk3">\u00a0</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #33525: Long line with ligatures takes a long time to paint decorations', () => {
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			false,
-			'append data to append data to append data to append data to append data to append data to append data to append data to append data to append data to append data to append data to append data to',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(194, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			true,
-			null
-		));
+	// issue #33525: Long line with ligatures takes a long time to paint decorations
+	test('issue-33525-1', async () => {
+		const actual = renderViewLine(createRenderLineInput({
+			canUseHalfwidthRightwardsArrow: false,
+			lineContent: 'append data to append data to append data to append data to append data to append data to append data to append data to append data to append data to append data to append data to append data to',
+			lineTokens: createViewLineTokens([createPart(194, 3)]),
+			stopRenderingLineAfter: 10000,
+			fontLigatures: true
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">append\u00a0data\u00a0to\u00a0append\u00a0data\u00a0to\u00a0append\u00a0data\u00a0to\u00a0</span>',
-			'<span class="mtk3">append\u00a0data\u00a0to\u00a0append\u00a0data\u00a0to\u00a0append\u00a0data\u00a0to\u00a0</span>',
-			'<span class="mtk3">append\u00a0data\u00a0to\u00a0append\u00a0data\u00a0to\u00a0append\u00a0data\u00a0to\u00a0</span>',
-			'<span class="mtk3">append\u00a0data\u00a0to\u00a0append\u00a0data\u00a0to\u00a0append\u00a0data\u00a0to\u00a0</span>',
-			'<span class="mtk3">append\u00a0data\u00a0to</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #33525: Long line with ligatures takes a long time to paint decorations - not possible', () => {
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			false,
-			'appenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatato',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(194, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			false,
-			true,
-			null
-		));
+	// issue #33525: Long line with ligatures takes a long time to paint decorations - not possible
+	test('issue-33525-2', async () => {
+		const actual = renderViewLine(createRenderLineInput({
+			canUseHalfwidthRightwardsArrow: false,
+			lineContent: 'appenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatato',
+			lineTokens: createViewLineTokens([createPart(194, 3)]),
+			stopRenderingLineAfter: 10000,
+			fontLigatures: true
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtk3">appenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatatoappenddatato</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #91936: Semantic token color highlighting fails on line with selected text', () => {
-		let actual = renderViewLine(new RenderLineInput(
-			false,
-			true,
-			'                    else if ($s = 08) then \'\\b\'',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([
+	// issue #91936: Semantic token color highlighting fails on line with selected text
+	test('issue-91936', async () => {
+		const actual = renderViewLine(createRenderLineInput({
+			lineContent: '                    else if ($s = 08) then \'\\b\'',
+			lineTokens: createViewLineTokens([
 				createPart(20, 1),
 				createPart(24, 15),
 				createPart(25, 1),
@@ -2066,196 +1442,77 @@ suite('viewLineRenderer.renderLine 2', () => {
 				createPart(43, 1),
 				createPart(47, 11)
 			]),
-			[],
-			4,
-			0,
-			10,
-			11,
-			11,
-			10000,
-			'selection',
-			false,
-			false,
-			[new LineRange(0, 47)]
-		));
+			stopRenderingLineAfter: 10000,
+			renderWhitespace: 'selection',
+			selectionsOnLine: [new OffsetRange(0, 47)],
+			middotWidth: 11,
+			wsmiddotWidth: 11
+		}));
 
-		let expected = [
-			'<span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtk15">else</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtk15">if</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtk1">(</span>',
-			'<span class="mtk16">$s</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtk1">=</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtk6">08</span>',
-			'<span class="mtk1">)</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtk15">then</span>',
-			'<span class="mtkz" style="width:10px">\u00b7</span>',
-			'<span class="mtk11">\'\\b\'</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #119416: Delete Control Character (U+007F / &#127;) displayed as space', () => {
-		const actual = renderViewLine(new RenderLineInput(
-			false,
-			false,
-			'[' + String.fromCharCode(127) + '] [' + String.fromCharCode(0) + ']',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(7, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			true,
-			true,
-			null
-		));
+	// issue #119416: Delete Control Character (U+007F / &#127;) displayed as space
+	test('issue-119416', async () => {
+		const actual = renderViewLine(createRenderLineInput({
+			canUseHalfwidthRightwardsArrow: false,
+			lineContent: '[' + String.fromCharCode(127) + '] [' + String.fromCharCode(0) + ']',
+			lineTokens: createViewLineTokens([createPart(7, 3)]),
+			stopRenderingLineAfter: 10000,
+			renderControlCharacters: true,
+			fontLigatures: true
+		}));
 
-		const expected = [
-			'<span>',
-			'<span class="mtk3">[\u2421]\u00a0[\u2400]</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #116939: Important control characters aren\'t rendered', () => {
-		const actual = renderViewLine(new RenderLineInput(
-			false,
-			false,
-			`transferBalance(5678,${String.fromCharCode(0x202E)}6776,4321${String.fromCharCode(0x202C)},"USD");`,
-			false,
-			false,
-			false,
-			0,
-			createViewLineTokens([createPart(42, 3)]),
-			[],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'none',
-			true,
-			false,
-			null
-		));
+	// issue #116939: Important control characters aren't rendered
+	test('issue-116939', async () => {
+		const actual = renderViewLine(createRenderLineInput({
+			canUseHalfwidthRightwardsArrow: false,
+			lineContent: `transferBalance(5678,${String.fromCharCode(0x202E)}6776,4321${String.fromCharCode(0x202C)},"USD");`,
+			isBasicASCII: false,
+			lineTokens: createViewLineTokens([createPart(42, 3)]),
+			stopRenderingLineAfter: 10000,
+			renderControlCharacters: true
+		}));
 
-		const expected = [
-			'<span>',
-			'<span class="mtk3">transferBalance(5678,</span><span class="mtkcontrol">[U+202E]</span><span class="mtk3">6776,4321</span><span class="mtkcontrol">[U+202C]</span><span class="mtk3">,"USD");</span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-	test('issue #124038: Multiple end-of-line text decorations get merged', () => {
-		const actual = renderViewLine(new RenderLineInput(
-			true,
-			false,
-			'    if',
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens([createPart(4, 1), createPart(6, 2)]),
-			[
+	// issue #124038: Multiple end-of-line text decorations get merged
+	test('issue-124038', async () => {
+		const actual = renderViewLine(createRenderLineInput({
+			useMonospaceOptimizations: true,
+			canUseHalfwidthRightwardsArrow: false,
+			lineContent: '    if',
+			lineTokens: createViewLineTokens([createPart(4, 1), createPart(6, 2)]),
+			lineDecorations: [
 				new LineDecoration(7, 7, 'ced-1-TextEditorDecorationType2-17c14d98-3 ced-1-TextEditorDecorationType2-3', InlineDecorationType.Before),
 				new LineDecoration(7, 7, 'ced-1-TextEditorDecorationType2-17c14d98-4 ced-1-TextEditorDecorationType2-4', InlineDecorationType.After),
 				new LineDecoration(7, 7, 'ced-ghost-text-1-4', InlineDecorationType.After),
 			],
-			4,
-			0,
-			10,
-			10,
-			10,
-			10000,
-			'all',
-			false,
-			false,
-			null
-		));
+			stopRenderingLineAfter: 10000,
+			renderWhitespace: 'all'
+		}));
 
-		const expected = [
-			'<span>',
-			'<span class="mtkw">····</span><span class="mtk2">if</span><span class="ced-1-TextEditorDecorationType2-17c14d98-3 ced-1-TextEditorDecorationType2-3"></span><span class="ced-1-TextEditorDecorationType2-17c14d98-4 ced-1-TextEditorDecorationType2-4"></span><span class="ced-ghost-text-1-4"></span>',
-			'</span>'
-		].join('');
-
-		assert.deepStrictEqual(actual.html, expected);
-		assertCharacterMapping3(actual.characterMapping,
-			[
-				[0, [0, 0]],
-				[1, [0, 1]],
-				[2, [0, 2]],
-				[3, [0, 3]],
-				[4, [1, 0]],
-				[5, [1, 1]],
-				[6, [3, 0]],
-			]
-		);
+		const inflated = inflateRenderLineOutput(actual);
+		await assertSnapshot(inflated.html.join(''), HTML_EXTENSION);
+		await assertSnapshot(inflated.mapping);
 	});
 
-
-	function createTestGetColumnOfLinePartOffset(lineContent: string, tabSize: number, parts: ViewLineToken[], expectedPartLengths: number[]): (partIndex: number, partLength: number, offset: number, expected: number) => void {
-		let renderLineOutput = renderViewLine(new RenderLineInput(
-			false,
-			true,
+	function createTestGetColumnOfLinePartOffset(lineContent: string, tabSize: number, parts: TestLineToken[], expectedPartLengths: number[]): (partIndex: number, partLength: number, offset: number, expected: number) => void {
+		const renderLineOutput = renderViewLine(createRenderLineInput({
 			lineContent,
-			false,
-			true,
-			false,
-			0,
-			createViewLineTokens(parts),
-			[],
 			tabSize,
-			0,
-			10,
-			10,
-			10,
-			-1,
-			'none',
-			false,
-			false,
-			null
-		));
+			lineTokens: createViewLineTokens(parts)
+		}));
 
 		return (partIndex: number, partLength: number, offset: number, expected: number) => {
 			const actualColumn = renderLineOutput.characterMapping.getColumn(new DomPosition(partIndex, offset), partLength);
@@ -2264,7 +1521,7 @@ suite('viewLineRenderer.renderLine 2', () => {
 	}
 
 	test('getColumnOfLinePartOffset 1 - simple text', () => {
-		let testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
+		const testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
 			'hello world',
 			4,
 			[
@@ -2287,7 +1544,7 @@ suite('viewLineRenderer.renderLine 2', () => {
 	});
 
 	test('getColumnOfLinePartOffset 2 - regular JS', () => {
-		let testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
+		const testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
 			'var x = 3;',
 			4,
 			[
@@ -2319,7 +1576,7 @@ suite('viewLineRenderer.renderLine 2', () => {
 	});
 
 	test('getColumnOfLinePartOffset 3 - tab with tab size 6', () => {
-		let testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
+		const testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
 			'\t',
 			6,
 			[
@@ -2337,7 +1594,7 @@ suite('viewLineRenderer.renderLine 2', () => {
 	});
 
 	test('getColumnOfLinePartOffset 4 - once indented line, tab size 4', () => {
-		let testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
+		const testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
 			'\tfunction',
 			4,
 			[
@@ -2363,7 +1620,7 @@ suite('viewLineRenderer.renderLine 2', () => {
 	});
 
 	test('getColumnOfLinePartOffset 5 - twice indented line, tab size 4', () => {
-		let testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
+		const testGetColumnOfLinePartOffset = createTestGetColumnOfLinePartOffset(
 			'\t\tfunction',
 			4,
 			[
@@ -2390,5 +1647,232 @@ suite('viewLineRenderer.renderLine 2', () => {
 		testGetColumnOfLinePartOffset(1, 8, 6, 9);
 		testGetColumnOfLinePartOffset(1, 8, 7, 10);
 		testGetColumnOfLinePartOffset(1, 8, 8, 11);
+	});
+});
+
+suite('renderViewLine - useTwoCellFullwidthCharacters', () => {
+
+	ensureNoDisposablesAreLeakedInTestSuite();
+
+	/**
+	 * The style attribute emitted for a character that is centered in two character cells. The
+	 * declarations it shares with every other such character live in the `mtkfullwidth` class.
+	 */
+	function cell(width: number): string {
+		return ` style="width:${width}px"`;
+	}
+
+	function render(lineContent: string, opts: IRelaxedRenderLineInputOptions = {}): string[] {
+		const actual = renderViewLine(createRenderLineInput({
+			lineContent,
+			isBasicASCII: strings.isBasicASCII(lineContent),
+			containsRTL: strings.containsRTL(lineContent),
+			lineTokens: createViewLineTokens([createPart(lineContent.length, 1)]),
+			useTwoCellFullwidthCharacters: true,
+			...opts
+		}));
+		return inflateRenderLineOutput(actual).html;
+	}
+
+	test('a lone full-width character is centered in two cells', () => {
+		assert.deepStrictEqual(render('漢'), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`
+		]);
+	});
+
+	test('every full-width character of a run gets its own cell', () => {
+		assert.deepStrictEqual(render('漢字'), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">字</span>`
+		]);
+	});
+
+	test('narrow characters around a full-width character stay in shared parts', () => {
+		assert.deepStrictEqual(render('ab漢cd'), [
+			`<span class="mtk1">ab</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`,
+			`<span class="mtk1">cd</span>`
+		]);
+	});
+
+	test('a full-width character at either end of the line is centered', () => {
+		assert.deepStrictEqual(render('漢a漢'), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`,
+			`<span class="mtk1">a</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`
+		]);
+	});
+
+	test('full-width forms of ASCII characters are centered', () => {
+		assert.deepStrictEqual(render('Ａ１！'), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">Ａ</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">１</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">！</span>`
+		]);
+	});
+
+	test('CJK punctuation is centered', () => {
+		assert.deepStrictEqual(render('あ、い。'), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">あ</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">、</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">い</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">。</span>`
+		]);
+	});
+
+	test('Hangul Jamo outside the shared full-width classification is left alone', () => {
+		const hangulJamo = '\u1100';
+		assert.deepStrictEqual(render(hangulJamo), [
+			`<span class="mtk1">${hangulJamo}</span>`
+		]);
+	});
+
+	test('half-width katakana is left alone', () => {
+		assert.deepStrictEqual(render('ｱｲｳ'), [
+			`<span class="mtk1">ｱｲｳ</span>`
+		]);
+	});
+
+	test('non-ASCII narrow characters are left alone', () => {
+		assert.deepStrictEqual(render('Ünïcödé'), [
+			`<span class="mtk1">Ünïcödé</span>`
+		]);
+	});
+
+	test('characters included by the shared full-width classification are centered', () => {
+		const vaiSyllable = '\uA500';
+		assert.deepStrictEqual(render(vaiSyllable), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">${vaiSyllable}</span>`
+		]);
+	});
+
+	test('the cell width follows the space width', () => {
+		assert.deepStrictEqual(render('漢', { spaceWidth: 7.5 }), [
+			`<span${cell(15)} class="mtk1 mtkfullwidth">漢</span>`
+		]);
+	});
+
+	test('nothing changes when the setting is off', () => {
+		assert.deepStrictEqual(render('ab漢cd', { useTwoCellFullwidthCharacters: false }), [
+			`<span class="mtk1">ab漢cd</span>`
+		]);
+	});
+
+	test('basic ASCII lines are untouched', () => {
+		assert.deepStrictEqual(render('abcd'), [
+			`<span class="mtk1">abcd</span>`
+		]);
+	});
+
+	test('RTL parts preserve bidi isolation without centering', () => {
+		assert.deepStrictEqual(render('漢عربى'), [
+			`<span style="unicode-bidi:isolate" class="mtk1">漢</span>`,
+			`<span style="unicode-bidi:isolate" class="mtk1">عربى</span>`
+		]);
+	});
+
+	test('a full-width character carrying a combining mark is centered by code point', () => {
+		assert.deepStrictEqual(render('あ́い'), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">あ</span>`,
+			`<span class="mtk1">́</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">い</span>`
+		]);
+	});
+
+	test('a full-width character followed by a variation selector is centered by code point', () => {
+		assert.deepStrictEqual(render('神︀社'), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">神</span>`,
+			`<span class="mtk1">︀</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">社</span>`
+		]);
+	});
+
+	test('characters outside the shared full-width classification are not centered', () => {
+		const ideograph = '\u{2000B}';
+		assert.deepStrictEqual(render(`${ideograph}漢`), [
+			`<span class="mtk1">${ideograph}</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`
+		]);
+	});
+
+	test('supplementary characters with variation selectors are left intact', () => {
+		const ideographWithVariationSelector = '\u{2000B}\uFE00';
+		assert.deepStrictEqual(render(ideographWithVariationSelector), [
+			`<span class="mtk1">${ideographWithVariationSelector}</span>`
+		]);
+	});
+
+	test('emoji modifier and ZWJ sequences are left intact', () => {
+		const emojiWithModifier = '\u{1F469}\u{1F3FD}';
+		const emojiWithZwj = '\u{1F469}\u200D\u{1F4BB}';
+		assert.deepStrictEqual({
+			modifier: render(emojiWithModifier),
+			zwj: render(emojiWithZwj),
+		}, {
+			modifier: [`<span class="mtk1">${emojiWithModifier}</span>`],
+			zwj: [`<span class="mtk1">${emojiWithZwj}</span>`],
+		});
+	});
+
+	test('token boundaries are preserved', () => {
+		assert.deepStrictEqual(render('ab漢cd', {
+			lineTokens: createViewLineTokens([createPart(3, 1), createPart(5, 2)])
+		}), [
+			`<span class="mtk1">ab</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`,
+			`<span class="mtk2">cd</span>`
+		]);
+	});
+
+	test('a token boundary in the middle of a run of full-width characters is preserved', () => {
+		assert.deepStrictEqual(render('漢字', {
+			lineTokens: createViewLineTokens([createPart(1, 1), createPart(2, 2)])
+		}), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`,
+			`<span${cell(20)} class="mtk2 mtkfullwidth">字</span>`
+		]);
+	});
+
+	test('inline decorations are preserved', () => {
+		assert.deepStrictEqual(render('a漢b', {
+			lineDecorations: [new LineDecoration(1, 4, 'link', InlineDecorationType.Regular)]
+		}), [
+			`<span class="mtk1 link">a</span>`,
+			`<span${cell(20)} class="mtk1 link mtkfullwidth">漢</span>`,
+			`<span class="mtk1 link">b</span>`
+		]);
+	});
+
+	test('rendered whitespace next to a full-width character is preserved', () => {
+		assert.deepStrictEqual(render('  漢', { useMonospaceOptimizations: true, renderWhitespace: 'all' }), [
+			`<span class="mtkw">·‌·‌</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`
+		]);
+	});
+
+	test('stopRenderingLineAfter truncates before centering', () => {
+		assert.deepStrictEqual(render('漢字漢字', { stopRenderingLineAfter: 2 }), [
+			`<span${cell(20)} class="mtk1 mtkfullwidth">漢</span>`,
+			`<span${cell(20)} class="mtk1 mtkfullwidth">字</span>`,
+			`<span class="mtkoverflow">Show more (2 chars)</span>`
+		]);
+	});
+
+	// The character mapping already treats a full-width character as two columns wide; centering
+	// the glyph is what makes the rendered line agree with it.
+	test('the character mapping is unaffected by the extra parts', () => {
+		const actual = renderViewLine(createRenderLineInput({
+			lineContent: 'a漢b',
+			isBasicASCII: false,
+			lineTokens: createViewLineTokens([createPart(3, 1)]),
+			useTwoCellFullwidthCharacters: true
+		}));
+
+		assertCharacterMapping3(actual.characterMapping, [
+			[0, [0, 0]],
+			[1, [1, 0]],
+			[3, [2, 0]],
+			[4, [2, 1]]
+		]);
 	});
 });

@@ -3,10 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { FastDomNode } from 'vs/base/browser/fastDomNode';
-import { RenderingContext, RestrictedRenderingContext } from 'vs/editor/common/view/renderingContext';
-import { ViewContext } from 'vs/editor/common/view/viewContext';
-import { ViewEventHandler } from 'vs/editor/common/viewModel/viewEventHandler';
+import { FastDomNode } from '../../../base/browser/fastDomNode.js';
+import { RenderingContext, RestrictedRenderingContext } from './renderingContext.js';
+import { ViewContext } from '../../common/viewModel/viewContext.js';
+import { ViewEventHandler } from '../../common/viewEventHandler.js';
+import { ViewportData } from '../../common/viewLayout/viewLinesViewportData.js';
 
 export abstract class ViewPart extends ViewEventHandler {
 
@@ -23,6 +24,9 @@ export abstract class ViewPart extends ViewEventHandler {
 		super.dispose();
 	}
 
+	public onBeforeRender(viewportData: ViewportData): void {
+	}
+
 	public abstract prepareRender(ctx: RenderingContext): void;
 	public abstract render(ctx: RestrictedRenderingContext): void;
 }
@@ -33,20 +37,18 @@ export const enum PartFingerprint {
 	OverflowingContentWidgets,
 	OverflowGuard,
 	OverlayWidgets,
+	OverflowingOverlayWidgets,
 	ScrollableElement,
 	TextArea,
 	ViewLines,
-	Minimap
+	Minimap,
+	ViewLinesGpu
 }
 
 export class PartFingerprints {
 
 	public static write(target: Element | FastDomNode<HTMLElement>, partId: PartFingerprint) {
-		if (target instanceof FastDomNode) {
-			target.setAttribute('data-mprt', String(partId));
-		} else {
-			target.setAttribute('data-mprt', String(partId));
-		}
+		target.setAttribute('data-mprt', String(partId));
 	}
 
 	public static read(target: Element): PartFingerprint {
@@ -58,9 +60,10 @@ export class PartFingerprints {
 	}
 
 	public static collect(child: Element | null, stopAt: Element): Uint8Array {
-		let result: PartFingerprint[] = [], resultLen = 0;
+		const result: PartFingerprint[] = [];
+		let resultLen = 0;
 
-		while (child && child !== document.body) {
+		while (child && child !== child.ownerDocument.body) {
 			if (child === stopAt) {
 				break;
 			}

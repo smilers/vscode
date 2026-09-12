@@ -3,16 +3,19 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IMarkdownString } from 'vs/base/common/htmlContent';
-import { IDisposable } from 'vs/base/common/lifecycle';
-import { Event } from 'vs/base/common/event';
-import { URI, UriComponents } from 'vs/base/common/uri';
-import { ConfigurationChangedEvent, IComputedEditorOptions, IEditorOptions } from 'vs/editor/common/config/editorOptions';
-import { IPosition, Position } from 'vs/editor/common/core/position';
-import { IRange, Range } from 'vs/editor/common/core/range';
-import { ISelection, Selection } from 'vs/editor/common/core/selection';
-import { IModelDecorationsChangeAccessor, ITextModel, OverviewRulerLane, TrackedRangeStickiness, IValidEditOperation } from 'vs/editor/common/model';
-import { ThemeColor } from 'vs/platform/theme/common/themeService';
+import { Event } from '../../base/common/event.js';
+import { IMarkdownString } from '../../base/common/htmlContent.js';
+import { IDisposable } from '../../base/common/lifecycle.js';
+import { ThemeColor } from '../../base/common/themables.js';
+import { URI, UriComponents } from '../../base/common/uri.js';
+import { IEditorOptions } from './config/editorOptions.js';
+import { IDimension } from './core/2d/dimension.js';
+import { IPosition, Position } from './core/position.js';
+import { IRange, Range } from './core/range.js';
+import { ISelection, Selection } from './core/selection.js';
+import { IModelDecoration, IModelDecorationsChangeAccessor, IModelDeltaDecoration, ITextModel, IValidEditOperation, OverviewRulerLane, TrackedRangeStickiness } from './model.js';
+import { IModelDecorationsChangedEvent } from './textModelEvents.js';
+import { ICommandMetadata } from '../../platform/commands/common/commands.js';
 
 /**
  * A builder and helper for edit operations for a command.
@@ -102,6 +105,12 @@ export interface IDiffEditorModel {
 	modified: ITextModel;
 }
 
+export interface IDiffEditorViewModel extends IDisposable {
+	readonly model: IDiffEditorModel;
+
+	waitForDiff(): Promise<void>;
+}
+
 /**
  * An event describing that an editor has had its model reset (i.e. `editor.setModel()`).
  */
@@ -114,54 +123,6 @@ export interface IModelChangedEvent {
 	 * The `uri` of the new model or null.
 	 */
 	readonly newModelUrl: URI | null;
-}
-
-export interface IDimension {
-	width: number;
-	height: number;
-}
-
-/**
- * A change
- */
-export interface IChange {
-	readonly originalStartLineNumber: number;
-	readonly originalEndLineNumber: number;
-	readonly modifiedStartLineNumber: number;
-	readonly modifiedEndLineNumber: number;
-}
-/**
- * A character level change.
- */
-export interface ICharChange extends IChange {
-	readonly originalStartColumn: number;
-	readonly originalEndColumn: number;
-	readonly modifiedStartColumn: number;
-	readonly modifiedEndColumn: number;
-}
-/**
- * A line change
- */
-export interface ILineChange extends IChange {
-	readonly charChanges: ICharChange[] | undefined;
-}
-
-/**
- * @internal
- */
-export interface IConfiguration extends IDisposable {
-	onDidChangeFast(listener: (e: ConfigurationChangedEvent) => void): IDisposable;
-	onDidChange(listener: (e: ConfigurationChangedEvent) => void): IDisposable;
-
-	readonly options: IComputedEditorOptions;
-
-	setMaxLineNumber(maxLineNumber: number): void;
-	setViewLineCount(viewLineCount: number): void;
-	updateOptions(newOptions: Readonly<IEditorOptions>): void;
-	getRawOptions(): IEditorOptions;
-	observeReferenceElement(dimension?: IDimension): void;
-	updatePixelRatio(): void;
-	setIsDominatedByLongLines(isDominatedByLongLines: boolean): void;
 }
 
 // --- view
@@ -186,6 +147,15 @@ export interface IContentSizeChangedEvent {
 	readonly contentHeightChanged: boolean;
 }
 
+/**
+ * @internal
+ */
+export interface ITriggerEditorOperationEvent {
+	source: string | null | undefined;
+	handlerId: string;
+	payload: unknown;
+}
+
 export interface INewScrollPosition {
 	scrollLeft?: number;
 	scrollTop?: number;
@@ -195,11 +165,12 @@ export interface IEditorAction {
 	readonly id: string;
 	readonly label: string;
 	readonly alias: string;
+	readonly metadata: ICommandMetadata | undefined;
 	isSupported(): boolean;
-	run(): Promise<void>;
+	run(args?: unknown): Promise<void>;
 }
 
-export type IEditorModel = ITextModel | IDiffEditorModel;
+export type IEditorModel = ITextModel | IDiffEditorModel | IDiffEditorViewModel;
 
 /**
  * A (serializable) state of the cursors.
@@ -227,7 +198,7 @@ export interface IViewState {
 export interface ICodeEditorViewState {
 	cursorState: ICursorState[];
 	viewState: IViewState;
-	contributionsState: { [id: string]: any };
+	contributionsState: { [id: string]: unknown };
 }
 /**
  * (Serializable) View state for the diff editor.
@@ -235,6 +206,7 @@ export interface ICodeEditorViewState {
 export interface IDiffEditorViewState {
 	original: ICodeEditorViewState | null;
 	modified: ICodeEditorViewState | null;
+	modelState?: unknown;
 }
 /**
  * An editor view state.
@@ -294,8 +266,11 @@ export interface IEditor {
 	 * be called when the container of the editor gets resized.
 	 *
 	 * If a dimension is passed in, the passed in value will be used.
+	 *
+	 * By default, this will also render the editor immediately.
+	 * If you prefer to delay rendering to the next animation frame, use postponeRendering == true.
 	 */
-	layout(dimension?: IDimension): void;
+	layout(dimension?: IDimension, postponeRendering?: boolean): void;
 
 	/**
 	 * Brings browser focus to the editor text
@@ -320,7 +295,7 @@ export interface IEditor {
 	/**
 	 * Restores the view state of the editor from a serializable object generated by `saveViewState`.
 	 */
-	restoreViewState(state: IEditorViewState): void;
+	restoreViewState(state: IEditorViewState | null): void;
 
 	/**
 	 * Given a position, returns a column number that takes tab-widths into account.
@@ -341,8 +316,9 @@ export interface IEditor {
 	/**
 	 * Set the primary position of the cursor. This will remove any secondary cursors.
 	 * @param position New primary cursor's position
+	 * @param source Source of the call that caused the position
 	 */
-	setPosition(position: IPosition): void;
+	setPosition(position: IPosition, source?: string): void;
 
 	/**
 	 * Scroll vertically as necessary and reveal a line.
@@ -399,29 +375,35 @@ export interface IEditor {
 	/**
 	 * Set the primary selection of the editor. This will remove any secondary cursors.
 	 * @param selection The new selection
+	 * @param source Source of the call that caused the selection
 	 */
-	setSelection(selection: IRange): void;
+	setSelection(selection: IRange, source?: string): void;
 	/**
 	 * Set the primary selection of the editor. This will remove any secondary cursors.
 	 * @param selection The new selection
+	 * @param source Source of the call that caused the selection
 	 */
-	setSelection(selection: Range): void;
+	setSelection(selection: Range, source?: string): void;
 	/**
 	 * Set the primary selection of the editor. This will remove any secondary cursors.
 	 * @param selection The new selection
+	 * @param source Source of the call that caused the selection
 	 */
-	setSelection(selection: ISelection): void;
+	setSelection(selection: ISelection, source?: string): void;
 	/**
 	 * Set the primary selection of the editor. This will remove any secondary cursors.
 	 * @param selection The new selection
+	 * @param source Source of the call that caused the selection
 	 */
-	setSelection(selection: Selection): void;
+	setSelection(selection: Selection, source?: string): void;
 
 	/**
 	 * Set the selections for all the cursors of the editor.
 	 * Cursors will be removed or added, as necessary.
+	 * @param selections The new selection
+	 * @param source Source of the call that caused the selection
 	 */
-	setSelections(selections: readonly ISelection[]): void;
+	setSelections(selections: readonly ISelection[], source?: string): void;
 
 	/**
 	 * Scroll vertically as necessary and reveal lines.
@@ -482,7 +464,7 @@ export interface IEditor {
 	 * @param handlerId The id of the handler or the id of a contribution.
 	 * @param payload Extra data to be sent to the handler.
 	 */
-	trigger(source: string | null | undefined, handlerId: string, payload: any): void;
+	trigger(source: string | null | undefined, handlerId: string, payload: unknown): void;
 
 	/**
 	 * Gets the current model attached to this editor.
@@ -500,13 +482,20 @@ export interface IEditor {
 	setModel(model: IEditorModel | null): void;
 
 	/**
+	 * Create a collection of decorations. All decorations added through this collection
+	 * will get the ownerId of the editor (meaning they will not show up in other editors).
+	 * These decorations will be automatically cleared when the editor's model changes.
+	 */
+	createDecorationsCollection(decorations?: IModelDeltaDecoration[]): IEditorDecorationsCollection;
+
+	/**
 	 * Change the decorations. All decorations added through this changeAccessor
 	 * will get the ownerId of the editor (meaning they will not show up in other
 	 * editors).
 	 * @see {@link ITextModel.changeDecorations}
 	 * @internal
 	 */
-	changeDecorations(callback: (changeAccessor: IModelDecorationsChangeAccessor) => any): any;
+	changeDecorations<T>(callback: (changeAccessor: IModelDecorationsChangeAccessor) => T): T | null;
 }
 
 /**
@@ -549,6 +538,44 @@ export interface ICompositeCodeEditor {
 	// readonly editors: readonly ICodeEditor[] maybe supported with uris
 }
 
+/**
+ * A collection of decorations
+ */
+export interface IEditorDecorationsCollection {
+	/**
+	 * An event emitted when decorations change in the editor,
+	 * but the change is not caused by us setting or clearing the collection.
+	 */
+	readonly onDidChange: Event<IModelDecorationsChangedEvent>;
+	/**
+	 * Get the decorations count.
+	 */
+	length: number;
+	/**
+	 * Get the range for a decoration.
+	 */
+	getRange(index: number): Range | null;
+	/**
+	 * Get all ranges for decorations.
+	 */
+	getRanges(): Range[];
+	/**
+	 * Determine if a decoration is in this collection.
+	 */
+	has(decoration: IModelDecoration): boolean;
+	/**
+	 * Replace all previous decorations with `newDecorations`.
+	 */
+	set(newDecorations: readonly IModelDeltaDecoration[]): string[];
+	/**
+	 * Append `newDecorations` to this collection.
+	 */
+	append(newDecorations: readonly IModelDeltaDecoration[]): string[];
+	/**
+	 * Remove all previous decorations.
+	 */
+	clear(): void;
+}
 
 /**
  * An editor contribution that gets created every time a new editor gets created and gets disposed when the editor gets disposed.
@@ -561,11 +588,11 @@ export interface IEditorContribution {
 	/**
 	 * Store view state.
 	 */
-	saveViewState?(): any;
+	saveViewState?(): unknown;
 	/**
 	 * Restore view state.
 	 */
-	restoreViewState?(state: any): void;
+	restoreViewState?(state: unknown): void;
 }
 
 /**
@@ -582,8 +609,8 @@ export interface IDiffEditorContribution {
 /**
  * @internal
  */
-export function isThemeColor(o: any): o is ThemeColor {
-	return o && typeof o.id === 'string';
+export function isThemeColor(o: unknown): o is ThemeColor {
+	return !!o && typeof (o as ThemeColor).id === 'string';
 }
 
 /**
@@ -606,7 +633,9 @@ export interface IThemeDecorationRenderOptions {
 
 	fontStyle?: string;
 	fontWeight?: string;
+	fontFamily?: string;
 	fontSize?: string;
+	lineHeight?: number;
 	textDecoration?: string;
 	cursor?: string;
 	color?: string | ThemeColor;
@@ -751,14 +780,4 @@ export interface CompositionTypePayload {
 	replacePrevCharCnt: number;
 	replaceNextCharCnt: number;
 	positionDelta: number;
-}
-
-/**
- * @internal
- */
-export interface PastePayload {
-	text: string;
-	pasteOnNewLine: boolean;
-	multicursorText: string[] | null;
-	mode: string | null;
 }

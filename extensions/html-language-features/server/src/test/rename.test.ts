@@ -3,9 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as assert from 'assert';
-import { WorkspaceEdit, TextDocument, getLanguageModes, ClientCapabilities } from '../modes/languageModes';
-import { getNodeFSRequestService } from '../node/nodeFs';
+import { suite, test } from 'node:test';
+import assert from 'node:assert/strict';
+import { WorkspaceEdit, TextDocument, getLanguageModes, ClientCapabilities } from '../modes/languageModes.js';
+import { getNodeFileFS } from '../node/nodeFs.js';
 
 
 async function testRename(value: string, newName: string, expectedDocContent: string): Promise<void> {
@@ -17,26 +18,30 @@ async function testRename(value: string, newName: string, expectedDocContent: st
 		settings: {},
 		folders: [{ name: 'foo', uri: 'test://foo' }]
 	};
-	const languageModes = getLanguageModes({ css: true, javascript: true }, workspace, ClientCapabilities.LATEST, getNodeFSRequestService());
-	const javascriptMode = languageModes.getMode('javascript')
+	const languageModes = getLanguageModes({ css: true, javascript: true }, workspace, ClientCapabilities.LATEST, getNodeFileFS());
+	const javascriptMode = languageModes.getMode('javascript');
 	const position = document.positionAt(offset);
 
-	if (javascriptMode) {
-		const workspaceEdit: WorkspaceEdit | null = await javascriptMode.doRename!(document, position, newName);
+	try {
+		if (javascriptMode) {
+			const workspaceEdit: WorkspaceEdit | null = await javascriptMode.doRename!(document, position, newName);
 
-		if (!workspaceEdit || !workspaceEdit.changes) {
-			assert.fail('No workspace edits');
+			if (!workspaceEdit || !workspaceEdit.changes) {
+				assert.fail('No workspace edits');
+			}
+
+			const edits = workspaceEdit.changes[document.uri.toString()];
+			if (!edits) {
+				assert.fail(`No edits for file at ${document.uri.toString()}`);
+			}
+
+			const newDocContent = TextDocument.applyEdits(document, edits);
+			assert.strictEqual(newDocContent, expectedDocContent, `Expected: ${expectedDocContent}\nActual: ${newDocContent}`);
+		} else {
+			assert.fail('should have javascriptMode but no');
 		}
-
-		const edits = workspaceEdit.changes[document.uri.toString()];
-		if (!edits) {
-			assert.fail(`No edits for file at ${document.uri.toString()}`);
-		}
-
-		const newDocContent = TextDocument.applyEdits(document, edits);
-		assert.strictEqual(newDocContent, expectedDocContent, `Expected: ${expectedDocContent}\nActual: ${newDocContent}`);
-	} else {
-		assert.fail('should have javascriptMode but no')
+	} finally {
+		languageModes.dispose();
 	}
 }
 
@@ -49,16 +54,20 @@ async function testNoRename(value: string, newName: string): Promise<void> {
 		settings: {},
 		folders: [{ name: 'foo', uri: 'test://foo' }]
 	};
-	const languageModes = getLanguageModes({ css: true, javascript: true }, workspace, ClientCapabilities.LATEST, getNodeFSRequestService());
-	const javascriptMode = languageModes.getMode('javascript')
+	const languageModes = getLanguageModes({ css: true, javascript: true }, workspace, ClientCapabilities.LATEST, getNodeFileFS());
+	const javascriptMode = languageModes.getMode('javascript');
 	const position = document.positionAt(offset);
 
-	if (javascriptMode) {
-		const workspaceEdit: WorkspaceEdit | null = await javascriptMode.doRename!(document, position, newName);
+	try {
+		if (javascriptMode) {
+			const workspaceEdit: WorkspaceEdit | null = await javascriptMode.doRename!(document, position, newName);
 
-		assert.ok(workspaceEdit?.changes === undefined, 'Should not rename but rename happened')
-	} else {
-		assert.fail('should have javascriptMode but no')
+			assert.ok(workspaceEdit?.changes === undefined, 'Should not rename but rename happened');
+		} else {
+			assert.fail('should have javascriptMode but no');
+		}
+	} finally {
+		languageModes.dispose();
 	}
 }
 
@@ -73,7 +82,7 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 
 		const output = [
 			'<html>',
@@ -84,10 +93,10 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 
-		await testRename(input.join('\n'), 'h', output.join('\n'))
-	})
+		await testRename(input.join('\n'), 'h', output.join('\n'));
+	});
 
 	test('Rename Function', async () => {
 		const input = [
@@ -102,7 +111,7 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 
 		const output = [
 			'<html>',
@@ -116,10 +125,10 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 
-		await testRename(input.join('\n'), 'sayName', output.join('\n'))
-	})
+		await testRename(input.join('\n'), 'sayName', output.join('\n'));
+	});
 
 	test('Rename Function Params', async () => {
 		const input = [
@@ -134,7 +143,7 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 
 		const output = [
 			'<html>',
@@ -148,10 +157,10 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 
-		await testRename(input.join('\n'), 'newName', output.join('\n'))
-	})
+		await testRename(input.join('\n'), 'newName', output.join('\n'));
+	});
 
 	test('Rename Class', async () => {
 		const input = [
@@ -163,7 +172,7 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 
 		const output = [
 			'<html>',
@@ -174,10 +183,10 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 
-		await testRename(input.join('\n'), 'Bar', output.join('\n'))
-	})
+		await testRename(input.join('\n'), 'Bar', output.join('\n'));
+	});
 
 	test('Cannot Rename literal', async () => {
 		const stringLiteralInput = [
@@ -188,7 +197,7 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 		const numberLiteralInput = [
 			'<html>',
 			'<head>',
@@ -197,9 +206,9 @@ suite('HTML Javascript Rename', () => {
 			'</script>',
 			'</head>',
 			'</html>'
-		]
+		];
 
-		await testNoRename(stringLiteralInput.join('\n'), 'something')
-		await testNoRename(numberLiteralInput.join('\n'), 'hhhh')
-	})
+		await testNoRename(stringLiteralInput.join('\n'), 'something');
+		await testNoRename(numberLiteralInput.join('\n'), 'hhhh');
+	});
 });

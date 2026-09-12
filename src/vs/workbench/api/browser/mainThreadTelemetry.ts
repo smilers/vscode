@@ -3,15 +3,17 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ITelemetryService, TelemetryLevel, TELEMETRY_OLD_SETTING_ID, TELEMETRY_SETTING_ID } from 'vs/platform/telemetry/common/telemetry';
-import { MainThreadTelemetryShape, MainContext, IExtHostContext, ExtHostTelemetryShape, ExtHostContext } from '../common/extHost.protocol';
-import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
-import { ClassifiedEvent, StrictPropertyCheck, GDPRClassification } from 'vs/platform/telemetry/common/gdprTypings';
-import { Disposable } from 'vs/base/common/lifecycle';
-import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { IEnvironmentService } from 'vs/platform/environment/common/environment';
-import { IProductService } from 'vs/platform/product/common/productService';
-import { getTelemetryLevel, supportsTelemetry } from 'vs/platform/telemetry/common/telemetryUtils';
+import { Disposable } from '../../../base/common/lifecycle.js';
+import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
+import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
+import { IEnvironmentService } from '../../../platform/environment/common/environment.js';
+import { IProductService } from '../../../platform/product/common/productService.js';
+import { isValidAssignmentContext } from '../../../platform/telemetry/common/assignmentContext.js';
+import { ClassifiedEvent, IGDPRProperty, OmitMetadata, StrictPropertyCheck } from '../../../platform/telemetry/common/gdprTypings.js';
+import { ITelemetryService, TelemetryLevel, TELEMETRY_OLD_SETTING_ID, TELEMETRY_SETTING_ID, ITelemetryData } from '../../../platform/telemetry/common/telemetry.js';
+import { supportsTelemetry } from '../../../platform/telemetry/common/telemetryUtils.js';
+import { extHostNamedCustomer, IExtHostContext } from '../../services/extensions/common/extHostCustomers.js';
+import { ExtHostContext, ExtHostTelemetryShape, MainContext, MainThreadTelemetryShape } from '../common/extHost.protocol.js';
 
 @extHostNamedCustomer(MainContext.MainThreadTelemetry)
 export class MainThreadTelemetry extends Disposable implements MainThreadTelemetryShape {
@@ -19,53 +21,74 @@ export class MainThreadTelemetry extends Disposable implements MainThreadTelemet
 
 	private static readonly _name = 'pluginHostTelemetry';
 
-	private _oldTelemetryEnabledValue: boolean | undefined;
-
 	constructor(
 		extHostContext: IExtHostContext,
 		@ITelemetryService private readonly _telemetryService: ITelemetryService,
 		@IConfigurationService private readonly _configurationService: IConfigurationService,
-		@IEnvironmentService private readonly _environmenService: IEnvironmentService,
-		@IProductService private readonly _productService: IProductService
+		@IEnvironmentService private readonly _environmentService: IEnvironmentService,
+		@IProductService private readonly _productService: IProductService,
 	) {
 		super();
 
 		this._proxy = extHostContext.getProxy(ExtHostContext.ExtHostTelemetry);
 
-		if (supportsTelemetry(this._productService, this._environmenService)) {
+		if (supportsTelemetry(this._productService, this._environmentService)) {
 			this._register(this._configurationService.onDidChangeConfiguration(e => {
 				if (e.affectsConfiguration(TELEMETRY_SETTING_ID) || e.affectsConfiguration(TELEMETRY_OLD_SETTING_ID)) {
-					const telemetryEnabled = this.telemetryEnabled;
-					// Since changing telemetryLevel from "off" => "error" doesn't change the isEnabled state
-					// We shouldn't fire a change event
-					if (telemetryEnabled !== this._oldTelemetryEnabledValue) {
-						this._oldTelemetryEnabledValue = telemetryEnabled;
-						this._proxy.$onDidChangeTelemetryEnabled(this.telemetryEnabled);
-					}
+					this._proxy.$onDidChangeTelemetryLevel(this.telemetryLevel);
 				}
 			}));
 		}
-
-		this._proxy.$initializeTelemetryEnabled(this.telemetryEnabled);
+		this._proxy.$initializeTelemetryLevel(this.telemetryLevel, supportsTelemetry(this._productService, this._environmentService), this._productService.enabledTelemetryLevels);
 	}
 
-	private get telemetryEnabled(): boolean {
-		if (!supportsTelemetry(this._productService, this._environmenService)) {
-			return false;
+	private get telemetryLevel(): TelemetryLevel {
+		if (!supportsTelemetry(this._productService, this._environmentService)) {
+			return TelemetryLevel.NONE;
 		}
 
-		return getTelemetryLevel(this._configurationService) === TelemetryLevel.USAGE;
+		return this._telemetryService.telemetryLevel;
 	}
 
-	$publicLog(eventName: string, data: any = Object.create(null)): void {
+	$publicLog(eventName: string, data: ITelemetryData = Object.create(null)): void {
 		// __GDPR__COMMON__ "pluginHostTelemetry" : { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
 		data[MainThreadTelemetry._name] = true;
 		this._telemetryService.publicLog(eventName, data);
 	}
 
-	$publicLog2<E extends ClassifiedEvent<T> = never, T extends GDPRClassification<T> = never>(eventName: string, data: StrictPropertyCheck<T, E>): void {
-		this.$publicLog(eventName, data as any);
+	$publicLog2<E extends ClassifiedEvent<OmitMetadata<T>> = never, T extends IGDPRProperty = never>(eventName: string, data?: StrictPropertyCheck<T, E>): void {
+		this.$publicLog(eventName, data);
 	}
 }
 
+/**
+ * The core telemetry property under which the Copilot CAPI flight assignment
+ * context is surfaced. It mirrors the scope of `abexp.assignmentcontext`.
+ */
+export const CAPI_ASSIGNMENT_CONTEXT_PROPERTY = 'capi.assignmentcontext';
 
+/**
+ * The private command Copilot invokes to forward its CAPI flight assignments
+ * into core telemetry. Not part of the public API.
+ */
+export const SET_CAPI_ASSIGNMENT_CONTEXT_COMMAND = '_telemetry.setCapiAssignmentContext';
+
+/**
+ * Validates a CAPI assignment-context string before it is trusted onto every
+ * core telemetry event. Because {@link ITelemetryService.setExperimentProperty}
+ * wraps the value in a `TelemetryTrustedValue` (bypassing PII cleaning), the
+ * value must be strictly shaped: a non-empty, size-capped list of `key:value`
+ * entries separated by `;`, with no whitespace or control characters. Any
+ * malformed input is rejected outright.
+ */
+export function isValidCapiAssignmentContext(value: string): boolean {
+	return isValidAssignmentContext(value);
+}
+
+CommandsRegistry.registerCommand(SET_CAPI_ASSIGNMENT_CONTEXT_COMMAND, function (accessor, value: string) {
+	if (typeof value !== 'string' || !isValidCapiAssignmentContext(value)) {
+		return;
+	}
+
+	accessor.get(ITelemetryService).setExperimentProperty(CAPI_ASSIGNMENT_CONTEXT_PROPERTY, value);
+});

@@ -2,6 +2,11 @@
 	"type": "dark",
 	"colors": {
 		"focusBorder": "#bbdaff",
+		// agent sessions
+		"agentsPanel.border": "#404f7d",
+		"agentsChatInput.border": "#404f7d",
+		"agentsChatInput.focusBorder": "#bbdaff",
+		"agentsNewSessionButton.border": "#404f7d",
 		"errorForeground": "#a92049",
 		"input.background": "#001733",
 		"dropdown.background": "#001733",
@@ -15,8 +20,8 @@
 		"editor.foreground": "#ffffff",
 		"editor.selectionBackground": "#003f8e",
 		"minimap.selectionHighlight": "#003f8e",
-        "editor.lineHighlightBackground": "#00346e",
-        "editorLineNumber.activeForeground": "#949494",
+		"editor.lineHighlightBackground": "#00346e",
+		"editorLineNumber.activeForeground": "#949494",
 		"editorCursor.foreground": "#ffffff",
 		"editorWhitespace.foreground": "#404f7d",
 		"editorWidget.background": "#001c40",
@@ -30,7 +35,9 @@
 		"tab.lastPinnedBorder": "#007acc80",
 		"debugToolBar.background": "#001c40",
 		"titleBar.activeBackground": "#001126",
+		"titleBar.inactiveBackground": "#0E1926",
 		"statusBar.background": "#001126",
+		"statusBar.inactiveBackground": "#0E1926",
 		"statusBarItem.remoteBackground": "#0e639c",
 		"ports.iconRunningProcessForeground": "#bbdaff",
 		"statusBar.noFolderBackground": "#001126",
@@ -39,7 +46,10 @@
 		"progressBar.background": "#bbdaffcc",
 		"badge.background": "#bbdaffcc",
 		"badge.foreground": "#001733",
+		"panelSection.border": "#404f7d",
+		"panelSectionHeader.border": "#404f7d",
 		"sideBar.background": "#001c40",
+		"sideBarSectionHeader.border": "#404f7d",
 		"terminal.ansiBlack": "#111111",
 		"terminal.ansiRed": "#ff9da4",
 		"terminal.ansiGreen": "#d1f1a9",
@@ -55,7 +65,10 @@
 		"terminal.ansiBrightBlue": "#80baff",
 		"terminal.ansiBrightMagenta": "#d778ff",
 		"terminal.ansiBrightCyan": "#78ffff",
-		"terminal.ansiBrightWhite": "#ffffff"
+		"terminal.ansiBrightWhite": "#ffffff",
+		"agentsCard.border": "#00000000",
+		// modern ui
+		"surface.border": "#00000000",
 	},
 	"tokenColors": [
 		{
@@ -65,7 +78,13 @@
 			}
 		},
 		{
-			"scope": ["meta.embedded", "source.groovy.embedded"],
+			"scope": [
+				"meta.embedded",
+				"source.groovy.embedded",
+				"meta.jsx.children",
+				"string meta.image.inline.markdown",
+				"variable.legacy.builtin.python"
+			],
 			"settings": {
 				//"background": "#002451",
 				"foreground": "#FFFFFF"
@@ -111,7 +130,7 @@
 		},
 		{
 			"name": "String, Symbols, Inherited Class, Markup Heading, GitGutter inserted",
-			"scope": "string, constant.other.symbol, entity.other.inherited-class, markup.heading, markup.inserted.git_gutter",
+			"scope": "string, constant.other.symbol, entity.other.inherited-class, punctuation.separator.namespace.ruby, markup.heading, markup.inserted.git_gutter",
 			"settings": {
 				"fontStyle": "",
 				"foreground": "#D1F1A9"
@@ -134,7 +153,7 @@
 		},
 		{
 			"name": "Keyword, Storage",
-			"scope": "keyword, storage, storage.type, entity.name.tag.css",
+			"scope": "keyword, storage, storage.type, entity.name.tag.css, entity.name.tag.less",
 			"settings": {
 				"fontStyle": "",
 				"foreground": "#EBBBFF"
@@ -235,6 +254,12 @@
 			"scope": "markup.italic",
 			"settings": {
 				"fontStyle": "italic"
+			}
+		},
+		{
+			"scope": "markup.strikethrough",
+			"settings": {
+				"fontStyle": "strikethrough"
 			}
 		},
 		{

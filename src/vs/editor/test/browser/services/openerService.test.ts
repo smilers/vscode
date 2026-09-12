@@ -2,17 +2,22 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as assert from 'assert';
-import { Disposable } from 'vs/base/common/lifecycle';
-import { URI } from 'vs/base/common/uri';
-import { OpenerService } from 'vs/editor/browser/services/openerService';
-import { TestCodeEditorService } from 'vs/editor/test/browser/editorTestServices';
-import { CommandsRegistry, ICommandService, NullCommandService } from 'vs/platform/commands/common/commands';
-import { ITextEditorOptions } from 'vs/platform/editor/common/editor';
-import { matchesScheme, matchesSomeScheme } from 'vs/platform/opener/common/opener';
+import assert from 'assert';
+import { Disposable } from '../../../../base/common/lifecycle.js';
+import { URI } from '../../../../base/common/uri.js';
+import { ensureNoDisposablesAreLeakedInTestSuite } from '../../../../base/test/common/utils.js';
+import { OpenerService } from '../../../browser/services/openerService.js';
+import { TestCodeEditorService } from '../editorTestServices.js';
+import { CommandsRegistry, ICommandService } from '../../../../platform/commands/common/commands.js';
+import { NullCommandService } from '../../../../platform/commands/test/common/nullCommandService.js';
+import { ITextEditorOptions } from '../../../../platform/editor/common/editor.js';
+import { matchesScheme, matchesSomeScheme } from '../../../../base/common/network.js';
+import { TestThemeService } from '../../../../platform/theme/test/common/testThemeService.js';
+import { defaultExternalUriOpenerId } from '../../../../platform/opener/common/opener.js';
 
 suite('OpenerService', function () {
-	const editorService = new TestCodeEditorService();
+	const themeService = new TestThemeService();
+	const editorService = new TestCodeEditorService(themeService);
 
 	let lastCommand: { id: string; args: any[] } | undefined;
 
@@ -20,7 +25,7 @@ suite('OpenerService', function () {
 		declare readonly _serviceBrand: undefined;
 		onWillExecuteCommand = () => Disposable.None;
 		onDidExecuteCommand = () => Disposable.None;
-		executeCommand(id: string, ...args: any[]): Promise<any> {
+		executeCommand(id: string, ...args: unknown[]): Promise<any> {
 			lastCommand = { id, args };
 			return Promise.resolve(undefined);
 		}
@@ -29,6 +34,8 @@ suite('OpenerService', function () {
 	setup(function () {
 		lastCommand = undefined;
 	});
+
+	const store = ensureNoDisposablesAreLeakedInTestSuite();
 
 	test('delegate to editorService, scheme:///fff', async function () {
 		const openerService = new OpenerService(editorService, NullCommandService);
@@ -80,7 +87,7 @@ suite('OpenerService', function () {
 		const openerService = new OpenerService(editorService, commandService);
 
 		const id = `aCommand${Math.random()}`;
-		CommandsRegistry.registerCommand(id, function () { });
+		store.add(CommandsRegistry.registerCommand(id, function () { }));
 
 		assert.strictEqual(lastCommand, undefined);
 		await openerService.open(URI.parse('command:' + id));
@@ -88,11 +95,11 @@ suite('OpenerService', function () {
 	});
 
 
-	test('delegate to commandsService, command:someid', async function () {
+	test('delegate to commandsService, command:someid, 2', async function () {
 		const openerService = new OpenerService(editorService, commandService);
 
 		const id = `aCommand${Math.random()}`;
-		CommandsRegistry.registerCommand(id, function () { });
+		store.add(CommandsRegistry.registerCommand(id, function () { }));
 
 		await openerService.open(URI.parse('command:' + id).with({ query: '\"123\"' }), { allowCommands: true });
 		assert.strictEqual(lastCommand!.id, id);
@@ -118,7 +125,7 @@ suite('OpenerService', function () {
 	test('links are protected by validators', async function () {
 		const openerService = new OpenerService(editorService, commandService);
 
-		openerService.registerValidator({ shouldOpen: () => Promise.resolve(false) });
+		store.add(openerService.registerValidator({ shouldOpen: () => Promise.resolve(false) }));
 
 		const httpResult = await openerService.open(URI.parse('https://www.microsoft.com'));
 		const httpsResult = await openerService.open(URI.parse('https://www.microsoft.com'));
@@ -129,15 +136,15 @@ suite('OpenerService', function () {
 	test('links validated by validators go to openers', async function () {
 		const openerService = new OpenerService(editorService, commandService);
 
-		openerService.registerValidator({ shouldOpen: () => Promise.resolve(true) });
+		store.add(openerService.registerValidator({ shouldOpen: () => Promise.resolve(true) }));
 
 		let openCount = 0;
-		openerService.registerOpener({
+		store.add(openerService.registerOpener({
 			open: (resource: URI) => {
 				openCount++;
 				return Promise.resolve(true);
 			}
-		});
+		}));
 
 		await openerService.open(URI.parse('http://microsoft.com'));
 		assert.strictEqual(openCount, 1);
@@ -145,16 +152,232 @@ suite('OpenerService', function () {
 		assert.strictEqual(openCount, 2);
 	});
 
+	test('contributed external URI openers run before validators', async function () {
+		const openerService = new OpenerService(editorService, commandService);
+		const sourceUri = URI.parse('https://source.example.com');
+		const resolvedUri = URI.parse('https://resolved.example.com');
+		const calls: string[] = [];
+
+		store.add(openerService.registerExternalUriResolver({
+			async resolveExternalUri() {
+				calls.push('resolve');
+				return { resolved: resolvedUri, dispose() { } };
+			}
+		}));
+		store.add(openerService.registerOpener({
+			async open() {
+				calls.push('opener');
+				return false;
+			}
+		}));
+		store.add(openerService.registerValidator({
+			shouldOpen() {
+				calls.push('validate');
+				return Promise.resolve(false);
+			}
+		}));
+		store.add(openerService.registerExternalOpener({
+			async openExternal(href, context) {
+				calls.push(`contributed:${href}:${context.sourceUri.toString()}`);
+				return true;
+			}
+		}));
+
+		const didOpen = await openerService.open(sourceUri, { openExternal: true, allowContributedOpeners: true });
+
+		assert.deepStrictEqual({
+			didOpen,
+			calls,
+		}, {
+			didOpen: true,
+			calls: [
+				'resolve',
+				`contributed:${resolvedUri.toString()}:${sourceUri.toString()}`,
+			],
+		});
+	});
+
+	test('external URI fallback validates the resolved URI', async function () {
+		const openerService = new OpenerService(editorService, commandService);
+		const sourceUri = URI.parse('https://source.example.com');
+		const resolvedUri = URI.parse('https://resolved.example.com');
+		const calls: string[] = [];
+
+		store.add(openerService.registerExternalUriResolver({
+			async resolveExternalUri() {
+				calls.push('resolve');
+				return { resolved: resolvedUri, dispose() { } };
+			}
+		}));
+		store.add(openerService.registerExternalOpener({
+			async openExternal(href, context) {
+				calls.push(`contributed:${href}:${context.sourceUri.toString()}`);
+				return false;
+			}
+		}));
+		store.add(openerService.registerValidator({
+			shouldOpen(resource) {
+				calls.push(`validate:${resource.toString()}`);
+				return Promise.resolve(false);
+			}
+		}));
+		store.add(openerService.registerOpener({
+			async open() {
+				calls.push('opener');
+				return true;
+			}
+		}));
+		openerService.setDefaultExternalOpener({
+			async openExternal(href) {
+				calls.push(`default:${href}`);
+				return true;
+			}
+		});
+
+		const didOpen = await openerService.open(sourceUri, { openExternal: true, allowContributedOpeners: true });
+
+		assert.deepStrictEqual({
+			didOpen,
+			calls,
+		}, {
+			didOpen: false,
+			calls: [
+				'resolve',
+				`contributed:${resolvedUri.toString()}:${sourceUri.toString()}`,
+				`validate:${resolvedUri.toString()}`,
+			],
+		});
+	});
+
+	test('default external URI opener validates before regular openers', async function () {
+		const openerService = new OpenerService(editorService, commandService);
+		const sourceUri = URI.parse('https://source.example.com');
+		const calls: string[] = [];
+
+		store.add(openerService.registerExternalOpener({
+			async openExternal() {
+				calls.push('contributed');
+				return true;
+			}
+		}));
+		store.add(openerService.registerValidator({
+			shouldOpen(resource) {
+				calls.push(`validate:${resource.toString()}`);
+				return Promise.resolve(false);
+			}
+		}));
+		store.add(openerService.registerOpener({
+			async open() {
+				calls.push('opener');
+				return true;
+			}
+		}));
+
+		const didOpen = await openerService.open(sourceUri, { openExternal: true, allowContributedOpeners: defaultExternalUriOpenerId });
+
+		assert.deepStrictEqual({
+			didOpen,
+			calls,
+		}, {
+			didOpen: false,
+			calls: [`validate:${sourceUri.toString()}`],
+		});
+	});
+
+	test('default external URI opener skips contributed openers', async function () {
+		const openerService = new OpenerService(editorService, commandService);
+		const sourceUri = URI.parse('https://source.example.com');
+		const calls: string[] = [];
+
+		store.add(openerService.registerExternalOpener({
+			async openExternal() {
+				calls.push('contributed');
+				return true;
+			}
+		}));
+		store.add(openerService.registerValidator({
+			shouldOpen(resource) {
+				calls.push(`validate:${resource.toString()}`);
+				return Promise.resolve(true);
+			}
+		}));
+		store.add(openerService.registerOpener({
+			async open() {
+				calls.push('opener');
+				return false;
+			}
+		}));
+		openerService.setDefaultExternalOpener({
+			async openExternal(href) {
+				calls.push(`default:${href}`);
+				return true;
+			}
+		});
+
+		const didOpen = await openerService.open(sourceUri, { openExternal: true, allowContributedOpeners: defaultExternalUriOpenerId });
+
+		assert.deepStrictEqual({
+			didOpen,
+			calls,
+		}, {
+			didOpen: true,
+			calls: [
+				`validate:${sourceUri.toString()}`,
+				'opener',
+				`default:${sourceUri.toString()}`,
+			],
+		});
+	});
+
+	test('external URI fallback preserves strings for validation and opening', async function () {
+		const openerService = new OpenerService(editorService, commandService);
+		const source = 'https://source.example.com/path?value=%2B';
+		const calls: string[] = [];
+
+		store.add(openerService.registerExternalOpener({
+			async openExternal() {
+				calls.push('contributed');
+				return false;
+			}
+		}));
+		store.add(openerService.registerValidator({
+			shouldOpen(resource) {
+				calls.push(`validate:${resource.toString()}`);
+				return Promise.resolve(true);
+			}
+		}));
+		openerService.setDefaultExternalOpener({
+			async openExternal(href) {
+				calls.push(`default:${href}`);
+				return true;
+			}
+		});
+
+		const didOpen = await openerService.open(source, { openExternal: true, allowContributedOpeners: true });
+
+		assert.deepStrictEqual({
+			didOpen,
+			calls,
+		}, {
+			didOpen: true,
+			calls: [
+				'contributed',
+				`validate:${source}`,
+				`default:${source}`,
+			],
+		});
+	});
+
 	test('links aren\'t manipulated before being passed to validator: PR #118226', async function () {
 		const openerService = new OpenerService(editorService, commandService);
 
-		openerService.registerValidator({
+		store.add(openerService.registerValidator({
 			shouldOpen: (resource) => {
 				// We don't want it to convert strings into URIs
 				assert.strictEqual(resource instanceof URI, false);
 				return Promise.resolve(false);
 			}
-		});
+		}));
 		await openerService.open('https://wwww.microsoft.com');
 		await openerService.open('https://www.microsoft.com??params=CountryCode%3DUSA%26Name%3Dvscode"');
 	});
@@ -272,5 +495,29 @@ suite('OpenerService', function () {
 		const result = await openerService.resolveExternalUri(URI.parse('file:///Users/user/folder'));
 		assert.deepStrictEqual(result.resolved.toString(), 'file:///Users/user/folder');
 		disposable.dispose();
+	});
+
+	test('vscode.open command can\'t open HTTP URL with hash (#) in it [extension development] #140907', async function () {
+		const openerService = new OpenerService(editorService, NullCommandService);
+
+		const actual: string[] = [];
+
+		openerService.setDefaultExternalOpener({
+			async openExternal(href) {
+				actual.push(href);
+				return true;
+			}
+		});
+
+		const href = 'https://gitlab.com/viktomas/test-project/merge_requests/new?merge_request%5Bsource_branch%5D=test-%23-hash';
+		const uri = URI.parse(href);
+
+		assert.ok(await openerService.open(uri));
+		assert.ok(await openerService.open(href));
+
+		assert.deepStrictEqual(actual, [
+			encodeURI(uri.toString(true)), // BAD, the encoded # (%23) is double encoded to %2523 (% is double encoded)
+			href // good
+		]);
 	});
 });

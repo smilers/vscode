@@ -20,10 +20,16 @@
 
 .monaco-editor .zone-widget .zone-widget-container.exception-widget .title .label {
 	font-weight: bold;
+	display: flex;
+	align-items: center;
 }
 
 .monaco-editor .zone-widget .zone-widget-container.exception-widget .title .actions {
 	flex: 1;
+}
+
+.monaco-editor .zone-widget .zone-widget-container.exception-widget .title .actions .monaco-action-bar .actions-container {
+	justify-content: flex-end;
 }
 
 .monaco-editor .zone-widget .zone-widget-container.exception-widget .description,

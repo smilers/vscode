@@ -4,13 +4,13 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { DocumentContext } from 'vscode-css-languageservice';
-import { endsWith, startsWith } from '../utils/strings';
+import { endsWith, startsWith } from '../utils/strings.js';
 import { WorkspaceFolder } from 'vscode-languageserver';
 import { Utils, URI } from 'vscode-uri';
 
 export function getDocumentContext(documentUri: string, workspaceFolders: WorkspaceFolder[]): DocumentContext {
 	function getRootFolder(): string | undefined {
-		for (let folder of workspaceFolders) {
+		for (const folder of workspaceFolders) {
 			let folderURI = folder.uri;
 			if (!endsWith(folderURI, '/')) {
 				folderURI = folderURI + '/';
@@ -25,13 +25,14 @@ export function getDocumentContext(documentUri: string, workspaceFolders: Worksp
 	return {
 		resolveReference: (ref: string, base = documentUri) => {
 			if (ref[0] === '/') { // resolve absolute path against the current workspace folder
-				let folderUri = getRootFolder();
+				const folderUri = getRootFolder();
 				if (folderUri) {
-					return folderUri + ref.substr(1);
+					return folderUri + ref.substring(1);
 				}
 			}
-			base = base.substr(0, base.lastIndexOf('/') + 1);
-			return Utils.resolvePath(URI.parse(base), ref).toString();
+			const baseUri = URI.parse(base);
+			const baseUriDir = baseUri.path.endsWith('/') ? baseUri : Utils.dirname(baseUri);
+			return Utils.resolvePath(baseUriDir, ref).toString(true);
 		},
 	};
 }

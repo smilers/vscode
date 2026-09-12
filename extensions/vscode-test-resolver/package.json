@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "publisher": "vscode",
   "license": "MIT",
-  "enableProposedApi": true,
   "enabledApiProposals": [
-    "resolvers"
+    "resolvers",
+    "tunnels"
   ],
   "private": true,
   "engines": {
@@ -18,11 +18,12 @@
   ],
   "scripts": {
     "compile": "node ./node_modules/vscode/bin/compile -watch -p ./",
-    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.js compile-extension:vscode-test-resolver"
+    "vscode:prepublish": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../../build/gulpfile.extensions.mjs compile-extension:vscode-test-resolver"
   },
   "activationEvents": [
     "onResolveRemoteAuthority:test",
     "onCommand:vscode-testresolver.newWindow",
+    "onCommand:vscode-testresolver.currentWindow",
     "onCommand:vscode-testresolver.newWindowWithError",
     "onCommand:vscode-testresolver.showLog",
     "onCommand:vscode-testresolver.openTunnel",
@@ -30,8 +31,9 @@
     "onCommand:vscode-testresolver.toggleConnectionPause"
   ],
   "main": "./out/extension",
+  "browser": "./dist/browser/testResolverMain",
   "devDependencies": {
-    "@types/node": "14.x"
+    "@types/node": "24.x"
   },
   "capabilities": {
     "untrustedWorkspaces": {
@@ -60,6 +62,16 @@
         "command": "vscode-testresolver.newWindow"
       },
       {
+        "title": "Connect to TestResolver in Current Window",
+        "category": "Remote-TestResolver",
+        "command": "vscode-testresolver.currentWindow"
+      },
+      {
+        "title": "Connect to TestResolver in Current Window with Managed Connection",
+        "category": "Remote-TestResolver",
+        "command": "vscode-testresolver.currentWindowManaged"
+      },
+      {
         "title": "Show TestResolver Log",
         "category": "Remote-TestResolver",
         "command": "vscode-testresolver.showLog"
@@ -83,6 +95,11 @@
         "title": "Pause Connection (Test Reconnect)",
         "category": "Remote-TestResolver",
         "command": "vscode-testresolver.toggleConnectionPause"
+      },
+      {
+        "title": "Slowdown Connection (Test Slow Down Indicator)",
+        "category": "Remote-TestResolver",
+        "command": "vscode-testresolver.toggleConnectionSlowdown"
       }
     ],
     "menus": {
@@ -139,6 +156,21 @@
           "description": "If set, the resolver will delay for the given amount of seconds. Use ths setting for testing a slow resolver",
           "type": "number",
           "default": 0
+        },
+        "testresolver.agentHostPort": {
+          "description": "If set, the resolver will spawn an agent host inside the test server on this port (`--agent-host-port`). Use this for testing the spawn-and-bridge flow.",
+          "type": "number",
+          "default": 0
+        },
+        "testresolver.agentHostBridgePort": {
+          "description": "If set, the resolver will bridge the renderer to an externally-running agent host on this port (`--agent-host-bridge-port`). Use this when the agent host is already running outside the test server.",
+          "type": "number",
+          "default": 0
+        },
+        "testresolver.agentHostBridgeConnectionToken": {
+          "description": "Connection token required by the externally-running agent host when using `testresolver.agentHostBridgePort`.",
+          "type": "string",
+          "default": ""
         },
         "testresolver.startupError": {
           "description": "If set, the resolver will fail. Use ths setting for testing the failure of a resolver.",

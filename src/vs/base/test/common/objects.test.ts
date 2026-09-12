@@ -2,20 +2,23 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as assert from 'assert';
-import * as objects from 'vs/base/common/objects';
+import assert from 'assert';
+import * as objects from '../../common/objects.js';
+import { ensureNoDisposablesAreLeakedInTestSuite } from './utils.js';
 
-let check = (one: any, other: any, msg: string) => {
+const check = (one: any, other: any, msg: string) => {
 	assert(objects.equals(one, other), msg);
 	assert(objects.equals(other, one), '[reverse] ' + msg);
 };
 
-let checkNot = (one: any, other: any, msg: string) => {
+const checkNot = (one: any, other: any, msg: string) => {
 	assert(!objects.equals(one, other), msg);
 	assert(!objects.equals(other, one), '[reverse] ' + msg);
 };
 
 suite('Objects', () => {
+
+	ensureNoDisposablesAreLeakedInTestSuite();
 
 	test('equals', () => {
 		check(null, null, 'null');
@@ -55,7 +58,7 @@ suite('Objects', () => {
 
 	test('mixin - array', function () {
 
-		let foo: any = {};
+		const foo: any = {};
 		objects.mixin(foo, { bar: [1, 2, 3] });
 
 		assert(foo.bar);
@@ -67,11 +70,11 @@ suite('Objects', () => {
 	});
 
 	test('mixin - no overwrite', function () {
-		let foo: any = {
+		const foo: any = {
 			bar: '123'
 		};
 
-		let bar: any = {
+		const bar: any = {
 			bar: '456'
 		};
 
@@ -81,8 +84,8 @@ suite('Objects', () => {
 	});
 
 	test('cloneAndChange', () => {
-		let o1 = { something: 'hello' };
-		let o = {
+		const o1 = { something: 'hello' };
+		const o = {
 			o1: o1,
 			o2: o1
 		};
@@ -90,27 +93,28 @@ suite('Objects', () => {
 	});
 
 	test('safeStringify', () => {
-		let obj1: any = {
+		const obj1: any = {
 			friend: null
 		};
 
-		let obj2: any = {
+		const obj2: any = {
 			friend: null
 		};
 
 		obj1.friend = obj2;
 		obj2.friend = obj1;
 
-		let arr: any = [1];
+		const arr: any = [1];
 		arr.push(arr);
 
-		let circular: any = {
+		const circular: any = {
 			a: 42,
 			b: null,
 			c: [
 				obj1, obj2
 			],
-			d: null
+			d: null,
+			e: BigInt(42)
 		};
 
 		arr.push(circular);
@@ -119,7 +123,7 @@ suite('Objects', () => {
 		circular.b = circular;
 		circular.d = arr;
 
-		let result = objects.safeStringify(circular);
+		const result = objects.safeStringify(circular);
 
 		assert.deepStrictEqual(JSON.parse(result), {
 			a: 42,
@@ -132,12 +136,65 @@ suite('Objects', () => {
 				},
 				'[Circular]'
 			],
-			d: [1, '[Circular]', '[Circular]']
+			d: [1, '[Circular]', '[Circular]'],
+			e: '[BigInt 42]'
 		});
 	});
 
+	test('stableStringify', () => {
+		// Stable key order regardless of insertion order
+		const a = { b: 1, a: 2, c: { y: 1, x: 2 } };
+		const b = { c: { x: 2, y: 1 }, a: 2, b: 1 };
+		assert.strictEqual(objects.stableStringify(a), objects.stableStringify(b));
+		assert.strictEqual(objects.stableStringify(a), '{"a":2,"b":1,"c":{"x":2,"y":1}}');
+
+		// Nested keys must be preserved (regression: would be dropped if a
+		// global replacer-array was used).
+		assert.strictEqual(
+			objects.stableStringify({ outer: { inner: 1 } }),
+			'{"outer":{"inner":1}}'
+		);
+
+		// Arrays preserve order; their object elements get sorted keys.
+		assert.strictEqual(
+			objects.stableStringify([{ b: 1, a: 2 }, 'x', null, 3]),
+			'[{"a":2,"b":1},"x",null,3]'
+		);
+
+		// Primitives
+		assert.strictEqual(objects.stableStringify(undefined), 'undefined');
+		assert.strictEqual(objects.stableStringify(null), 'null');
+		assert.strictEqual(objects.stableStringify(0), '0');
+		assert.strictEqual(objects.stableStringify(''), '""');
+		assert.strictEqual(objects.stableStringify(true), 'true');
+
+		// Properties whose value is undefined are omitted (matches JSON.stringify)
+		assert.strictEqual(
+			objects.stableStringify({ a: 1, b: undefined, c: 3 }),
+			'{"a":1,"c":3}'
+		);
+
+		// Circular references do not throw and produce stable output
+		const circular: any = { a: 1 };
+		circular.self = circular;
+		assert.strictEqual(
+			objects.stableStringify(circular),
+			'{"a":1,"self":"[Circular]"}'
+		);
+
+		const shared = { a: 1 };
+		assert.strictEqual(
+			objects.stableStringify({ x: shared, y: shared }),
+			'{"x":{"a":1},"y":{"a":1}}'
+		);
+		assert.strictEqual(
+			objects.stableStringify([shared, shared]),
+			'[{"a":1},{"a":1}]'
+		);
+	});
+
 	test('distinct', () => {
-		let base = {
+		const base = {
 			one: 'one',
 			two: 2,
 			three: {
@@ -226,5 +283,21 @@ suite('Objects', () => {
 
 		assert.strictEqual(obj1.mIxEdCaSe, objects.getCaseInsensitive(obj1, 'MIXEDCASE'));
 		assert.strictEqual(obj1.mIxEdCaSe, objects.getCaseInsensitive(obj1, 'mixedcase'));
+	});
+});
+
+test('mapValues', () => {
+	const obj = {
+		a: 1,
+		b: 2,
+		c: 3
+	};
+
+	const result = objects.mapValues(obj, (value, key) => `${key}: ${value * 2}`);
+
+	assert.deepStrictEqual(result, {
+		a: 'a: 2',
+		b: 'b: 4',
+		c: 'c: 6',
 	});
 });

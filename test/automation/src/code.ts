@@ -3,266 +3,138 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as path from 'path';
 import * as cp from 'child_process';
 import * as os from 'os';
-import * as fs from 'fs';
-import * as mkdirp from 'mkdirp';
-import { tmpName } from 'tmp';
-import { IDriver, connect as connectElectronDriver, IDisposable, IElement, Thenable, ILocalizedStrings, ILocaleInfo } from './driver';
-import { connect as connectPlaywrightDriver, launch } from './playwrightDriver';
-import { Logger } from './logger';
-import { ncp } from 'ncp';
-import { URI } from 'vscode-uri';
+import * as playwright from 'playwright';
+import { IElement, ILocaleInfo, ILocalizedStrings, ILogFile } from './driver';
+import { Logger, measureAndLog } from './logger';
+import { launch as launchPlaywrightBrowser } from './playwrightBrowser';
+import { PlaywrightDriver } from './playwrightDriver';
+import { launch as launchPlaywrightElectron } from './playwrightElectron';
+import { teardown } from './processes';
+import { Quality } from './application';
 
-const repoPath = path.join(__dirname, '../../..');
-
-function getDevElectronPath(): string {
-	const buildPath = path.join(repoPath, '.build');
-	const product = require(path.join(repoPath, 'product.json'));
-
-	switch (process.platform) {
-		case 'darwin':
-			return path.join(buildPath, 'electron', `${product.nameLong}.app`, 'Contents', 'MacOS', 'Electron');
-		case 'linux':
-			return path.join(buildPath, 'electron', `${product.applicationName}`);
-		case 'win32':
-			return path.join(buildPath, 'electron', `${product.nameShort}.exe`);
-		default:
-			throw new Error('Unsupported platform.');
-	}
-}
-
-function getBuildElectronPath(root: string): string {
-	switch (process.platform) {
-		case 'darwin':
-			return path.join(root, 'Contents', 'MacOS', 'Electron');
-		case 'linux': {
-			const product = require(path.join(root, 'resources', 'app', 'product.json'));
-			return path.join(root, product.applicationName);
-		}
-		case 'win32': {
-			const product = require(path.join(root, 'resources', 'app', 'product.json'));
-			return path.join(root, `${product.nameShort}.exe`);
-		}
-		default:
-			throw new Error('Unsupported platform.');
-	}
-}
-
-function getDevOutPath(): string {
-	return path.join(repoPath, 'out');
-}
-
-function getBuildOutPath(root: string): string {
-	switch (process.platform) {
-		case 'darwin':
-			return path.join(root, 'Contents', 'Resources', 'app', 'out');
-		default:
-			return path.join(root, 'resources', 'app', 'out');
-	}
-}
-
-async function connect(connectDriver: typeof connectElectronDriver, child: cp.ChildProcess | undefined, outPath: string, handlePath: string, logger: Logger): Promise<Code> {
-	let errCount = 0;
-
-	while (true) {
-		try {
-			const { client, driver } = await connectDriver(outPath, handlePath);
-			return new Code(client, driver, logger, child?.pid);
-		} catch (err) {
-			if (++errCount > 50) {
-				if (child) {
-					child.kill();
-				}
-				throw err;
-			}
-
-			// retry
-			await new Promise(c => setTimeout(c, 100));
-		}
-	}
-}
-
-// Kill all running instances, when dead
-const instances = new Set<cp.ChildProcess>();
-process.once('exit', () => instances.forEach(code => code.kill()));
-
-export interface SpawnOptions {
+export interface LaunchOptions {
+	// Allows you to override the Playwright instance
+	playwright?: typeof playwright;
 	codePath?: string;
-	workspacePath: string;
-	userDataDir: string;
-	extensionsPath: string;
-	logger: Logger;
+	readonly workspacePath?: string;
+	userDataDir?: string;
+	readonly extensionsPath?: string;
+	readonly logger: Logger;
+	logsPath: string;
+	crashesPath: string;
+	readonly videosPath?: string;
 	verbose?: boolean;
-	extraArgs?: string[];
-	log?: string;
-	remote?: boolean;
-	web?: boolean;
-	headless?: boolean;
-	browser?: 'chromium' | 'webkit' | 'firefox';
+	useInMemorySecretStorage?: boolean;
+	readonly extraArgs?: string[];
+	readonly remote?: boolean;
+	readonly web?: boolean;
+	readonly tracing?: boolean;
+	snapshots?: boolean;
+	readonly headless?: boolean;
+	readonly browser?: 'chromium' | 'webkit' | 'firefox' | 'chromium-msedge' | 'chromium-chrome';
+	readonly quality: Quality;
+	version: { major: number; minor: number; patch: number };
+	readonly extensionDevelopmentPath?: string;
+
+	/**
+	 * Extra environment variables merged on top of the inherited `process.env`
+	 * when launching the Electron child process. Set a value to `undefined`
+	 * to unset the variable. Used by tests that need to inject env-based
+	 * mocks (e.g. `VSCODE_COPILOT_CHAT_TOKEN`).
+	 */
+	readonly extraEnv?: Readonly<Record<string, string | undefined>>;
 }
 
-async function createDriverHandle(): Promise<string> {
-	if ('win32' === os.platform()) {
-		const name = [...Array(15)].map(() => Math.random().toString(36)[3]).join('');
-		return `\\\\.\\pipe\\${name}`;
-	} else {
-		return await new Promise<string>((c, e) => tmpName((err, handlePath) => err ? e(err) : c(handlePath)));
-	}
+interface ICodeInstance {
+	kill: () => Promise<void>;
 }
 
-export async function spawn(options: SpawnOptions): Promise<Code> {
-	const handle = await createDriverHandle();
+const instances = new Set<ICodeInstance>();
 
-	let child: cp.ChildProcess | undefined;
-	let connectDriver: typeof connectElectronDriver;
+function registerInstance(process: cp.ChildProcess, logger: Logger, type: 'electron' | 'server'): { safeToKill: Promise<void> } {
+	const instance = { kill: () => teardown(process, logger) };
+	instances.add(instance);
 
-	copyExtension(options.extensionsPath, 'vscode-notebook-tests');
-
-	if (options.web) {
-		await launch(options.userDataDir, options.workspacePath, options.codePath, options.extensionsPath, Boolean(options.verbose));
-		connectDriver = connectPlaywrightDriver.bind(connectPlaywrightDriver, options);
-		return connect(connectDriver, child, '', handle, options.logger);
-	}
-
-	const env = { ...process.env };
-	const codePath = options.codePath;
-	const logsPath = path.join(repoPath, '.build', 'logs', options.remote ? 'smoke-tests-remote' : 'smoke-tests');
-	const outPath = codePath ? getBuildOutPath(codePath) : getDevOutPath();
-
-	const args = [
-		options.workspacePath,
-		'--skip-release-notes',
-		'--skip-welcome',
-		'--disable-telemetry',
-		'--no-cached-data',
-		'--disable-updates',
-		'--disable-keytar',
-		'--disable-crash-reporter',
-		'--disable-workspace-trust',
-		`--extensions-dir=${options.extensionsPath}`,
-		`--user-data-dir=${options.userDataDir}`,
-		`--logsPath=${logsPath}`,
-		'--driver', handle
-	];
-
-	if (process.platform === 'linux') {
-		args.push('--disable-gpu'); // Linux has trouble in VMs to render properly with GPU enabled
-	}
-
-	if (options.remote) {
-		// Replace workspace path with URI
-		args[0] = `--${options.workspacePath.endsWith('.code-workspace') ? 'file' : 'folder'}-uri=vscode-remote://test+test/${URI.file(options.workspacePath).path}`;
-
-		if (codePath) {
-			// running against a build: copy the test resolver extension
-			copyExtension(options.extensionsPath, 'vscode-test-resolver');
-		}
-		args.push('--enable-proposed-api=vscode.vscode-test-resolver');
-		const remoteDataDir = `${options.userDataDir}-server`;
-		mkdirp.sync(remoteDataDir);
-
-		if (codePath) {
-			// running against a build: copy the test resolver extension into remote extensions dir
-			const remoteExtensionsDir = path.join(remoteDataDir, 'extensions');
-			mkdirp.sync(remoteExtensionsDir);
-			copyExtension(remoteExtensionsDir, 'vscode-notebook-tests');
-		}
-
-		env['TESTRESOLVER_DATA_FOLDER'] = remoteDataDir;
-		env['TESTRESOLVER_LOGS_FOLDER'] = path.join(logsPath, 'server');
-	}
-
-	const spawnOptions: cp.SpawnOptions = { env };
-
-	args.push('--enable-proposed-api=vscode.vscode-notebook-tests');
-
-	if (!codePath) {
-		args.unshift(repoPath);
-	}
-
-	if (options.verbose) {
-		args.push('--driver-verbose');
-		spawnOptions.stdio = ['ignore', 'inherit', 'inherit'];
-	}
-
-	if (options.log) {
-		args.push('--log', options.log);
-	}
-
-	if (options.extraArgs) {
-		args.push(...options.extraArgs);
-	}
-
-	const electronPath = codePath ? getBuildElectronPath(codePath) : getDevElectronPath();
-	child = cp.spawn(electronPath, args, spawnOptions);
-	instances.add(child);
-	child.once('exit', () => instances.delete(child!));
-	connectDriver = connectElectronDriver;
-	return connect(connectDriver, child, outPath, handle, options.logger);
-}
-
-async function copyExtension(extensionsPath: string, extId: string): Promise<void> {
-	const dest = path.join(extensionsPath, extId);
-	if (!fs.existsSync(dest)) {
-		const orig = path.join(repoPath, 'extensions', extId);
-		await new Promise<void>((c, e) => ncp(orig, dest, err => err ? e(err) : c()));
-	}
-}
-
-async function poll<T>(
-	fn: () => Thenable<T>,
-	acceptFn: (result: T) => boolean,
-	timeoutMessage: string,
-	retryCount: number = 200,
-	retryInterval: number = 100 // millis
-): Promise<T> {
-	let trial = 1;
-	let lastError: string = '';
-
-	while (true) {
-		if (trial > retryCount) {
-			console.error('** Timeout!');
-			console.error(lastError);
-			console.error(`Timeout: ${timeoutMessage} after ${(retryCount * retryInterval) / 1000} seconds.`);
-			throw new Error(`Timeout: ${timeoutMessage} after ${(retryCount * retryInterval) / 1000} seconds.`);
-		}
-
-		let result;
-		try {
-			result = await fn();
-			if (acceptFn(result)) {
-				return result;
-			} else {
-				lastError = 'Did not pass accept function';
+	const safeToKill = new Promise<void>(resolve => {
+		process.stdout?.on('data', data => {
+			const output = data.toString();
+			if (output.indexOf('calling app.quit()') >= 0 && type === 'electron') {
+				setTimeout(() => resolve(), 500 /* give Electron some time to actually terminate fully */);
 			}
-		} catch (e: any) {
-			lastError = Array.isArray(e.stack) ? e.stack.join(os.EOL) : e.stack;
-		}
+			logger.log(`[${type}] stdout: ${output}`);
+		});
+		process.stderr?.on('data', error => logger.log(`[${type}] stderr: ${error}`));
+	});
 
-		await new Promise(resolve => setTimeout(resolve, retryInterval));
-		trial++;
+	process.once('exit', (code, signal) => {
+		logger.log(`[${type}] Process terminated (pid: ${process.pid}, code: ${code}, signal: ${signal})`);
+
+		instances.delete(instance);
+	});
+
+	return { safeToKill };
+}
+
+async function teardownAll(signal?: number) {
+	stopped = true;
+
+	for (const instance of instances) {
+		await instance.kill();
+	}
+
+	if (typeof signal === 'number') {
+		process.exit(signal);
+	}
+}
+
+let stopped = false;
+process.on('exit', () => teardownAll());
+process.on('SIGINT', () => teardownAll(128 + 2)); 	 // https://nodejs.org/docs/v14.16.0/api/process.html#process_signal_events
+process.on('SIGTERM', () => teardownAll(128 + 15)); // same as above
+
+export async function launch(options: LaunchOptions): Promise<Code> {
+	if (stopped) {
+		throw new Error('Smoke test process has terminated, refusing to spawn Code');
+	}
+
+	// Browser smoke tests
+	if (options.web) {
+		const { serverProcess, driver } = await measureAndLog(() => launchPlaywrightBrowser(options), 'launch playwright (browser)', options.logger);
+		registerInstance(serverProcess, options.logger, 'server');
+
+		return new Code(driver, options.logger, serverProcess, undefined, options.quality, options.version);
+	}
+
+	// Electron smoke tests (playwright)
+	else {
+		const { electronProcess, driver } = await measureAndLog(() => launchPlaywrightElectron(options), 'launch playwright (electron)', options.logger);
+		const { safeToKill } = registerInstance(electronProcess, options.logger, 'electron');
+
+		return new Code(driver, options.logger, electronProcess, safeToKill, options.quality, options.version);
 	}
 }
 
 export class Code {
 
-	private _activeWindowId: number | undefined = undefined;
-	driver: IDriver;
+	readonly driver: PlaywrightDriver;
 
 	constructor(
-		private client: IDisposable,
-		driver: IDriver,
+		driver: PlaywrightDriver,
 		readonly logger: Logger,
-		private readonly pid: number | undefined
+		private readonly mainProcess: cp.ChildProcess,
+		private readonly safeToKill: Promise<void> | undefined,
+		readonly quality: Quality,
+		readonly version: { major: number; minor: number; patch: number }
 	) {
 		this.driver = new Proxy(driver, {
-			get(target, prop, receiver) {
+			get(target, prop) {
 				if (typeof prop === 'symbol') {
 					throw new Error('Invalid usage');
 				}
 
+				// eslint-disable-next-line local/code-no-any-casts
 				const targetProp = (target as any)[prop];
 				if (typeof targetProp !== 'function') {
 					return targetProp;
@@ -276,56 +148,127 @@ export class Code {
 		});
 	}
 
-	async capturePage(): Promise<string> {
-		const windowId = await this.getActiveWindowId();
-		return await this.driver.capturePage(windowId);
+	get editContextEnabled(): boolean {
+		return !(this.quality === Quality.Stable && this.version.major === 1 && this.version.minor < 101);
 	}
 
-	async waitForWindowIds(fn: (windowIds: number[]) => boolean): Promise<void> {
-		await poll(() => this.driver.getWindowIds(), fn, `get window ids`);
+	async startTracing(name?: string): Promise<void> {
+		return await this.driver.startTracing(name);
 	}
 
-	async dispatchKeybinding(keybinding: string): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await this.driver.dispatchKeybinding(windowId, keybinding);
+	async stopTracing(name?: string, persist: boolean = false): Promise<void> {
+		return await this.driver.stopTracing(name, persist);
 	}
 
-	async reload(): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await this.driver.reloadWindow(windowId);
+	/**
+	 * Dispatch a keybinding to the application.
+	 * @param keybinding The keybinding to dispatch, e.g. 'ctrl+shift+p'.
+	 * @param accept The acceptance function to await before returning. Wherever
+	 * possible this should verify that the keybinding did what was expected,
+	 * otherwise it will likely be a cause of difficult to investigate race
+	 * conditions. This is particularly insidious when used in the automation
+	 * library as it can surface across many test suites.
+	 *
+	 * This requires an async function even when there's no implementation to
+	 * force the author to think about the accept callback and prevent mistakes
+	 * like not making it async.
+	 */
+	async dispatchKeybinding(keybinding: string, accept: () => Promise<void>): Promise<void> {
+		await this.driver.sendKeybinding(keybinding, accept);
+	}
+
+	async didFinishLoad(): Promise<void> {
+		return this.driver.didFinishLoad();
 	}
 
 	async exit(): Promise<void> {
-		const exitPromise = this.driver.exitApplication();
+		return measureAndLog(() => new Promise<void>(resolve => {
+			const pid = this.mainProcess.pid!;
 
-		// If we know the `pid`, use that to await the
-		// process to terminate (desktop).
-		const pid = this.pid;
-		if (typeof pid === 'number') {
-			await (async () => {
-				while (true) {
+			let done = false;
+
+			// Start the exit flow via driver
+			this.driver.close();
+
+			let safeToKill = false;
+			this.safeToKill?.then(() => {
+				this.logger.log('Smoke test exit(): safeToKill() called');
+				safeToKill = true;
+			});
+
+			// Await the exit of the application
+			(async () => {
+				let retries = 0;
+				while (!done) {
+					retries++;
+
+					if (safeToKill) {
+						this.logger.log('Smoke test exit(): call did not terminate the process yet, but safeToKill is true, so we can kill it');
+						this.kill(pid);
+					}
+
+					switch (retries) {
+
+						// after 10 seconds: forcefully kill
+						case 20: {
+							this.logger.log('Smoke test exit(): call did not terminate process after 10s, forcefully exiting the application...');
+							this.kill(pid);
+							break;
+						}
+
+						// after 20 seconds: give up
+						case 40: {
+							this.logger.log('Smoke test exit(): call did not terminate process after 20s, giving up');
+							this.kill(pid);
+							done = true;
+							resolve();
+							break;
+						}
+					}
+
 					try {
-						process.kill(pid, 0); // throws an exception if the main process doesn't exist anymore.
-						await new Promise(c => setTimeout(c, 100));
+						process.kill(pid, 0); // throws an exception if the process doesn't exist anymore.
+						await this.wait(500);
 					} catch (error) {
-						return;
+						this.logger.log('Smoke test exit(): call terminated process successfully');
+
+						done = true;
+						resolve();
 					}
 				}
 			})();
+		}), 'Code#exit()', this.logger);
+	}
+
+	private kill(pid: number): void {
+		try {
+			process.kill(pid, 0); // throws an exception if the process doesn't exist anymore.
+		} catch (e) {
+			this.logger.log('Smoke test kill(): returning early because process does not exist anymore');
+			return;
 		}
 
-		// Otherwise await the exit promise (web).
-		else {
-			await exitPromise;
+		try {
+			this.logger.log(`Smoke test kill(): Trying to SIGTERM process: ${pid}`);
+			process.kill(pid);
+		} catch (e) {
+			this.logger.log('Smoke test kill(): SIGTERM failed', e);
 		}
 	}
 
+	async getElement(selector: string): Promise<IElement | undefined> {
+		return (await this.driver.getElements(selector))?.[0];
+	}
+
+	async getElements(selector: string, recursive: boolean): Promise<IElement[] | undefined> {
+		return this.driver.getElements(selector, recursive);
+	}
+
 	async waitForTextContent(selector: string, textContent?: string, accept?: (result: string) => boolean, retryCount?: number): Promise<string> {
-		const windowId = await this.getActiveWindowId();
 		accept = accept || (result => textContent !== undefined ? textContent === result : !!result);
 
-		return await poll(
-			() => this.driver.getElements(windowId, selector).then(els => els.length > 0 ? Promise.resolve(els[0].textContent) : Promise.reject(new Error('Element not found for textContent'))),
+		return await this.poll(
+			() => this.driver.getElements(selector).then(els => els.length > 0 ? Promise.resolve(els[0].textContent) : Promise.reject(new Error('Element not found for textContent'))),
 			s => accept!(typeof s === 'string' ? s : ''),
 			`get text content '${selector}'`,
 			retryCount
@@ -333,76 +276,127 @@ export class Code {
 	}
 
 	async waitAndClick(selector: string, xoffset?: number, yoffset?: number, retryCount: number = 200): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await poll(() => this.driver.click(windowId, selector, xoffset, yoffset), () => true, `click '${selector}'`, retryCount);
+		await this.poll(() => this.driver.click(selector, xoffset, yoffset), () => true, `click '${selector}'`, retryCount);
 	}
 
-	async waitAndDoubleClick(selector: string): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await poll(() => this.driver.doubleClick(windowId, selector), () => true, `double click '${selector}'`);
+	/**
+	 * Clicks an element using Playwright's actionability-checked `page.click` (which
+	 * re-verifies `elementFromPoint` right before dispatching, so the element can't
+	 * shift under the click), with a stable-coordinates fallback when actionability
+	 * checks fail due to an overlay intercepting pointer events. Unlike
+	 * {@link waitAndClick} this does not poll/retry the click — it waits for the
+	 * element to exist first, then attempts a single click. Use for elements that
+	 * may shift due to siblings being inserted asynchronously (e.g. status bar items
+	 * in the editor area when extensions register a language status item).
+	 */
+	async robustClick(selector: string): Promise<void> {
+		await this.waitForElement(selector);
+		await this.driver.robustClick(selector);
 	}
 
 	async waitForSetValue(selector: string, value: string): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await poll(() => this.driver.setValue(windowId, selector, value), () => true, `set value '${selector}'`);
+		await this.poll(() => this.driver.setValue(selector, value), () => true, `set value '${selector}'`);
 	}
 
-	async waitForElements(selector: string, recursive: boolean, accept: (result: IElement[]) => boolean = result => result.length > 0): Promise<IElement[]> {
-		const windowId = await this.getActiveWindowId();
-		return await poll(() => this.driver.getElements(windowId, selector, recursive), accept, `get elements '${selector}'`);
+	async waitForElements(selector: string, recursive: boolean, accept: (result: IElement[]) => boolean = result => result.length > 0, retryCount?: number): Promise<IElement[]> {
+		return await this.poll(() => this.driver.getElements(selector, recursive), accept, `get elements '${selector}'`, retryCount);
 	}
 
 	async waitForElement(selector: string, accept: (result: IElement | undefined) => boolean = result => !!result, retryCount: number = 200): Promise<IElement> {
-		const windowId = await this.getActiveWindowId();
-		return await poll<IElement>(() => this.driver.getElements(windowId, selector).then(els => els[0]), accept, `get element '${selector}'`, retryCount);
+		return await this.poll<IElement>(() => this.driver.getElements(selector).then(els => els[0]), accept, `get element '${selector}'`, retryCount);
 	}
 
 	async waitForActiveElement(selector: string, retryCount: number = 200): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await poll(() => this.driver.isActiveElement(windowId, selector), r => r, `is active element '${selector}'`, retryCount);
+		await this.poll(() => this.driver.isActiveElement(selector), r => r, `is active element '${selector}'`, retryCount);
 	}
 
-	async waitForTitle(fn: (title: string) => boolean): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await poll(() => this.driver.getTitle(windowId), fn, `get title`);
+	async waitForTitle(accept: (title: string) => boolean): Promise<void> {
+		await this.poll(() => this.driver.getTitle(), accept, `get title`);
 	}
 
 	async waitForTypeInEditor(selector: string, text: string): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await poll(() => this.driver.typeInEditor(windowId, selector, text), () => true, `type in editor '${selector}'`);
+		await this.poll(() => this.driver.typeInEditor(selector, text), () => true, `type in editor '${selector}'`);
+	}
+
+	async waitForEditorSelection(selector: string, accept: (selection: { selectionStart: number; selectionEnd: number }) => boolean): Promise<void> {
+		await this.poll(() => this.driver.getEditorSelection(selector), accept, `get editor selection '${selector}'`);
 	}
 
 	async waitForTerminalBuffer(selector: string, accept: (result: string[]) => boolean): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await poll(() => this.driver.getTerminalBuffer(windowId, selector), accept, `get terminal buffer '${selector}'`);
+		await this.poll(() => this.driver.getTerminalBuffer(selector), accept, `get terminal buffer '${selector}'`);
 	}
 
 	async writeInTerminal(selector: string, value: string): Promise<void> {
-		const windowId = await this.getActiveWindowId();
-		await poll(() => this.driver.writeInTerminal(windowId, selector, value), () => true, `writeInTerminal '${selector}'`);
+		await this.poll(() => this.driver.writeInTerminal(selector, value), () => true, `writeInTerminal '${selector}'`);
 	}
 
-	async getLocaleInfo(): Promise<ILocaleInfo> {
-		const windowId = await this.getActiveWindowId();
-		return await this.driver.getLocaleInfo(windowId);
+	async whenWorkbenchRestored(): Promise<void> {
+		await this.poll(() => this.driver.whenWorkbenchRestored(), () => true, `when workbench restored`);
 	}
 
-	async getLocalizedStrings(): Promise<ILocalizedStrings> {
-		const windowId = await this.getActiveWindowId();
-		return await this.driver.getLocalizedStrings(windowId);
+	/**
+	 * Triggers a window reload via `trigger` and waits until the new window is up
+	 * and its workbench restored. Awaiting {@link whenWorkbenchRestored} alone is
+	 * not enough because that call can still be answered by the old, already
+	 * restored document before the reload took effect.
+	 */
+	async reloadWindow(trigger: () => Promise<void>): Promise<void> {
+		const marker = await this.driver.markWindowForReload();
+		await trigger();
+		await this.driver.waitForWindowReload(marker);
+		await this.whenWorkbenchRestored();
 	}
 
-	private async getActiveWindowId(): Promise<number> {
-		if (typeof this._activeWindowId !== 'number') {
-			const windows = await this.driver.getWindowIds();
-			this._activeWindowId = windows[0];
+	getLocaleInfo(): Promise<ILocaleInfo> {
+		return this.driver.getLocaleInfo();
+	}
+
+	getLocalizedStrings(): Promise<ILocalizedStrings> {
+		return this.driver.getLocalizedStrings();
+	}
+
+	getLogs(): Promise<ILogFile[]> {
+		return this.driver.getLogs();
+	}
+
+	wait(millis: number): Promise<void> {
+		return this.driver.wait(millis);
+	}
+
+	private async poll<T>(
+		fn: () => Promise<T>,
+		acceptFn: (result: T) => boolean,
+		timeoutMessage: string,
+		retryCount = 200,
+		retryInterval = 100 // millis
+	): Promise<T> {
+		let trial = 1;
+		let lastError: string = '';
+
+		while (true) {
+			if (trial > retryCount) {
+				this.logger.log('Timeout!');
+				this.logger.log(lastError);
+				this.logger.log(`Timeout: ${timeoutMessage} after ${(retryCount * retryInterval) / 1000} seconds.`);
+
+				throw new Error(`Timeout: ${timeoutMessage} after ${(retryCount * retryInterval) / 1000} seconds.`);
+			}
+
+			let result;
+			try {
+				result = await fn();
+				if (acceptFn(result)) {
+					return result;
+				} else {
+					lastError = 'Did not pass accept function';
+				}
+			} catch (e: any) {
+				lastError = Array.isArray(e.stack) ? e.stack.join(os.EOL) : e.stack;
+			}
+
+			await this.wait(retryInterval);
+			trial++;
 		}
-
-		return this._activeWindowId;
-	}
-
-	dispose(): void {
-		this.client.dispose();
 	}
 }
 

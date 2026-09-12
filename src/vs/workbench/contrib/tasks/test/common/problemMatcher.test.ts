@@ -2,10 +2,12 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as matchers from 'vs/workbench/contrib/tasks/common/problemMatcher';
+import * as matchers from '../../common/problemMatcher.js';
 
-import * as assert from 'assert';
-import { ValidationState, IProblemReporter, ValidationStatus } from 'vs/base/common/parsers';
+import assert from 'assert';
+import { ValidationState, IProblemReporter, ValidationStatus } from '../../../../../base/common/parsers.js';
+import { MarkerSeverity } from '../../../../../platform/markers/common/markers.js';
+import { ensureNoDisposablesAreLeakedInTestSuite } from '../../../../../base/test/common/utils.js';
 
 class ProblemReporter implements IProblemReporter {
 	private _validationStatus: ValidationStatus;
@@ -60,6 +62,8 @@ suite('ProblemPatternParser', () => {
 	let parser: matchers.ProblemPatternParser;
 	const testRegexp = new RegExp('test');
 
+	ensureNoDisposablesAreLeakedInTestSuite();
+
 	setup(() => {
 		reporter = new ProblemReporter();
 		parser = new matchers.ProblemPatternParser(reporter);
@@ -67,10 +71,10 @@ suite('ProblemPatternParser', () => {
 
 	suite('single-pattern definitions', () => {
 		test('parses a pattern defined by only a regexp', () => {
-			let problemPattern: matchers.Config.ProblemPattern = {
+			const problemPattern: matchers.Config.IProblemPattern = {
 				regexp: 'test'
 			};
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert(reporter.isOK());
 			assert.deepStrictEqual(parsed, {
 				regexp: testRegexp,
@@ -82,11 +86,11 @@ suite('ProblemPatternParser', () => {
 			});
 		});
 		test('does not sets defaults for line and character if kind is File', () => {
-			let problemPattern: matchers.Config.ProblemPattern = {
+			const problemPattern: matchers.Config.IProblemPattern = {
 				regexp: 'test',
 				kind: 'file'
 			};
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.deepStrictEqual(parsed, {
 				regexp: testRegexp,
 				kind: matchers.ProblemLocationKind.File,
@@ -98,10 +102,10 @@ suite('ProblemPatternParser', () => {
 
 	suite('multi-pattern definitions', () => {
 		test('defines a pattern based on regexp and property fields, with file/line location', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', file: 3, line: 4, column: 5, message: 6 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert(reporter.isOK());
 			assert.deepStrictEqual(parsed,
 				[{
@@ -115,10 +119,10 @@ suite('ProblemPatternParser', () => {
 			);
 		});
 		test('defines a pattern bsaed on regexp and property fields, with location', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', file: 3, location: 4, message: 6 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert(reporter.isOK());
 			assert.deepStrictEqual(parsed,
 				[{
@@ -131,13 +135,13 @@ suite('ProblemPatternParser', () => {
 			);
 		});
 		test('accepts a pattern that provides the fields from multiple entries', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', file: 3 },
 				{ regexp: 'test1', line: 4 },
 				{ regexp: 'test2', column: 5 },
 				{ regexp: 'test3', message: 6 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert(reporter.isOK());
 			assert.deepStrictEqual(parsed, [
 				{ regexp: testRegexp, kind: matchers.ProblemLocationKind.Location, file: 3 },
@@ -147,82 +151,82 @@ suite('ProblemPatternParser', () => {
 			]);
 		});
 		test('forbids setting the loop flag outside of the last element in the array', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', file: 3, loop: true },
 				{ regexp: 'test1', line: 4 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.strictEqual(null, parsed);
 			assert.strictEqual(ValidationState.Error, reporter.state);
 			assert(reporter.hasMessage('The loop property is only supported on the last line matcher.'));
 		});
 		test('forbids setting the kind outside of the first element of the array', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', file: 3 },
 				{ regexp: 'test1', kind: 'file', line: 4 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.strictEqual(null, parsed);
 			assert.strictEqual(ValidationState.Error, reporter.state);
 			assert(reporter.hasMessage('The problem pattern is invalid. The kind property must be provided only in the first element'));
 		});
 
 		test('kind: Location requires a regexp', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ file: 0, line: 1, column: 20, message: 0 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.strictEqual(null, parsed);
 			assert.strictEqual(ValidationState.Error, reporter.state);
 			assert(reporter.hasMessage('The problem pattern is missing a regular expression.'));
 		});
 		test('kind: Location requires a regexp on every entry', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', file: 3 },
 				{ line: 4 },
 				{ regexp: 'test2', column: 5 },
 				{ regexp: 'test3', message: 6 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.strictEqual(null, parsed);
 			assert.strictEqual(ValidationState.Error, reporter.state);
 			assert(reporter.hasMessage('The problem pattern is missing a regular expression.'));
 		});
 		test('kind: Location requires a message', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', file: 0, line: 1, column: 20 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.strictEqual(null, parsed);
 			assert.strictEqual(ValidationState.Error, reporter.state);
 			assert(reporter.hasMessage('The problem pattern is invalid. It must have at least have a file and a message.'));
 		});
 
 		test('kind: Location requires a file', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', line: 1, column: 20, message: 0 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.strictEqual(null, parsed);
 			assert.strictEqual(ValidationState.Error, reporter.state);
 			assert(reporter.hasMessage('The problem pattern is invalid. It must either have kind: "file" or have a line or location match group.'));
 		});
 
 		test('kind: Location requires either a line or location', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', file: 1, column: 20, message: 0 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.strictEqual(null, parsed);
 			assert.strictEqual(ValidationState.Error, reporter.state);
 			assert(reporter.hasMessage('The problem pattern is invalid. It must either have kind: "file" or have a line or location match group.'));
 		});
 
 		test('kind: File accepts a regexp, file and message', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', file: 2, kind: 'file', message: 6 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert(reporter.isOK());
 			assert.deepStrictEqual(parsed,
 				[{
@@ -235,23 +239,160 @@ suite('ProblemPatternParser', () => {
 		});
 
 		test('kind: File requires a file', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', kind: 'file', message: 6 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.strictEqual(null, parsed);
 			assert.strictEqual(ValidationState.Error, reporter.state);
 			assert(reporter.hasMessage('The problem pattern is invalid. It must have at least have a file and a message.'));
 		});
 
 		test('kind: File requires a message', () => {
-			let problemPattern: matchers.Config.MultiLineProblemPattern = [
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [
 				{ regexp: 'test', kind: 'file', file: 6 }
 			];
-			let parsed = parser.parse(problemPattern);
+			const parsed = parser.parse(problemPattern);
 			assert.strictEqual(null, parsed);
 			assert.strictEqual(ValidationState.Error, reporter.state);
 			assert(reporter.hasMessage('The problem pattern is invalid. It must have at least have a file and a message.'));
 		});
+
+		test('empty pattern array should be handled gracefully', () => {
+			const problemPattern: matchers.Config.MultiLineProblemPattern = [];
+			const parsed = parser.parse(problemPattern);
+			assert.strictEqual(null, parsed);
+			assert.strictEqual(ValidationState.Error, reporter.state);
+			assert(reporter.hasMessage('The problem pattern is invalid. It must contain at least one pattern.'));
+		});
+	});
+});
+
+suite('ProblemPatternRegistry - msCompile', () => {
+	ensureNoDisposablesAreLeakedInTestSuite();
+	test('matches lines with leading whitespace', () => {
+		const matcher = matchers.createLineMatcher({
+			owner: 'msCompile',
+			applyTo: matchers.ApplyToKind.allDocuments,
+			fileLocation: matchers.FileLocationKind.Absolute,
+			pattern: matchers.ProblemPatternRegistry.get('msCompile')
+		});
+		const line = '    /workspace/app.cs(5,10): error CS1001: Sample message';
+		const result = matcher.handle([line]);
+		assert.ok(result.match);
+		const marker = result.match!.marker;
+		assert.strictEqual(marker.code, 'CS1001');
+		assert.strictEqual(marker.message, 'Sample message');
+	});
+
+	test('matches lines without diagnostic code', () => {
+		const matcher = matchers.createLineMatcher({
+			owner: 'msCompile',
+			applyTo: matchers.ApplyToKind.allDocuments,
+			fileLocation: matchers.FileLocationKind.Absolute,
+			pattern: matchers.ProblemPatternRegistry.get('msCompile')
+		});
+		const line = '/workspace/app.cs(3,7): warning : Message without code';
+		const result = matcher.handle([line]);
+		assert.ok(result.match);
+		const marker = result.match!.marker;
+		assert.strictEqual(marker.code, undefined);
+		assert.strictEqual(marker.message, 'Message without code');
+	});
+
+	test('matches lines without location information', () => {
+		const matcher = matchers.createLineMatcher({
+			owner: 'msCompile',
+			applyTo: matchers.ApplyToKind.allDocuments,
+			fileLocation: matchers.FileLocationKind.Absolute,
+			pattern: matchers.ProblemPatternRegistry.get('msCompile')
+		});
+		const line = 'Main.cs: warning CS0168: The variable \'x\' is declared but never used';
+		const result = matcher.handle([line]);
+		assert.ok(result.match);
+		const marker = result.match!.marker;
+		assert.strictEqual(marker.code, 'CS0168');
+		assert.strictEqual(marker.message, 'The variable \'x\' is declared but never used');
+		assert.strictEqual(marker.severity, MarkerSeverity.Warning);
+	});
+
+	test('matches lines with build prefixes and fatal errors', () => {
+		const matcher = matchers.createLineMatcher({
+			owner: 'msCompile',
+			applyTo: matchers.ApplyToKind.allDocuments,
+			fileLocation: matchers.FileLocationKind.Absolute,
+			pattern: matchers.ProblemPatternRegistry.get('msCompile')
+		});
+		const line = '  1>c:/workspace/app.cs(12): fatal error C1002: Fatal diagnostics';
+		const result = matcher.handle([line]);
+		assert.ok(result.match);
+		const marker = result.match!.marker;
+		assert.strictEqual(marker.code, 'C1002');
+		assert.strictEqual(marker.message, 'Fatal diagnostics');
+		assert.strictEqual(marker.severity, MarkerSeverity.Error);
+	});
+
+	test('matches info diagnostics with codes', () => {
+		const matcher = matchers.createLineMatcher({
+			owner: 'msCompile',
+			applyTo: matchers.ApplyToKind.allDocuments,
+			fileLocation: matchers.FileLocationKind.Absolute,
+			pattern: matchers.ProblemPatternRegistry.get('msCompile')
+		});
+		const line = '2>/workspace/app.cs(20,5): info INF1001: Informational diagnostics';
+		const result = matcher.handle([line]);
+		assert.ok(result.match);
+		const marker = result.match!.marker;
+		assert.strictEqual(marker.code, 'INF1001');
+		assert.strictEqual(marker.message, 'Informational diagnostics');
+		assert.strictEqual(marker.severity, MarkerSeverity.Info);
+	});
+
+	test('matches lines with subcategory prefixes', () => {
+		const matcher = matchers.createLineMatcher({
+			owner: 'msCompile',
+			applyTo: matchers.ApplyToKind.allDocuments,
+			fileLocation: matchers.FileLocationKind.Absolute,
+			pattern: matchers.ProblemPatternRegistry.get('msCompile')
+		});
+		const line = 'Main.cs(17,20): subcategory warning CS0168: The variable \'x\' is declared but never used';
+		const result = matcher.handle([line]);
+		assert.ok(result.match);
+		const marker = result.match!.marker;
+		assert.strictEqual(marker.code, 'CS0168');
+		assert.strictEqual(marker.message, 'The variable \'x\' is declared but never used');
+		assert.strictEqual(marker.severity, MarkerSeverity.Warning);
+	});
+
+	test('matches complex diagnostics with all qualifiers', () => {
+		const matcher = matchers.createLineMatcher({
+			owner: 'msCompile',
+			applyTo: matchers.ApplyToKind.allDocuments,
+			fileLocation: matchers.FileLocationKind.Absolute,
+			pattern: matchers.ProblemPatternRegistry.get('msCompile')
+		});
+		const line = '  12>c:/workspace/Main.cs(42,7,43,2): subcategory fatal error CS9999: Complex diagnostics';
+		const result = matcher.handle([line]);
+		assert.ok(result.match);
+		const marker = result.match!.marker;
+		assert.strictEqual(marker.code, 'CS9999');
+		assert.strictEqual(marker.message, 'Complex diagnostics');
+		assert.strictEqual(marker.severity, MarkerSeverity.Error);
+		assert.strictEqual(marker.startLineNumber, 42);
+		assert.strictEqual(marker.startColumn, 7);
+		assert.strictEqual(marker.endLineNumber, 43);
+		assert.strictEqual(marker.endColumn, 2);
+	});
+
+	test('ignores diagnostics without origin', () => {
+		const matcher = matchers.createLineMatcher({
+			owner: 'msCompile',
+			applyTo: matchers.ApplyToKind.allDocuments,
+			fileLocation: matchers.FileLocationKind.Absolute,
+			pattern: matchers.ProblemPatternRegistry.get('msCompile')
+		});
+		const line = 'warning: The variable \'x\' is declared but never used';
+		const result = matcher.handle([line]);
+		assert.strictEqual(result.match, null);
 	});
 });

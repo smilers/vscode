@@ -3,90 +3,167 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IDisposable, dispose, Disposable, toDisposable } from 'vs/base/common/lifecycle';
-import { IWorkbenchContributionsRegistry, IWorkbenchContribution, Extensions as WorkbenchExtensions } from 'vs/workbench/common/contributions';
-import { Registry } from 'vs/platform/registry/common/platform';
-import { IWindowsConfiguration } from 'vs/platform/windows/common/windows';
-import { IHostService } from 'vs/workbench/services/host/browser/host';
-import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { localize } from 'vs/nls';
-import { IWorkspaceContextService, WorkbenchState } from 'vs/platform/workspace/common/workspace';
-import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
-import { RunOnceScheduler } from 'vs/base/common/async';
-import { URI } from 'vs/base/common/uri';
-import { isEqual } from 'vs/base/common/resources';
-import { isMacintosh, isNative, isLinux } from 'vs/base/common/platform';
-import { LifecyclePhase } from 'vs/workbench/services/lifecycle/common/lifecycle';
-import { IDialogService } from 'vs/platform/dialogs/common/dialogs';
-import { IWorkbenchEnvironmentService } from 'vs/workbench/services/environment/common/environmentService';
-import { IProductService } from 'vs/platform/product/common/productService';
+import { RunOnceScheduler } from '../../../../base/common/async.js';
+import { Disposable, dispose, IDisposable, toDisposable } from '../../../../base/common/lifecycle.js';
+import { isLinux, isMacintosh, isNative } from '../../../../base/common/platform.js';
+import { isEqual } from '../../../../base/common/resources.js';
+import { URI } from '../../../../base/common/uri.js';
+import { localize } from '../../../../nls.js';
+import { ConfigurationTarget, IConfigurationChangeEvent, IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { IDialogService } from '../../../../platform/dialogs/common/dialogs.js';
+import { IProductService } from '../../../../platform/product/common/productService.js';
+import { Registry } from '../../../../platform/registry/common/platform.js';
+import { IUserDataSyncEnablementService, IUserDataSyncService, SyncStatus } from '../../../../platform/userDataSync/common/userDataSync.js';
+import { IWindowsConfiguration, IWindowSettings, MenuSettings, MenuStyleConfiguration, TitleBarSetting, TitlebarStyle } from '../../../../platform/window/common/window.js';
+import { IWorkspaceContextService, WorkbenchState } from '../../../../platform/workspace/common/workspace.js';
+import { IWorkbenchContribution, IWorkbenchContributionsRegistry, Extensions as WorkbenchExtensions } from '../../../common/contributions.js';
+import { IWorkbenchEnvironmentService } from '../../../services/environment/common/environmentService.js';
+import { IExtensionService } from '../../../services/extensions/common/extensions.js';
+import { IHostService } from '../../../services/host/browser/host.js';
+import { LifecyclePhase } from '../../../services/lifecycle/common/lifecycle.js';
+import { IUserDataSyncWorkbenchService } from '../../../services/userDataSync/common/userDataSync.js';
 
 interface IConfiguration extends IWindowsConfiguration {
-	update?: { mode?: string; };
 	debug?: { console?: { wordWrap?: boolean } };
 	editor?: { accessibilitySupport?: 'on' | 'off' | 'auto' };
-	security?: { workspace?: { trust?: { enabled?: boolean } } };
-	files?: { legacyWatcher?: string, experimentalSandboxedFileService?: boolean };
+	security?: { workspace?: { trust?: { enabled?: boolean } }; restrictUNCAccess?: boolean };
+	window: IWindowSettings;
+	workbench?: { enableExperiments?: boolean };
+	telemetry?: { feedback?: { enabled?: boolean } };
+	chat?: {
+		extensionUnification?: { enabled?: boolean };
+		agentSessions?: { migrateLegacyCopilotCli?: boolean };
+		agentHost?: {
+			enabled?: boolean;
+			claudeAgent?: { enabled?: boolean };
+			codexAgent?: { enabled?: boolean };
+			otel?: {
+				enabled?: boolean;
+				exporterType?: string;
+				otlpEndpoint?: string;
+				captureContent?: boolean;
+				outfile?: string;
+				dbSpanExporter?: { enabled?: boolean };
+			};
+		};
+		editor?: { codex?: { preferAgentHost?: boolean } };
+	};
+	_extensionsGallery?: { enablePPE?: boolean };
+	accessibility?: { verbosity?: { debug?: boolean } };
 }
 
 export class SettingsChangeRelauncher extends Disposable implements IWorkbenchContribution {
 
-	private titleBarStyle: 'native' | 'custom' | undefined;
-	private nativeTabs: boolean | undefined;
-	private nativeFullScreen: boolean | undefined;
-	private clickThroughInactive: boolean | undefined;
-	private updateMode: string | undefined;
+	private static SETTINGS = [
+		TitleBarSetting.TITLE_BAR_STYLE,
+		MenuSettings.MenuStyle,
+		'window.nativeTabs',
+		'window.nativeFullScreen',
+		'window.clickThroughInactive',
+		'window.controlsStyle',
+		'editor.accessibilitySupport',
+		'security.workspace.trust.enabled',
+		'workbench.enableExperiments',
+		'_extensionsGallery.enablePPE',
+		'security.restrictUNCAccess',
+		'accessibility.verbosity.debug',
+		'telemetry.feedback.enabled',
+		'chat.extensionUnification.enabled',
+		'chat.agentSessions.migrateLegacyCopilotCli',
+		'chat.agentHost.claudeAgent.enabled',
+		'chat.editor.codex.preferAgentHost',
+		'chat.agentHost.otel.enabled',
+		'chat.agentHost.otel.exporterType',
+		'chat.agentHost.otel.otlpEndpoint',
+		'chat.agentHost.otel.captureContent',
+		'chat.agentHost.otel.outfile',
+		'chat.agentHost.otel.dbSpanExporter.enabled'
+	];
+
+	private readonly titleBarStyle = new ChangeObserver<TitlebarStyle>('string');
+	private readonly menuStyle = new ChangeObserver<MenuStyleConfiguration>('string');
+	private readonly nativeTabs = new ChangeObserver('boolean');
+	private readonly nativeFullScreen = new ChangeObserver('boolean');
+	private readonly clickThroughInactive = new ChangeObserver('boolean');
+	private readonly controlsStyle = new ChangeObserver('string');
 	private accessibilitySupport: 'on' | 'off' | 'auto' | undefined;
-	private workspaceTrustEnabled: boolean | undefined;
-	private legacyFileWatcher: string | undefined = undefined;
-	private experimentalSandboxedFileService: boolean | undefined = undefined;
+	private readonly workspaceTrustEnabled = new ChangeObserver('boolean');
+	private readonly experimentsEnabled = new ChangeObserver('boolean');
+	private readonly enablePPEExtensionsGallery = new ChangeObserver('boolean');
+	private readonly restrictUNCAccess = new ChangeObserver('boolean');
+	private readonly accessibilityVerbosityDebug = new ChangeObserver('boolean');
+	private readonly telemetryFeedbackEnabled = new ChangeObserver('boolean');
+	private readonly extensionUnificationEnabled = new ChangeObserver('boolean');
+	private readonly agentSessionsMigrateLegacyCopilotCli = new ChangeObserver('boolean');
+	private readonly agentHostClaudeAgentEnabled = new ChangeObserver('boolean');
+	private readonly editorCodexPreferAgentHost = new ChangeObserver('boolean');
+	private readonly agentHostOTelEnabled = new ChangeObserver('boolean');
+	private readonly agentHostOTelExporterType = new ChangeObserver('string');
+	private readonly agentHostOTelOtlpEndpoint = new ChangeObserver('string');
+	private readonly agentHostOTelCaptureContent = new ChangeObserver('boolean');
+	private readonly agentHostOTelOutfile = new ChangeObserver('string');
+	private readonly agentHostOTelDbSpanExporterEnabled = new ChangeObserver('boolean');
 
 	constructor(
 		@IHostService private readonly hostService: IHostService,
 		@IConfigurationService private readonly configurationService: IConfigurationService,
+		@IUserDataSyncService private readonly userDataSyncService: IUserDataSyncService,
+		@IUserDataSyncEnablementService private readonly userDataSyncEnablementService: IUserDataSyncEnablementService,
+		@IUserDataSyncWorkbenchService userDataSyncWorkbenchService: IUserDataSyncWorkbenchService,
 		@IProductService private readonly productService: IProductService,
 		@IDialogService private readonly dialogService: IDialogService
 	) {
 		super();
 
-		this.onConfigurationChange(configurationService.getValue<IConfiguration>(), false);
-		this._register(this.configurationService.onDidChangeConfiguration(e => this.onConfigurationChange(this.configurationService.getValue<IConfiguration>(), true)));
+		this.update(false);
+		this._register(this.configurationService.onDidChangeConfiguration(e => this.onConfigurationChange(e)));
+		this._register(userDataSyncWorkbenchService.onDidTurnOnSync(e => this.update(true)));
 	}
 
-	private onConfigurationChange(config: IConfiguration, notify: boolean): void {
+	private onConfigurationChange(e: IConfigurationChangeEvent): void {
+		if (e && !SettingsChangeRelauncher.SETTINGS.some(key => e.affectsConfiguration(key))) {
+			return;
+		}
+
+		// Skip if turning on sync is in progress
+		if (this.isTurningOnSyncInProgress()) {
+			return;
+		}
+
+		this.update(e.source !== ConfigurationTarget.DEFAULT /* do not ask to relaunch if defaults changed */);
+	}
+
+	private isTurningOnSyncInProgress(): boolean {
+		return !this.userDataSyncEnablementService.isEnabled() && this.userDataSyncService.status === SyncStatus.Syncing;
+	}
+
+	private update(askToRelaunch: boolean): void {
 		let changed = false;
 
+		function processChanged(didChange: boolean) {
+			changed = changed || didChange;
+		}
+
+		const config = this.configurationService.getValue<IConfiguration>();
 		if (isNative) {
 
 			// Titlebar style
-			if (typeof config.window?.titleBarStyle === 'string' && config.window?.titleBarStyle !== this.titleBarStyle && (config.window.titleBarStyle === 'native' || config.window.titleBarStyle === 'custom')) {
-				this.titleBarStyle = config.window.titleBarStyle;
-				changed = true;
-			}
+			processChanged((config.window.titleBarStyle === TitlebarStyle.NATIVE || config.window.titleBarStyle === TitlebarStyle.CUSTOM) && this.titleBarStyle.handleChange(config.window?.titleBarStyle));
+
+			// Windows/Linux: Menu style
+			processChanged(!isMacintosh && this.menuStyle.handleChange(config.window?.menuStyle));
 
 			// macOS: Native tabs
-			if (isMacintosh && typeof config.window?.nativeTabs === 'boolean' && config.window.nativeTabs !== this.nativeTabs) {
-				this.nativeTabs = config.window.nativeTabs;
-				changed = true;
-			}
+			processChanged(isMacintosh && this.nativeTabs.handleChange(config.window?.nativeTabs));
 
 			// macOS: Native fullscreen
-			if (isMacintosh && typeof config.window?.nativeFullScreen === 'boolean' && config.window.nativeFullScreen !== this.nativeFullScreen) {
-				this.nativeFullScreen = config.window.nativeFullScreen;
-				changed = true;
-			}
+			processChanged(isMacintosh && this.nativeFullScreen.handleChange(config.window?.nativeFullScreen));
 
 			// macOS: Click through (accept first mouse)
-			if (isMacintosh && typeof config.window?.clickThroughInactive === 'boolean' && config.window.clickThroughInactive !== this.clickThroughInactive) {
-				this.clickThroughInactive = config.window.clickThroughInactive;
-				changed = true;
-			}
+			processChanged(isMacintosh && this.clickThroughInactive.handleChange(config.window?.clickThroughInactive));
 
-			// Update channel
-			if (typeof config.update?.mode === 'string' && config.update.mode !== this.updateMode) {
-				this.updateMode = config.update.mode;
-				changed = true;
-			}
+			// Windows/Linux: Window controls style
+			processChanged(!isMacintosh && this.controlsStyle.handleChange(config.window?.controlsStyle));
 
 			// On linux turning on accessibility support will also pass this flag to the chrome renderer, thus a restart is required
 			if (isLinux && typeof config.editor?.accessibilitySupport === 'string' && config.editor.accessibilitySupport !== this.accessibilitySupport) {
@@ -97,26 +174,47 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 			}
 
 			// Workspace trust
-			if (typeof config?.security?.workspace?.trust?.enabled === 'boolean' && config.security?.workspace.trust.enabled !== this.workspaceTrustEnabled) {
-				this.workspaceTrustEnabled = config.security.workspace.trust.enabled;
-				changed = true;
-			}
+			processChanged(this.workspaceTrustEnabled.handleChange(config?.security?.workspace?.trust?.enabled));
 
-			// Legacy File Watcher
-			if (typeof config.files?.legacyWatcher === 'string' && config.files.legacyWatcher !== this.legacyFileWatcher) {
-				this.legacyFileWatcher = config.files.legacyWatcher;
-				changed = true;
-			}
+			// UNC host access restrictions
+			processChanged(this.restrictUNCAccess.handleChange(config?.security?.restrictUNCAccess));
 
-			// Experimental Sandboxed File Service
-			if (typeof config.files?.experimentalSandboxedFileService === 'boolean' && config.files.experimentalSandboxedFileService !== this.experimentalSandboxedFileService) {
-				this.experimentalSandboxedFileService = config.files.experimentalSandboxedFileService;
-				changed = true;
-			}
+			// Debug accessibility verbosity
+			processChanged(this.accessibilityVerbosityDebug.handleChange(config?.accessibility?.verbosity?.debug));
 		}
 
-		// Notify only when changed and we are the focused window (avoids notification spam across windows)
-		if (notify && changed) {
+		// Experiments
+		processChanged(this.experimentsEnabled.handleChange(config.workbench?.enableExperiments));
+
+		// Profiles
+		processChanged(this.productService.quality !== 'stable' && this.enablePPEExtensionsGallery.handleChange(config._extensionsGallery?.enablePPE));
+
+		// Enable Feedback
+		processChanged(this.telemetryFeedbackEnabled.handleChange(config.telemetry?.feedback?.enabled));
+
+		// Extension Unification (only when turning on)
+		processChanged(this.extensionUnificationEnabled.handleChange(config.chat?.extensionUnification?.enabled) && config.chat?.extensionUnification?.enabled === true);
+
+		// Agent provider registration and implementation preferences are read at spawn.
+		processChanged(this.agentHostClaudeAgentEnabled.handleChange(config.chat?.agentHost?.claudeAgent?.enabled));
+		processChanged(this.editorCodexPreferAgentHost.handleChange(config.chat?.editor?.codex?.preferAgentHost));
+
+		// The legacy Copilot CLI migration gate is snapshotted at startup by both the
+		// renderer and the shared agent-host process, so a change only applies after a restart.
+		processChanged(this.agentSessionsMigrateLegacyCopilotCli.handleChange(config.chat?.agentSessions?.migrateLegacyCopilotCli));
+
+		// Agent Host OTel: settings are forwarded as env vars when the agent host
+		// child process is spawned (see `electronAgentHostStarter.ts`). The child
+		// is owned by the main process and is not respawned on window reload, so
+		// changes only take effect after a full app restart.
+		processChanged(this.agentHostOTelEnabled.handleChange(config.chat?.agentHost?.otel?.enabled));
+		processChanged(this.agentHostOTelExporterType.handleChange(config.chat?.agentHost?.otel?.exporterType));
+		processChanged(this.agentHostOTelOtlpEndpoint.handleChange(config.chat?.agentHost?.otel?.otlpEndpoint));
+		processChanged(this.agentHostOTelCaptureContent.handleChange(config.chat?.agentHost?.otel?.captureContent));
+		processChanged(this.agentHostOTelOutfile.handleChange(config.chat?.agentHost?.otel?.outfile));
+		processChanged(this.agentHostOTelDbSpanExporterEnabled.handleChange(config.chat?.agentHost?.otel?.dbSpanExporter?.enabled));
+
+		if (askToRelaunch && changed && this.hostService.hasFocus) {
 			this.doConfirm(
 				isNative ?
 					localize('relaunchSettingMessage', "A setting has changed that requires a restart to take effect.") :
@@ -125,20 +223,46 @@ export class SettingsChangeRelauncher extends Disposable implements IWorkbenchCo
 					localize('relaunchSettingDetail', "Press the restart button to restart {0} and enable the setting.", this.productService.nameLong) :
 					localize('relaunchSettingDetailWeb', "Press the reload button to reload {0} and enable the setting.", this.productService.nameLong),
 				isNative ?
-					localize('restart', "&&Restart") :
-					localize('restartWeb', "&&Reload"),
+					localize({ key: 'restart', comment: ['&& denotes a mnemonic'] }, "&&Restart") :
+					localize({ key: 'restartWeb', comment: ['&& denotes a mnemonic'] }, "&&Reload"),
 				() => this.hostService.restart()
 			);
 		}
 	}
 
-	private async doConfirm(message: string, detail: string, primaryButton: string, confirmed: () => void): Promise<void> {
-		if (this.hostService.hasFocus) {
-			const res = await this.dialogService.confirm({ type: 'info', message, detail, primaryButton });
-			if (res.confirmed) {
-				confirmed();
-			}
+	private async doConfirm(message: string, detail: string, primaryButton: string, confirmedFn: () => void): Promise<void> {
+		const { confirmed } = await this.dialogService.confirm({ message, detail, primaryButton });
+		if (confirmed) {
+			confirmedFn();
 		}
+	}
+}
+
+interface TypeNameToType {
+	readonly boolean: boolean;
+	readonly string: string;
+}
+
+class ChangeObserver<T> {
+
+	static create<TTypeName extends 'boolean' | 'string'>(typeName: TTypeName): ChangeObserver<TypeNameToType[TTypeName]> {
+		return new ChangeObserver(typeName);
+	}
+
+	constructor(private readonly typeName: string) { }
+
+	private lastValue: T | undefined = undefined;
+
+	/**
+	 * Returns if there was a change compared to the last value
+	 */
+	handleChange(value: T | undefined): boolean {
+		if (typeof value === this.typeName && value !== this.lastValue) {
+			this.lastValue = value;
+			return true;
+		}
+
+		return false;
 	}
 }
 
@@ -153,19 +277,26 @@ export class WorkspaceChangeExtHostRelauncher extends Disposable implements IWor
 		@IWorkspaceContextService private readonly contextService: IWorkspaceContextService,
 		@IExtensionService extensionService: IExtensionService,
 		@IHostService hostService: IHostService,
-		@IWorkbenchEnvironmentService environmentService: IWorkbenchEnvironmentService
+		@IWorkbenchEnvironmentService environmentService: IWorkbenchEnvironmentService,
 	) {
 		super();
 
-		this.extensionHostRestarter = this._register(new RunOnceScheduler(() => {
+		this.extensionHostRestarter = this._register(new RunOnceScheduler(async () => {
 			if (!!environmentService.extensionTestsLocationURI) {
 				return; // no restart when in tests: see https://github.com/microsoft/vscode/issues/66936
+			}
+
+			if (environmentService.isSessionsWindow) {
+				return; // no restart for sessions window
 			}
 
 			if (environmentService.remoteAuthority) {
 				hostService.reload(); // TODO@aeschli, workaround
 			} else if (isNative) {
-				extensionService.restartExtensionHost();
+				const stopped = await extensionService.stopExtensionHosts(localize('restartExtensionHost.reason', "Changing workspace folders"));
+				if (stopped) {
+					extensionService.startExtensionHosts();
+				}
 			}
 		}, 10));
 
@@ -177,9 +308,7 @@ export class WorkspaceChangeExtHostRelauncher extends Disposable implements IWor
 			});
 
 		this._register(toDisposable(() => {
-			if (this.onDidChangeWorkspaceFoldersUnbind) {
-				this.onDidChangeWorkspaceFoldersUnbind.dispose();
-			}
+			this.onDidChangeWorkspaceFoldersUnbind?.dispose();
 		}));
 	}
 

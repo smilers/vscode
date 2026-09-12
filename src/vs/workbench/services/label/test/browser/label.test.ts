@@ -3,21 +3,33 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as resources from 'vs/base/common/resources';
-import * as assert from 'assert';
-import { TestEnvironmentService, TestPathService } from 'vs/workbench/test/browser/workbenchTestServices';
-import { URI } from 'vs/base/common/uri';
-import { LabelService } from 'vs/workbench/services/label/common/labelService';
-import { TestContextService } from 'vs/workbench/test/common/workbenchTestServices';
-import { WorkspaceFolder } from 'vs/platform/workspace/common/workspace';
-import { Workspace } from 'vs/platform/workspace/test/common/testWorkspace';
+import * as resources from '../../../../../base/common/resources.js';
+import assert from 'assert';
+import { TestEnvironmentService, TestLifecycleService, TestPathService, TestRemoteAgentService } from '../../../../test/browser/workbenchTestServices.js';
+import { URI } from '../../../../../base/common/uri.js';
+import { LabelService } from '../../common/labelService.js';
+import { TestContextService, TestStorageService } from '../../../../test/common/workbenchTestServices.js';
+import { WorkspaceFolder } from '../../../../../platform/workspace/common/workspace.js';
+import { TestWorkspace, Workspace } from '../../../../../platform/workspace/test/common/testWorkspace.js';
+import { isWindows } from '../../../../../base/common/platform.js';
+import { StorageScope, StorageTarget } from '../../../../../platform/storage/common/storage.js';
+import { Memento } from '../../../../common/memento.js';
+import { ResourceLabelFormatter } from '../../../../../platform/label/common/label.js';
+import { sep } from '../../../../../base/common/path.js';
+import { ensureNoDisposablesAreLeakedInTestSuite } from '../../../../../base/test/common/utils.js';
+import { DisposableStore } from '../../../../../base/common/lifecycle.js';
+import { Emitter, Event } from '../../../../../base/common/event.js';
 
 suite('URI Label', () => {
 	let labelService: LabelService;
+	let storageService: TestStorageService;
 
 	setup(() => {
-		labelService = new LabelService(TestEnvironmentService, new TestContextService(), new TestPathService());
+		storageService = new TestStorageService();
+		labelService = new LabelService(TestEnvironmentService, new TestContextService(), new TestPathService(URI.file('/foobar')), new TestRemoteAgentService(), storageService, new TestLifecycleService());
 	});
+
+	ensureNoDisposablesAreLeakedInTestSuite();
 
 	test('custom scheme', function () {
 		labelService.registerFormatter({
@@ -35,6 +47,27 @@ suite('URI Label', () => {
 		assert.strictEqual(labelService.getUriBasenameLabel(uri1), 'END');
 	});
 
+	test('file scheme', function () {
+		labelService.registerFormatter({
+			scheme: 'file',
+			formatting: {
+				label: '${path}',
+				separator: sep,
+				tildify: !isWindows,
+				normalizeDriveLetter: isWindows
+			}
+		});
+
+		const uri1 = TestWorkspace.folders[0].uri.with({ path: TestWorkspace.folders[0].uri.path.concat('/a/b/c/d') });
+		assert.strictEqual(labelService.getUriLabel(uri1, { relative: true }), isWindows ? 'a\\b\\c\\d' : 'a/b/c/d');
+		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), isWindows ? 'C:\\testWorkspace\\a\\b\\c\\d' : '/testWorkspace/a/b/c/d');
+		assert.strictEqual(labelService.getUriBasenameLabel(uri1), 'd');
+
+		const uri2 = URI.file('c:\\1/2/3');
+		assert.strictEqual(labelService.getUriLabel(uri2, { relative: false }), isWindows ? 'C:\\1\\2\\3' : '/c:\\1/2/3');
+		assert.strictEqual(labelService.getUriBasenameLabel(uri2), '3');
+	});
+
 	test('separator', function () {
 		labelService.registerFormatter({
 			scheme: 'vscode',
@@ -49,6 +82,357 @@ suite('URI Label', () => {
 		const uri1 = URI.parse('vscode://microsoft.com/1/2/3/4/5');
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'LABEL\\\\1\\2\\3\\4\\5\\microsoft.com\\END');
 		assert.strictEqual(labelService.getUriBasenameLabel(uri1), 'END');
+	});
+
+	test('returns the most specific registered resource label home', () => {
+		const outer = URI.file('/home/test/.agent');
+		const inner = URI.file('/home/test/.agent/sessions/session-id');
+		const outerRegistration = labelService.registerFormatter({ scheme: outer.scheme, home: outer.path, formatting: { label: 'Agent', separator: '/' } });
+		const innerRegistration = labelService.registerFormatter({ scheme: inner.scheme, home: inner.path, formatting: { label: 'Session', separator: '/' } });
+
+		const resource = URI.file('/home/test/.agent/sessions/session-id/file.md');
+		assert.deepStrictEqual({
+			home: labelService.getUriHome(resource)?.toString(),
+			label: labelService.getUriLabel(resource),
+		}, {
+			home: inner.toString(),
+			label: 'Session/file.md',
+		});
+
+		innerRegistration.dispose();
+		assert.deepStrictEqual({
+			home: labelService.getUriHome(resource)?.toString(),
+			label: labelService.getUriLabel(resource),
+		}, {
+			home: outer.toString(),
+			label: 'Agent/sessions/session-id/file.md',
+		});
+		outerRegistration.dispose();
+	});
+
+	test('ignores resource label homes for a different authority', () => {
+		const mismatchedRegistration = labelService.registerFormatter({
+			scheme: 'test',
+			authority: 'other',
+			home: '/sessions/session-id',
+			formatting: { label: 'Session', separator: '/' },
+		});
+
+		assert.strictEqual(labelService.getUriHome(URI.parse('test://current/sessions/session-id/file.md')), undefined);
+
+		mismatchedRegistration.dispose();
+	});
+
+	test('preserves resource label home authority and priority precedence', () => {
+		const resource = URI.parse('test://current/sessions/session-id/file.md');
+		const withoutAuthority = labelService.registerFormatter({
+			scheme: 'test',
+			home: '/sessions/session-id',
+			formatting: { label: 'No Authority', separator: '/' },
+		});
+		const globAuthority = labelService.registerFormatter({
+			scheme: 'test',
+			authority: 'cur*',
+			home: '/sessions/session-id',
+			formatting: { label: 'Glob Authority', separator: '/' },
+		});
+		const exactAuthority = labelService.registerFormatter({
+			scheme: 'test',
+			authority: 'current',
+			home: '/sessions/session-id',
+			formatting: { label: 'Exact Authority', separator: '/' },
+		});
+		const priorityExactAuthority = labelService.registerFormatter({
+			scheme: 'test',
+			authority: 'CURRENT',
+			home: '/sessions/session-id',
+			priority: true,
+			formatting: { label: 'Priority Exact Authority', separator: '/' },
+		});
+
+		assert.strictEqual(labelService.getUriLabel(resource), 'Priority Exact Authority/file.md');
+		priorityExactAuthority.dispose();
+		assert.strictEqual(labelService.getUriLabel(resource), 'Exact Authority/file.md');
+		exactAuthority.dispose();
+		assert.strictEqual(labelService.getUriLabel(resource), 'Glob Authority/file.md');
+		globAuthority.dispose();
+		assert.strictEqual(labelService.getUriLabel(resource), 'No Authority/file.md');
+		withoutAuthority.dispose();
+	});
+
+	test('resource label home paths are case-sensitive', () => {
+		const registration = labelService.registerFormatter({
+			scheme: 'test',
+			authority: 'current',
+			home: '/Sessions/session-id',
+			formatting: { label: 'Session', separator: '/' },
+		});
+
+		assert.deepStrictEqual({
+			matching: labelService.getUriLabel(URI.parse('test://current/Sessions/session-id/file.md')),
+			differentCase: labelService.getUriLabel(URI.parse('test://current/sessions/session-id/file.md')),
+		}, {
+			matching: 'Session/file.md',
+			differentCase: `${sep}sessions${sep}session-id${sep}file.md`,
+		});
+
+		registration.dispose();
+	});
+
+	test('resolves URI home templates to concrete formatting', () => {
+		let resolverCalls = 0;
+		const staticRegistration = labelService.registerFormatter({
+			scheme: 'test',
+			authority: 'current',
+			home: '/sessions/session-id',
+			formatting: { label: 'Static Session', separator: '/' },
+		});
+		const registration = labelService.registerFormatter({
+			home: URI.from({ scheme: 'test', authority: 'current', path: '/sessions/${sessionId}' }),
+			onDidChangeFormatting: Event.None,
+			formatting: context => {
+				resolverCalls++;
+				const sessionId = context.parameters.get('sessionId');
+				return sessionId === 'session-id' ? { label: 'Session ${path}', separator: '/' } : undefined;
+			},
+		});
+		const resource = URI.parse('test://current/sessions/session-id/files/result.md');
+
+		assert.deepStrictEqual({
+			home: labelService.getUriHome(resource)?.toString(),
+			label: labelService.getUriLabel(resource),
+			unrelated: labelService.getUriLabel(URI.parse('test://current/unrelated/file.md')),
+			resolverCalls,
+		}, {
+			home: 'test://current/sessions/session-id',
+			label: 'Session ${path}/files/result.md',
+			unrelated: `${sep}unrelated${sep}file.md`,
+			resolverCalls: 2,
+		});
+		registration.dispose();
+		assert.strictEqual(labelService.getUriLabel(resource), 'Static Session/files/result.md');
+		staticRegistration.dispose();
+	});
+
+	test('URI home templates without an authority match any authority', () => {
+		const registration = labelService.registerFormatter({
+			home: URI.from({ scheme: 'test', path: '/sessions/${sessionId}' }),
+			onDidChangeFormatting: Event.None,
+			formatting: context => ({ label: context.parameters.get('sessionId') ?? '', separator: '/' }),
+		});
+
+		assert.strictEqual(labelService.getUriLabel(URI.parse('test://remote/sessions/session-id/file.md')), 'session-id/file.md');
+
+		registration.dispose();
+	});
+
+	test('URI home formatters support authority roots', () => {
+		const registration = labelService.registerFormatter({
+			home: URI.from({ scheme: 'test', authority: 'current' }),
+			onDidChangeFormatting: Event.None,
+			formatting: () => ({ label: 'Root', separator: '/' }),
+		});
+		const resource = URI.parse('test://current/file.md');
+
+		assert.deepStrictEqual({
+			home: labelService.getUriHome(resource)?.toString(),
+			label: labelService.getUriLabel(resource),
+		}, {
+			home: 'test://current',
+			label: 'Root/file.md',
+		});
+
+		registration.dispose();
+	});
+
+	test('URI home templates do not capture dot path segments', () => {
+		let resolverCalls = 0;
+		const registration = labelService.registerFormatter({
+			home: URI.parse('test://current/sessions/${sessionId}'),
+			onDidChangeFormatting: Event.None,
+			formatting: () => {
+				resolverCalls++;
+				return { label: 'Session', separator: '/' };
+			},
+		});
+
+		const current = URI.parse('test://current/sessions/./file.md');
+		const parent = URI.parse('test://current/sessions/../file.md');
+		assert.deepStrictEqual({
+			currentHome: labelService.getUriHome(current),
+			current: labelService.getUriLabel(current),
+			parentHome: labelService.getUriHome(parent),
+			parent: labelService.getUriLabel(parent),
+			dotPrefixed: labelService.getUriLabel(URI.parse('test://current/sessions/.session/file.md')),
+			resolverCalls,
+		}, {
+			currentHome: undefined,
+			current: `${sep}sessions${sep}file.md`,
+			parentHome: undefined,
+			parent: `${sep}file.md`,
+			dotPrefixed: 'Session/file.md',
+			resolverCalls: 1,
+		});
+
+		registration.dispose();
+	});
+
+	test('URI home templates resolve all parameters', () => {
+		const registration = labelService.registerFormatter({
+			home: URI.parse('test://current/orgs/${org}/sessions/${sessionId}'),
+			onDidChangeFormatting: Event.None,
+			formatting: context => ({
+				label: `${context.parameters.get('org')}/${context.parameters.get('sessionId')}`,
+				separator: '/',
+			}),
+		});
+		const resource = URI.parse('test://current/orgs/acme/sessions/session-id/file.md');
+
+		assert.deepStrictEqual({
+			home: labelService.getUriHome(resource)?.path,
+			label: labelService.getUriLabel(resource),
+		}, {
+			home: '/orgs/acme/sessions/session-id',
+			label: 'acme/session-id/file.md',
+		});
+
+		registration.dispose();
+	});
+
+	test('URI home templates support trailing separators', () => {
+		const registration = labelService.registerFormatter({
+			home: URI.parse('test://current/sessions/${sessionId}/'),
+			onDidChangeFormatting: Event.None,
+			formatting: () => ({ label: 'Session', separator: '/' }),
+		});
+
+		assert.deepStrictEqual({
+			exact: labelService.getUriLabel(URI.parse('test://current/sessions/session-id')),
+			descendant: labelService.getUriLabel(URI.parse('test://current/sessions/session-id/file.md')),
+		}, {
+			exact: 'Session',
+			descendant: 'Session/file.md',
+		});
+
+		registration.dispose();
+	});
+
+	test('equally specific URI home templates use registration order', () => {
+		const formatter = {
+			home: URI.parse('test://current/sessions/${sessionId}'),
+			onDidChangeFormatting: Event.None,
+			formatting: () => ({ label: 'First', separator: '/' as const }),
+		};
+		const first = labelService.registerFormatter(formatter);
+		const second = labelService.registerFormatter({
+			...formatter,
+			formatting: () => ({ label: 'Second', separator: '/' }),
+		});
+		const resource = URI.parse('test://current/sessions/session-id/file.md');
+
+		assert.strictEqual(labelService.getUriLabel(resource), 'First/file.md');
+		first.dispose();
+		assert.strictEqual(labelService.getUriLabel(resource), 'Second/file.md');
+
+		second.dispose();
+	});
+
+	test('one URI home template formats all known sessions without resolving unrelated resources', () => {
+		let formatterChanges = 0;
+		let resolverCalls = 0;
+		const listener = labelService.onDidChangeFormatters(() => formatterChanges++);
+		const onDidChange = new Emitter<void>();
+		const labels = new Map(Array.from({ length: 100 }, (_, index) => [`session-${index}`, `Session ${index}`]));
+		const registration = labelService.registerFormatter({
+			home: URI.parse('test://current/sessions/${sessionId}'),
+			onDidChangeFormatting: onDidChange.event,
+			formatting: context => {
+				resolverCalls++;
+				const label = labels.get(context.parameters.get('sessionId') ?? '');
+				return label === undefined ? undefined : { label, separator: '/' };
+			},
+		});
+
+		assert.deepStrictEqual({
+			formatterChanges,
+			home: labelService.getUriHome(URI.parse('test://current/sessions/session-42/file.md'))?.toString(),
+			label: labelService.getUriLabel(URI.parse('test://current/sessions/session-42/file.md')),
+			unrelated: labelService.getUriLabel(URI.parse('test://current/unrelated/file.md')),
+			resolverCalls,
+		}, {
+			formatterChanges: 1,
+			home: 'test://current/sessions/session-42',
+			label: 'Session 42/file.md',
+			unrelated: `${sep}unrelated${sep}file.md`,
+			resolverCalls: 2,
+		});
+
+		labels.set('session-42', 'Renamed Session');
+		onDidChange.fire();
+		assert.deepStrictEqual({
+			formatterChanges,
+			label: labelService.getUriLabel(URI.parse('test://current/sessions/session-42/file.md')),
+		}, {
+			formatterChanges: 2,
+			label: 'Renamed Session/file.md',
+		});
+
+		registration.dispose();
+		onDidChange.fire();
+		assert.strictEqual(formatterChanges, 3);
+		onDidChange.dispose();
+		listener.dispose();
+	});
+
+	test('resource label homes take precedence over ordinary formatter changes', () => {
+		const resource = URI.file('/home/test/.agent/sessions/session-id/file.md');
+		const first = labelService.registerFormatter({
+			scheme: 'file',
+			formatting: { label: 'FIRST${path}', separator: '/' },
+		});
+		const home = labelService.registerFormatter({
+			home: URI.file('/home/test/.agent/sessions/${sessionId}'),
+			onDidChangeFormatting: Event.None,
+			formatting: () => ({ label: 'Session', separator: '/' }),
+		});
+
+		assert.strictEqual(labelService.getUriLabel(resource), 'Session/file.md');
+
+		first.dispose();
+		const second = labelService.registerFormatter({
+			scheme: 'file',
+			formatting: { label: 'SECOND${path}', separator: '/' },
+		});
+		assert.strictEqual(labelService.getUriLabel(resource), 'Session/file.md');
+
+		home.dispose();
+		second.dispose();
+	});
+
+	test('noPrefix skips resource label homes', () => {
+		const resource = URI.file('/home/test/.agent/sessions/session-id/file.md');
+		const home = labelService.registerFormatter({
+			home: URI.file('/home/test/.agent/sessions/${sessionId}'),
+			onDidChangeFormatting: Event.None,
+			formatting: () => ({ label: 'Agent/Session', separator: '/' }),
+		});
+
+		assert.strictEqual(labelService.getUriLabel(resource, { noPrefix: true }), resource.fsPath);
+
+		home.dispose();
+	});
+
+	test('keeps equivalent resource label home registrations until all are disposed', () => {
+		const root = URI.file('/home/test/.agent/sessions/session-id');
+		const formatter = { scheme: root.scheme, home: root.path, formatting: { label: 'Session', separator: '/' as const } };
+		const first = labelService.registerFormatter(formatter);
+		const second = labelService.registerFormatter({ ...formatter });
+
+		first.dispose();
+		assert.strictEqual(labelService.getUriLabel(labelService.getUriHome(URI.file('/home/test/.agent/sessions/session-id/file.md'))!), 'Session');
+
+		second.dispose();
+		assert.strictEqual(labelService.getUriHome(URI.file('/home/test/.agent/sessions/session-id/file.md')), undefined);
 	});
 
 	test('custom authority', function () {
@@ -157,26 +541,70 @@ suite('URI Label', () => {
 		const uri1 = URI.parse('vscode://microsoft.com/1/2/3/4/5');
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'LABEL: /END');
 	});
+
+
+	test('label caching', () => {
+		const m = new Memento('cachedResourceLabelFormatters2', storageService).getMemento(StorageScope.PROFILE, StorageTarget.MACHINE);
+		const makeFormatter = (scheme: string): ResourceLabelFormatter => ({ formatting: { label: `\${path} (${scheme})`, separator: '/' }, scheme });
+		assert.deepStrictEqual(m, {});
+
+		// registers a new formatter:
+		labelService.registerCachedFormatter(makeFormatter('a'));
+		assert.deepStrictEqual(m, { formatters: [makeFormatter('a')] });
+
+		// registers a 2nd formatter:
+		labelService.registerCachedFormatter(makeFormatter('b'));
+		assert.deepStrictEqual(m, { formatters: [makeFormatter('b'), makeFormatter('a')] });
+
+		// promotes a formatter on re-register:
+		labelService.registerCachedFormatter(makeFormatter('a'));
+		assert.deepStrictEqual(m, { formatters: [makeFormatter('a'), makeFormatter('b')] });
+
+		// no-ops if already in first place:
+		labelService.registerCachedFormatter(makeFormatter('a'));
+		assert.deepStrictEqual(m, { formatters: [makeFormatter('a'), makeFormatter('b')] });
+
+		// limits the cache:
+		for (let i = 0; i < 100; i++) {
+			labelService.registerCachedFormatter(makeFormatter(`i${i}`));
+		}
+		const expected: ResourceLabelFormatter[] = [];
+		for (let i = 50; i < 100; i++) {
+			expected.unshift(makeFormatter(`i${i}`));
+		}
+		assert.deepStrictEqual(m, { formatters: expected });
+
+		delete (m as { formatters: unknown }).formatters;
+	});
 });
 
 
 suite('multi-root workspace', () => {
 	let labelService: LabelService;
+	const disposables = new DisposableStore();
 
 	setup(() => {
 		const sources = URI.file('folder1/src');
 		const tests = URI.file('folder1/test');
 		const other = URI.file('folder2');
 
-		labelService = new LabelService(
+		labelService = disposables.add(new LabelService(
 			TestEnvironmentService,
 			new TestContextService(
 				new Workspace('test-workspace', [
-					new WorkspaceFolder({ uri: sources, index: 0, name: 'Sources' }, { uri: sources.toString() }),
-					new WorkspaceFolder({ uri: tests, index: 1, name: 'Tests' }, { uri: tests.toString() }),
-					new WorkspaceFolder({ uri: other, index: 2, name: resources.basename(other) }, { uri: other.toString() }),
+					new WorkspaceFolder({ uri: sources, index: 0, name: 'Sources' }),
+					new WorkspaceFolder({ uri: tests, index: 1, name: 'Tests' }),
+					new WorkspaceFolder({ uri: other, index: 2, name: resources.basename(other) }),
 				])),
-			new TestPathService());
+			new TestPathService(),
+			new TestRemoteAgentService(),
+			disposables.add(new TestStorageService()),
+			disposables.add(new TestLifecycleService())
+		));
+	});
+
+	teardown(() => {
+		disposables.clear();
 	});
 
 	test('labels of files in multiroot workspaces are the foldername followed by offset from the folder', () => {
@@ -249,6 +677,78 @@ suite('multi-root workspace', () => {
 			assert.strictEqual(generated, label, path);
 		});
 	});
+
+	test('stripPathSegments strips leading path segments', () => {
+		labelService.registerFormatter({
+			scheme: 'vscode-agent-host',
+			formatting: {
+				label: '${path}',
+				separator: '/',
+				stripPathSegments: 2
+			}
+		});
+
+		const uri = URI.from({ scheme: 'vscode-agent-host', authority: 'my-server', path: '/file//home/user/project/file.ts' });
+		const generated = labelService.getUriLabel(uri, { relative: false });
+		assert.strictEqual(generated, '/home/user/project/file.ts');
+	});
+
+	test('stripPathSegments combined with stripPathStartingSeparator', () => {
+		labelService.registerFormatter({
+			scheme: 'vscode-agent-host',
+			formatting: {
+				label: '${path}',
+				separator: '/',
+				stripPathSegments: 2,
+				stripPathStartingSeparator: true
+			}
+		});
+
+		const uri = URI.from({ scheme: 'vscode-agent-host', authority: 'my-server', path: '/file//home/user/file.ts' });
+		const generated = labelService.getUriLabel(uri, { relative: false });
+		assert.strictEqual(generated, 'home/user/file.ts');
+	});
+
+	test('stripPathSegments with fewer segments than requested', () => {
+		labelService.registerFormatter({
+			scheme: 'test-strip',
+			formatting: {
+				label: '${path}',
+				separator: '/',
+				stripPathSegments: 5
+			}
+		});
+
+		const uri = URI.from({ scheme: 'test-strip', path: '/a/b' });
+		const generated = labelService.getUriLabel(uri, { relative: false });
+		// Should strip as many as possible without crashing
+		assert.strictEqual(generated, '/b');
+	});
+
+	test('relative label without formatter', () => {
+		const rootFolder = URI.parse('myscheme://myauthority/');
+
+		labelService = disposables.add(new LabelService(
+			TestEnvironmentService,
+			new TestContextService(
+				new Workspace('test-workspace', [
+					new WorkspaceFolder({ uri: rootFolder, index: 0, name: 'FSProotFolder' }),
+				])),
+			new TestPathService(undefined, rootFolder.scheme),
+			new TestRemoteAgentService(),
+			disposables.add(new TestStorageService()),
+			disposables.add(new TestLifecycleService())
+		));
+
+		const generated = labelService.getUriLabel(URI.parse('myscheme://myauthority/some/folder/test.txt'), { relative: true });
+		if (isWindows) {
+			assert.strictEqual(generated, 'some\\folder\\test.txt');
+		} else {
+			assert.strictEqual(generated, 'some/folder/test.txt');
+		}
+	});
+
+	ensureNoDisposablesAreLeakedInTestSuite();
 });
 
 suite('workspace at FSP root', () => {
@@ -261,9 +761,13 @@ suite('workspace at FSP root', () => {
 			TestEnvironmentService,
 			new TestContextService(
 				new Workspace('test-workspace', [
-					new WorkspaceFolder({ uri: rootFolder, index: 0, name: 'FSProotFolder' }, { uri: rootFolder.toString() }),
+					new WorkspaceFolder({ uri: rootFolder, index: 0, name: 'FSProotFolder' }),
 				])),
-			new TestPathService());
+			new TestPathService(),
+			new TestRemoteAgentService(),
+			new TestStorageService(),
+			new TestLifecycleService()
+		);
 		labelService.registerFormatter({
 			scheme: 'myscheme',
 			formatting: {
@@ -311,4 +815,6 @@ suite('workspace at FSP root', () => {
 		generated = labelService.getUriLabel(URI.parse('myscheme://myauthority/some/folder/test.txt'), { relative: true, separator: '\\' });
 		assert.strictEqual(generated, 'some\\folder\\test.txt');
 	});
+
+	ensureNoDisposablesAreLeakedInTestSuite();
 });

@@ -3,23 +3,22 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as dom from 'vs/base/browser/dom';
-import { IKeyboardEvent } from 'vs/base/browser/keyboardEvent';
-import { IMouseEvent } from 'vs/base/browser/mouseEvent';
-import { Checkbox, ICheckboxStyles } from 'vs/base/browser/ui/checkbox/checkbox';
-import { IContextViewProvider } from 'vs/base/browser/ui/contextview/contextview';
-import { IFindInputCheckboxOpts } from 'vs/base/browser/ui/findinput/findInputCheckboxes';
-import { HistoryInputBox, IInputBoxStyles, IInputValidator, IMessage as InputBoxMessage } from 'vs/base/browser/ui/inputbox/inputBox';
-import { Widget } from 'vs/base/browser/ui/widget';
-import { Codicon } from 'vs/base/common/codicons';
-import { Color } from 'vs/base/common/color';
-import { Emitter, Event } from 'vs/base/common/event';
-import { KeyCode } from 'vs/base/common/keyCodes';
-import 'vs/css!./findInput';
-import * as nls from 'vs/nls';
+import { IKeyboardEvent } from '../../keyboardEvent.js';
+import { IMouseEvent } from '../../mouseEvent.js';
+import { IToggleStyles, Toggle } from '../toggle/toggle.js';
+import { IContextViewProvider } from '../contextview/contextview.js';
+import { IFindInputToggleOpts, navigateToggles } from './findInputToggles.js';
+import { HistoryInputBox, IInputBoxStyles, IInputValidator, IMessage as InputBoxMessage } from '../inputbox/inputBox.js';
+import { Widget } from '../widget.js';
+import { Codicon } from '../../../common/codicons.js';
+import { Emitter, Event } from '../../../common/event.js';
+import './findInput.css';
+import * as nls from '../../../../nls.js';
+import { IHistory } from '../../../common/history.js';
+import { type IHoverLifecycleOptions } from '../hover/hover.js';
 
 
-export interface IReplaceInputOptions extends IReplaceInputStyles {
+export interface IReplaceInputOptions {
 	readonly placeholder?: string;
 	readonly width?: number;
 	readonly validation?: IInputValidator;
@@ -27,31 +26,29 @@ export interface IReplaceInputOptions extends IReplaceInputStyles {
 	readonly flexibleHeight?: boolean;
 	readonly flexibleWidth?: boolean;
 	readonly flexibleMaxHeight?: number;
+	readonly hoverLifecycleOptions?: IHoverLifecycleOptions;
 
 	readonly appendPreserveCaseLabel?: string;
-	readonly history?: string[];
+	readonly history?: IHistory<string>;
 	readonly showHistoryHint?: () => boolean;
-}
-
-export interface IReplaceInputStyles extends IInputBoxStyles {
-	inputActiveOptionBorder?: Color;
-	inputActiveOptionForeground?: Color;
-	inputActiveOptionBackground?: Color;
+	readonly inputBoxStyles: IInputBoxStyles;
+	readonly toggleStyles: IToggleStyles;
 }
 
 const NLS_DEFAULT_LABEL = nls.localize('defaultLabel', "input");
-const NLS_PRESERVE_CASE_LABEL = nls.localize('label.preserveCaseCheckbox', "Preserve Case");
+const NLS_PRESERVE_CASE_LABEL = nls.localize('label.preserveCaseToggle', "Preserve Case");
 
-export class PreserveCaseCheckbox extends Checkbox {
-	constructor(opts: IFindInputCheckboxOpts) {
+class PreserveCaseToggle extends Toggle {
+	constructor(opts: IFindInputToggleOpts) {
 		super({
 			// TODO: does this need its own icon?
 			icon: Codicon.preserveCase,
 			title: NLS_PRESERVE_CASE_LABEL + opts.appendTitle,
 			isChecked: opts.isChecked,
+			hoverLifecycleOptions: opts.hoverLifecycleOptions,
 			inputActiveOptionBorder: opts.inputActiveOptionBorder,
 			inputActiveOptionForeground: opts.inputActiveOptionForeground,
-			inputActiveOptionBackground: opts.inputActiveOptionBackground
+			inputActiveOptionBackground: opts.inputActiveOptionBackground,
 		});
 	}
 }
@@ -66,45 +63,28 @@ export class ReplaceInput extends Widget {
 	private label: string;
 	private fixFocusOnOptionClickEnabled = true;
 
-	private inputActiveOptionBorder?: Color;
-	private inputActiveOptionForeground?: Color;
-	private inputActiveOptionBackground?: Color;
-	private inputBackground?: Color;
-	private inputForeground?: Color;
-	private inputBorder?: Color;
-
-	private inputValidationInfoBorder?: Color;
-	private inputValidationInfoBackground?: Color;
-	private inputValidationInfoForeground?: Color;
-	private inputValidationWarningBorder?: Color;
-	private inputValidationWarningBackground?: Color;
-	private inputValidationWarningForeground?: Color;
-	private inputValidationErrorBorder?: Color;
-	private inputValidationErrorBackground?: Color;
-	private inputValidationErrorForeground?: Color;
-
-	private preserveCase: PreserveCaseCheckbox;
+	private preserveCase: PreserveCaseToggle;
 	private cachedOptionsWidth: number = 0;
 	public domNode: HTMLElement;
 	public inputBox: HistoryInputBox;
 
 	private readonly _onDidOptionChange = this._register(new Emitter<boolean>());
-	public readonly onDidOptionChange: Event<boolean /* via keyboard */> = this._onDidOptionChange.event;
+	public get onDidOptionChange(): Event<boolean /* via keyboard */> { return this._onDidOptionChange.event; }
 
 	private readonly _onKeyDown = this._register(new Emitter<IKeyboardEvent>());
-	public readonly onKeyDown: Event<IKeyboardEvent> = this._onKeyDown.event;
+	public get onKeyDown(): Event<IKeyboardEvent> { return this._onKeyDown.event; }
 
 	private readonly _onMouseDown = this._register(new Emitter<IMouseEvent>());
-	public readonly onMouseDown: Event<IMouseEvent> = this._onMouseDown.event;
+	public get onMouseDown(): Event<IMouseEvent> { return this._onMouseDown.event; }
 
 	private readonly _onInput = this._register(new Emitter<void>());
-	public readonly onInput: Event<void> = this._onInput.event;
+	public get onInput(): Event<void> { return this._onInput.event; }
 
 	private readonly _onKeyUp = this._register(new Emitter<IKeyboardEvent>());
-	public readonly onKeyUp: Event<IKeyboardEvent> = this._onKeyUp.event;
+	public get onKeyUp(): Event<IKeyboardEvent> { return this._onKeyUp.event; }
 
 	private _onPreserveCaseKeyDown = this._register(new Emitter<IKeyboardEvent>());
-	public readonly onPreserveCaseKeyDown: Event<IKeyboardEvent> = this._onPreserveCaseKeyDown.event;
+	public get onPreserveCaseKeyDown(): Event<IKeyboardEvent> { return this._onPreserveCaseKeyDown.event; }
 
 	constructor(parent: HTMLElement | null, contextViewProvider: IContextViewProvider | undefined, private readonly _showOptionButtons: boolean, options: IReplaceInputOptions) {
 		super();
@@ -113,25 +93,8 @@ export class ReplaceInput extends Widget {
 		this.validation = options.validation;
 		this.label = options.label || NLS_DEFAULT_LABEL;
 
-		this.inputActiveOptionBorder = options.inputActiveOptionBorder;
-		this.inputActiveOptionForeground = options.inputActiveOptionForeground;
-		this.inputActiveOptionBackground = options.inputActiveOptionBackground;
-		this.inputBackground = options.inputBackground;
-		this.inputForeground = options.inputForeground;
-		this.inputBorder = options.inputBorder;
-
-		this.inputValidationInfoBorder = options.inputValidationInfoBorder;
-		this.inputValidationInfoBackground = options.inputValidationInfoBackground;
-		this.inputValidationInfoForeground = options.inputValidationInfoForeground;
-		this.inputValidationWarningBorder = options.inputValidationWarningBorder;
-		this.inputValidationWarningBackground = options.inputValidationWarningBackground;
-		this.inputValidationWarningForeground = options.inputValidationWarningForeground;
-		this.inputValidationErrorBorder = options.inputValidationErrorBorder;
-		this.inputValidationErrorBackground = options.inputValidationErrorBackground;
-		this.inputValidationErrorForeground = options.inputValidationErrorForeground;
-
 		const appendPreserveCaseLabel = options.appendPreserveCaseLabel || '';
-		const history = options.history || [];
+		const history = options.history || new Set([]);
 		const flexibleHeight = !!options.flexibleHeight;
 		const flexibleWidth = !!options.flexibleWidth;
 		const flexibleMaxHeight = options.flexibleMaxHeight;
@@ -145,31 +108,19 @@ export class ReplaceInput extends Widget {
 			validationOptions: {
 				validation: this.validation
 			},
-			inputBackground: this.inputBackground,
-			inputForeground: this.inputForeground,
-			inputBorder: this.inputBorder,
-			inputValidationInfoBackground: this.inputValidationInfoBackground,
-			inputValidationInfoForeground: this.inputValidationInfoForeground,
-			inputValidationInfoBorder: this.inputValidationInfoBorder,
-			inputValidationWarningBackground: this.inputValidationWarningBackground,
-			inputValidationWarningForeground: this.inputValidationWarningForeground,
-			inputValidationWarningBorder: this.inputValidationWarningBorder,
-			inputValidationErrorBackground: this.inputValidationErrorBackground,
-			inputValidationErrorForeground: this.inputValidationErrorForeground,
-			inputValidationErrorBorder: this.inputValidationErrorBorder,
 			history,
 			showHistoryHint: options.showHistoryHint,
 			flexibleHeight,
 			flexibleWidth,
-			flexibleMaxHeight
+			flexibleMaxHeight,
+			inputBoxStyles: options.inputBoxStyles
 		}));
 
-		this.preserveCase = this._register(new PreserveCaseCheckbox({
+		this.preserveCase = this._register(new PreserveCaseToggle({
 			appendTitle: appendPreserveCaseLabel,
 			isChecked: false,
-			inputActiveOptionBorder: this.inputActiveOptionBorder,
-			inputActiveOptionForeground: this.inputActiveOptionForeground,
-			inputActiveOptionBackground: this.inputActiveOptionBackground,
+			hoverLifecycleOptions: options.hoverLifecycleOptions,
+			...options.toggleStyles
 		}));
 		this._register(this.preserveCase.onChange(viaKeyboard => {
 			this._onDidOptionChange.fire(viaKeyboard);
@@ -189,45 +140,20 @@ export class ReplaceInput extends Widget {
 		}
 
 		// Arrow-Key support to navigate between options
-		let indexes = [this.preserveCase.domNode];
+		const indexes = [this.preserveCase.domNode];
 		this.onkeydown(this.domNode, (event: IKeyboardEvent) => {
-			if (event.equals(KeyCode.LeftArrow) || event.equals(KeyCode.RightArrow) || event.equals(KeyCode.Escape)) {
-				let index = indexes.indexOf(<HTMLElement>document.activeElement);
-				if (index >= 0) {
-					let newIndex: number = -1;
-					if (event.equals(KeyCode.RightArrow)) {
-						newIndex = (index + 1) % indexes.length;
-					} else if (event.equals(KeyCode.LeftArrow)) {
-						if (index === 0) {
-							newIndex = indexes.length - 1;
-						} else {
-							newIndex = index - 1;
-						}
-					}
-
-					if (event.equals(KeyCode.Escape)) {
-						indexes[index].blur();
-						this.inputBox.focus();
-					} else if (newIndex >= 0) {
-						indexes[newIndex].focus();
-					}
-
-					dom.EventHelper.stop(event, true);
-				}
-			}
+			navigateToggles(event, this.domNode, () => indexes, () => this.inputBox.focus());
 		});
 
 
-		let controls = document.createElement('div');
+		const controls = document.createElement('div');
 		controls.className = 'controls';
 		controls.style.display = this._showOptionButtons ? 'block' : 'none';
 		controls.appendChild(this.preserveCase.domNode);
 
 		this.domNode.appendChild(controls);
 
-		if (parent) {
-			parent.appendChild(this.domNode);
-		}
+		parent?.appendChild(this.domNode);
 
 		this.onkeydown(this.inputBox.inputElement, (e) => this._onKeyDown.fire(e));
 		this.onkeyup(this.inputBox.inputElement, (e) => this._onKeyUp.fire(e));
@@ -279,52 +205,7 @@ export class ReplaceInput extends Widget {
 		this.inputBox.addToHistory();
 	}
 
-	public style(styles: IReplaceInputStyles): void {
-		this.inputActiveOptionBorder = styles.inputActiveOptionBorder;
-		this.inputActiveOptionForeground = styles.inputActiveOptionForeground;
-		this.inputActiveOptionBackground = styles.inputActiveOptionBackground;
-		this.inputBackground = styles.inputBackground;
-		this.inputForeground = styles.inputForeground;
-		this.inputBorder = styles.inputBorder;
-
-		this.inputValidationInfoBackground = styles.inputValidationInfoBackground;
-		this.inputValidationInfoForeground = styles.inputValidationInfoForeground;
-		this.inputValidationInfoBorder = styles.inputValidationInfoBorder;
-		this.inputValidationWarningBackground = styles.inputValidationWarningBackground;
-		this.inputValidationWarningForeground = styles.inputValidationWarningForeground;
-		this.inputValidationWarningBorder = styles.inputValidationWarningBorder;
-		this.inputValidationErrorBackground = styles.inputValidationErrorBackground;
-		this.inputValidationErrorForeground = styles.inputValidationErrorForeground;
-		this.inputValidationErrorBorder = styles.inputValidationErrorBorder;
-
-		this.applyStyles();
-	}
-
 	protected applyStyles(): void {
-		if (this.domNode) {
-			const checkBoxStyles: ICheckboxStyles = {
-				inputActiveOptionBorder: this.inputActiveOptionBorder,
-				inputActiveOptionForeground: this.inputActiveOptionForeground,
-				inputActiveOptionBackground: this.inputActiveOptionBackground,
-			};
-			this.preserveCase.style(checkBoxStyles);
-
-			const inputBoxStyles: IInputBoxStyles = {
-				inputBackground: this.inputBackground,
-				inputForeground: this.inputForeground,
-				inputBorder: this.inputBorder,
-				inputValidationInfoBackground: this.inputValidationInfoBackground,
-				inputValidationInfoForeground: this.inputValidationInfoForeground,
-				inputValidationInfoBorder: this.inputValidationInfoBorder,
-				inputValidationWarningBackground: this.inputValidationWarningBackground,
-				inputValidationWarningForeground: this.inputValidationWarningForeground,
-				inputValidationWarningBorder: this.inputValidationWarningBorder,
-				inputValidationErrorBackground: this.inputValidationErrorBackground,
-				inputValidationErrorForeground: this.inputValidationErrorForeground,
-				inputValidationErrorBorder: this.inputValidationErrorBorder
-			};
-			this.inputBox.style(inputBoxStyles);
-		}
 	}
 
 	public select(): void {
@@ -355,36 +236,23 @@ export class ReplaceInput extends Widget {
 	}
 
 	public validate(): void {
-		if (this.inputBox) {
-			this.inputBox.validate();
-		}
+		this.inputBox?.validate();
 	}
 
 	public showMessage(message: InputBoxMessage): void {
-		if (this.inputBox) {
-			this.inputBox.showMessage(message);
-		}
+		this.inputBox?.showMessage(message);
 	}
 
 	public clearMessage(): void {
-		if (this.inputBox) {
-			this.inputBox.hideMessage();
-		}
+		this.inputBox?.hideMessage();
 	}
 
 	private clearValidation(): void {
-		if (this.inputBox) {
-			this.inputBox.hideMessage();
-		}
+		this.inputBox?.hideMessage();
 	}
 
 	public set width(newWidth: number) {
 		this.inputBox.paddingRight = this.cachedOptionsWidth;
-		this.inputBox.width = newWidth;
 		this.domNode.style.width = newWidth + 'px';
-	}
-
-	public override dispose(): void {
-		super.dispose();
 	}
 }

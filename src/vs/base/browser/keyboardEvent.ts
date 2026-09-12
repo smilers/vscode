@@ -3,17 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as browser from 'vs/base/browser/browser';
-import { EVENT_KEY_CODE_MAP, KeyCode, KeyCodeUtils, KeyMod } from 'vs/base/common/keyCodes';
-import { SimpleKeybinding } from 'vs/base/common/keybindings';
-import * as platform from 'vs/base/common/platform';
-
-
+import * as browser from './browser.js';
+import { EVENT_KEY_CODE_MAP, isModifierKey, KeyCode, KeyCodeUtils, KeyMod } from '../common/keyCodes.js';
+import { KeyCodeChord } from '../common/keybindings.js';
+import * as platform from '../common/platform.js';
 
 function extractKeyCode(e: KeyboardEvent): KeyCode {
 	if (e.charCode) {
 		// "keypress" events mostly
-		let char = String.fromCharCode(e.charCode).toUpperCase();
+		const char = String.fromCharCode(e.charCode).toUpperCase();
 		return KeyCodeUtils.fromString(char);
 	}
 
@@ -23,19 +21,22 @@ function extractKeyCode(e: KeyboardEvent): KeyCode {
 	if (keyCode === 3) {
 		return KeyCode.PauseBreak;
 	} else if (browser.isFirefox) {
-		if (keyCode === 59) {
-			return KeyCode.Semicolon;
-		} else if (keyCode === 107) {
-			return KeyCode.Equal;
-		} else if (keyCode === 109) {
-			return KeyCode.Minus;
-		} else if (platform.isMacintosh && keyCode === 224) {
-			return KeyCode.Meta;
+		switch (keyCode) {
+			case 59: return KeyCode.Semicolon;
+			case 60:
+				if (platform.isLinux) { return KeyCode.IntlBackslash; }
+				break;
+			case 61: return KeyCode.Equal;
+			// based on: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode#numpad_keys
+			case 107: return KeyCode.NumpadAdd;
+			case 109: return KeyCode.NumpadSubtract;
+			case 173: return KeyCode.Minus;
+			case 224:
+				if (platform.isMacintosh) { return KeyCode.Meta; }
+				break;
 		}
 	} else if (browser.isWebKit) {
-		if (keyCode === 91) {
-			return KeyCode.Meta;
-		} else if (platform.isMacintosh && keyCode === 93) {
+		if (platform.isMacintosh && keyCode === 93) {
 			// the two meta keys in the Mac have different key codes (91 and 93)
 			return KeyCode.Meta;
 		} else if (!platform.isMacintosh && keyCode === 92) {
@@ -58,13 +59,14 @@ export interface IKeyboardEvent {
 	readonly shiftKey: boolean;
 	readonly altKey: boolean;
 	readonly metaKey: boolean;
+	readonly altGraphKey: boolean;
 	readonly keyCode: KeyCode;
 	readonly code: string;
 
 	/**
 	 * @internal
 	 */
-	toKeybinding(): SimpleKeybinding;
+	toKeyCodeChord(): KeyCodeChord;
 	equals(keybinding: number): boolean;
 
 	preventDefault(): void;
@@ -77,7 +79,7 @@ const shiftKeyMod = KeyMod.Shift;
 const metaKeyMod = (platform.isMacintosh ? KeyMod.CtrlCmd : KeyMod.WinCtrl);
 
 export function printKeyboardEvent(e: KeyboardEvent): string {
-	let modifiers: string[] = [];
+	const modifiers: string[] = [];
 	if (e.ctrlKey) {
 		modifiers.push(`ctrl`);
 	}
@@ -94,7 +96,7 @@ export function printKeyboardEvent(e: KeyboardEvent): string {
 }
 
 export function printStandardKeyboardEvent(e: StandardKeyboardEvent): string {
-	let modifiers: string[] = [];
+	const modifiers: string[] = [];
 	if (e.ctrlKey) {
 		modifiers.push(`ctrl`);
 	}
@@ -110,6 +112,15 @@ export function printStandardKeyboardEvent(e: StandardKeyboardEvent): string {
 	return `modifiers: [${modifiers.join(',')}], code: ${e.code}, keyCode: ${e.keyCode} ('${KeyCodeUtils.toString(e.keyCode)}')`;
 }
 
+export function hasModifierKeys(keyStatus: {
+	readonly ctrlKey: boolean;
+	readonly shiftKey: boolean;
+	readonly altKey: boolean;
+	readonly metaKey: boolean;
+}): boolean {
+	return keyStatus.ctrlKey || keyStatus.shiftKey || keyStatus.altKey || keyStatus.metaKey;
+}
+
 export class StandardKeyboardEvent implements IKeyboardEvent {
 
 	readonly _standardKeyboardEventBrand = true;
@@ -121,14 +132,15 @@ export class StandardKeyboardEvent implements IKeyboardEvent {
 	public readonly shiftKey: boolean;
 	public readonly altKey: boolean;
 	public readonly metaKey: boolean;
+	public readonly altGraphKey: boolean;
 	public readonly keyCode: KeyCode;
 	public readonly code: string;
 
 	private _asKeybinding: number;
-	private _asRuntimeKeybinding: SimpleKeybinding;
+	private _asKeyCodeChord: KeyCodeChord;
 
 	constructor(source: KeyboardEvent) {
-		let e = source;
+		const e = source;
 
 		this.browserEvent = e;
 		this.target = <HTMLElement>e.target;
@@ -137,8 +149,17 @@ export class StandardKeyboardEvent implements IKeyboardEvent {
 		this.shiftKey = e.shiftKey;
 		this.altKey = e.altKey;
 		this.metaKey = e.metaKey;
-		this.keyCode = extractKeyCode(e);
+		this.altGraphKey = e.getModifierState?.('AltGraph');
 		this.code = e.code;
+
+		// Browsers are inconsistent while an IME composition is in flight: most keystrokes arrive as
+		// `keyCode: 229` (which maps to `KEY_IN_COMPOSITION`), but some platform/IME combinations
+		// report the real key code for keys the IME owns - notably the Enter that commits a
+		// composition, but also Space, Escape and the arrows used to pick candidates. Normalize to
+		// `KEY_IN_COMPOSITION` so that "the IME owns this keystroke" has a single representation
+		// that `equals()`, direct `keyCode` readers and keybinding resolution all understand,
+		// instead of acting on a key the user never directed at the application.
+		this.keyCode = e.isComposing ? KeyCode.KEY_IN_COMPOSITION : extractKeyCode(e);
 
 		// console.info(e.type + ": keyCode: " + e.keyCode + ", which: " + e.which + ", charCode: " + e.charCode + ", detail: " + e.detail + " ====> " + this.keyCode + ' -- ' + KeyCode[this.keyCode]);
 
@@ -148,7 +169,7 @@ export class StandardKeyboardEvent implements IKeyboardEvent {
 		this.metaKey = this.metaKey || this.keyCode === KeyCode.Meta;
 
 		this._asKeybinding = this._computeKeybinding();
-		this._asRuntimeKeybinding = this._computeRuntimeKeybinding();
+		this._asKeyCodeChord = this._computeKeyCodeChord();
 
 		// console.log(`code: ${e.code}, keyCode: ${e.keyCode}, key: ${e.key}`);
 	}
@@ -165,8 +186,8 @@ export class StandardKeyboardEvent implements IKeyboardEvent {
 		}
 	}
 
-	public toKeybinding(): SimpleKeybinding {
-		return this._asRuntimeKeybinding;
+	public toKeyCodeChord(): KeyCodeChord {
+		return this._asKeyCodeChord;
 	}
 
 	public equals(other: number): boolean {
@@ -175,7 +196,7 @@ export class StandardKeyboardEvent implements IKeyboardEvent {
 
 	private _computeKeybinding(): number {
 		let key = KeyCode.Unknown;
-		if (this.keyCode !== KeyCode.Ctrl && this.keyCode !== KeyCode.Shift && this.keyCode !== KeyCode.Alt && this.keyCode !== KeyCode.Meta) {
+		if (!isModifierKey(this.keyCode)) {
 			key = this.keyCode;
 		}
 
@@ -197,11 +218,11 @@ export class StandardKeyboardEvent implements IKeyboardEvent {
 		return result;
 	}
 
-	private _computeRuntimeKeybinding(): SimpleKeybinding {
+	private _computeKeyCodeChord(): KeyCodeChord {
 		let key = KeyCode.Unknown;
-		if (this.keyCode !== KeyCode.Ctrl && this.keyCode !== KeyCode.Shift && this.keyCode !== KeyCode.Alt && this.keyCode !== KeyCode.Meta) {
+		if (!isModifierKey(this.keyCode)) {
 			key = this.keyCode;
 		}
-		return new SimpleKeybinding(this.ctrlKey, this.shiftKey, this.altKey, this.metaKey, key);
+		return new KeyCodeChord(this.ctrlKey, this.shiftKey, this.altKey, this.metaKey, key);
 	}
 }

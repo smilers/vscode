@@ -5,14 +5,16 @@
 
 import {
 	Connection,
-	TextDocuments, InitializeParams, InitializeResult, NotificationType, RequestType,
-	DocumentRangeFormattingRequest, Disposable, ServerCapabilities, TextDocumentSyncKind, TextEdit, DocumentFormattingRequest, TextDocumentIdentifier, FormattingOptions
+	TextDocuments, InitializeParams, InitializeResult, NotificationType, RequestType, ResponseError,
+	DocumentRangeFormattingRequest, Disposable, ServerCapabilities, TextDocumentSyncKind, TextEdit, DocumentFormattingRequest, TextDocumentIdentifier, FormattingOptions, Diagnostic, CodeAction, CodeActionKind
 } from 'vscode-languageserver';
 
-import { formatError, runSafe, runSafeAsync } from './utils/runner';
-import { TextDocument, JSONDocument, JSONSchema, getLanguageService, DocumentLanguageSettings, SchemaConfiguration, ClientCapabilities, Diagnostic, Range, Position } from 'vscode-json-languageservice';
-import { getLanguageModelCache } from './languageModelCache';
+import { runSafe, runSafeAsync } from './utils/runner.js';
+import { DiagnosticsSupport, registerDiagnosticsPullSupport, registerDiagnosticsPushSupport } from './utils/validation.js';
+import { TextDocument, JSONDocument, JSONSchema, getLanguageService, DocumentLanguageSettings, SchemaConfiguration, ClientCapabilities, Range, Position, SortOptions, SeverityLevel } from 'vscode-json-languageservice';
+import { getLanguageModelCache } from './languageModelCache.js';
 import { Utils, URI } from 'vscode-uri';
+import * as l10n from '@vscode/l10n';
 
 type ISchemaAssociations = Record<string, string[]>;
 
@@ -27,21 +29,39 @@ namespace VSCodeContentRequest {
 }
 
 namespace SchemaContentChangeNotification {
-	export const type: NotificationType<string> = new NotificationType('json/schemaContent');
-}
-
-namespace ResultLimitReachedNotification {
-	export const type: NotificationType<string> = new NotificationType('json/resultLimitReached');
+	export const type: NotificationType<string | string[]> = new NotificationType('json/schemaContent');
 }
 
 namespace ForceValidateRequest {
 	export const type: RequestType<string, Diagnostic[], any> = new RequestType('json/validate');
 }
 
+namespace ForceValidateAllRequest {
+	export const type: RequestType<void, void, any> = new RequestType('json/validateAll');
+}
+
 namespace LanguageStatusRequest {
 	export const type: RequestType<string, JSONLanguageStatus, any> = new RequestType('json/languageStatus');
 }
 
+namespace ValidateContentRequest {
+	export const type: RequestType<{ schemaUri: string; content: string }, Diagnostic[], any> = new RequestType('json/validateContent');
+}
+
+export interface DocumentSortingParams {
+	/**
+	 * The uri of the document to sort.
+	 */
+	uri: string;
+	/**
+	 * The sort options
+	 */
+	options: SortOptions;
+}
+
+namespace DocumentSortingRequest {
+	export const type: RequestType<DocumentSortingParams, TextEdit[], any> = new RequestType('json/sort');
+}
 
 const workspaceContext = {
 	resolveRelativePath: (relativePath: string, resource: string) => {
@@ -56,19 +76,21 @@ export interface RequestService {
 
 export interface RuntimeEnvironment {
 	file?: RequestService;
-	http?: RequestService
-	configureHttpRequests?(proxy: string, strictSSL: boolean): void;
+	http?: RequestService;
+	configureHttpRequests?(proxy: string | undefined, strictSSL: boolean): void;
 	readonly timer: {
 		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable;
 		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable;
-	}
+	};
 }
+
+const sortCodeActionKind = CodeActionKind.Source.concat('.sort', '.json');
 
 export function startServer(connection: Connection, runtime: RuntimeEnvironment) {
 
 	function getSchemaRequestService(handledSchemas: string[] = ['https', 'http', 'file']) {
 		const builtInHandlers: { [protocol: string]: RequestService | undefined } = {};
-		for (let protocol of handledSchemas) {
+		for (const protocol of handledSchemas) {
 			if (protocol === 'file') {
 				builtInHandlers[protocol] = runtime.file;
 			} else if (protocol === 'http' || protocol === 'https') {
@@ -84,8 +106,8 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 			}
 			return connection.sendRequest(VSCodeContentRequest.type, uri).then(responseText => {
 				return responseText;
-			}, error => {
-				return Promise.reject(error.message);
+			}, (error: ResponseError<any>) => {
+				return Promise.reject(error);
 			});
 		};
 	}
@@ -109,15 +131,23 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	let hierarchicalDocumentSymbolSupport = false;
 
 	let foldingRangeLimitDefault = Number.MAX_VALUE;
-	let foldingRangeLimit = Number.MAX_VALUE;
 	let resultLimit = Number.MAX_VALUE;
+	let jsonFoldingRangeLimit = Number.MAX_VALUE;
+	let jsoncFoldingRangeLimit = Number.MAX_VALUE;
+	let jsonColorDecoratorLimit = Number.MAX_VALUE;
+	let jsoncColorDecoratorLimit = Number.MAX_VALUE;
+
 	let formatterMaxNumberOfEdits = Number.MAX_VALUE;
+	let diagnosticsSupport: DiagnosticsSupport | undefined;
+
 
 	// After the server has started the client sends an initialize request. The server receives
 	// in the passed params the rootPath of the workspace plus the client capabilities.
 	connection.onInitialize((params: InitializeParams): InitializeResult => {
 
-		const handledProtocols = params.initializationOptions?.handledSchemaProtocols;
+		const initializationOptions = params.initializationOptions || {};
+
+		const handledProtocols = initializationOptions?.handledSchemaProtocols;
 
 		languageService = getLanguageService({
 			schemaRequestService: getSchemaRequestService(handledProtocols),
@@ -139,10 +169,18 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 		}
 
 		clientSnippetSupport = getClientCapability('textDocument.completion.completionItem.snippetSupport', false);
-		dynamicFormatterRegistration = getClientCapability('textDocument.rangeFormatting.dynamicRegistration', false) && (typeof params.initializationOptions?.provideFormatter !== 'boolean');
+		dynamicFormatterRegistration = getClientCapability('textDocument.rangeFormatting.dynamicRegistration', false) && (typeof initializationOptions.provideFormatter !== 'boolean');
 		foldingRangeLimitDefault = getClientCapability('textDocument.foldingRange.rangeLimit', Number.MAX_VALUE);
 		hierarchicalDocumentSymbolSupport = getClientCapability('textDocument.documentSymbol.hierarchicalDocumentSymbolSupport', false);
-		formatterMaxNumberOfEdits = params.initializationOptions?.customCapabilities?.rangeFormatting?.editLimit || Number.MAX_VALUE;
+		formatterMaxNumberOfEdits = initializationOptions.customCapabilities?.rangeFormatting?.editLimit || Number.MAX_VALUE;
+
+		const supportsDiagnosticPull = getClientCapability('textDocument.diagnostic', undefined);
+		if (supportsDiagnosticPull === undefined) {
+			diagnosticsSupport = registerDiagnosticsPushSupport(documents, connection, runtime, validateTextDocument);
+		} else {
+			diagnosticsSupport = registerDiagnosticsPullSupport(documents, connection, runtime, validateTextDocument);
+		}
+
 		const capabilities: ServerCapabilities = {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			completionProvider: clientSnippetSupport ? {
@@ -151,12 +189,20 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 			} : undefined,
 			hoverProvider: true,
 			documentSymbolProvider: true,
-			documentRangeFormattingProvider: params.initializationOptions?.provideFormatter === true,
-			documentFormattingProvider: params.initializationOptions?.provideFormatter === true,
+			documentRangeFormattingProvider: initializationOptions.provideFormatter === true,
+			documentFormattingProvider: initializationOptions.provideFormatter === true,
 			colorProvider: {},
 			foldingRangeProvider: true,
 			selectionRangeProvider: true,
-			documentLinkProvider: {}
+			documentLinkProvider: {},
+			diagnosticProvider: {
+				documentSelector: null,
+				interFileDependencies: false,
+				workspaceDiagnostics: false
+			},
+			codeActionProvider: {
+				codeActionKinds: [sortCodeActionKind]
+			}
 		};
 
 		return { capabilities };
@@ -166,14 +212,26 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 
 	// The settings interface describes the server relevant settings part
 	interface Settings {
-		json: {
-			schemas: JSONSchemaSettings[];
-			format: { enable: boolean; };
+		json?: {
+			schemas?: JSONSchemaSettings[];
+			format?: { enable?: boolean };
+			keepLines?: { enable?: boolean };
+			validate?: {
+				enable?: boolean;
+				comments?: SeverityLevel;
+				trailingCommas?: SeverityLevel;
+				schemaValidation?: SeverityLevel;
+				schemaRequest?: SeverityLevel;
+			};
 			resultLimit?: number;
+			jsonFoldingLimit?: number;
+			jsoncFoldingLimit?: number;
+			jsonColorDecoratorLimit?: number;
+			jsoncColorDecoratorLimit?: number;
 		};
-		http: {
-			proxy: string;
-			proxyStrictSSL: boolean;
+		http?: {
+			proxy?: string;
+			proxyStrictSSL?: boolean;
 		};
 	}
 
@@ -181,67 +239,44 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 		fileMatch?: string[];
 		url?: string;
 		schema?: JSONSchema;
+		folderUri?: string;
 	}
 
 
-	const limitExceededWarnings = function () {
-		const pendingWarnings: { [uri: string]: { features: { [name: string]: string }; timeout?: Disposable; } } = {};
-
-		const showLimitedNotification = (uri: string, resultLimit: number) => {
-			const warning = pendingWarnings[uri];
-			connection.sendNotification(ResultLimitReachedNotification.type, `${Utils.basename(URI.parse(uri))}: For performance reasons, ${Object.keys(warning.features).join(' and ')} have been limited to ${resultLimit} items.`);
-			warning.timeout = undefined;
-		};
-
-		return {
-			cancel(uri: string) {
-				const warning = pendingWarnings[uri];
-				if (warning && warning.timeout) {
-					warning.timeout.dispose();
-					delete pendingWarnings[uri];
-				}
-			},
-
-			onResultLimitExceeded(uri: string, resultLimit: number, name: string) {
-				return () => {
-					let warning = pendingWarnings[uri];
-					if (warning) {
-						if (!warning.timeout) {
-							// already shown
-							return;
-						}
-						warning.features[name] = name;
-						warning.timeout.dispose();
-						warning.timeout = runtime.timer.setTimeout(() => showLimitedNotification(uri, resultLimit), 2000);
-					} else {
-						warning = { features: { [name]: name } };
-						warning.timeout = runtime.timer.setTimeout(() => showLimitedNotification(uri, resultLimit), 2000);
-						pendingWarnings[uri] = warning;
-					}
-				};
-			}
-		};
-	}();
 
 	let jsonConfigurationSettings: JSONSchemaSettings[] | undefined = undefined;
 	let schemaAssociations: ISchemaAssociations | SchemaConfiguration[] | undefined = undefined;
 	let formatterRegistrations: Thenable<Disposable>[] | null = null;
+	let validateEnabled = true;
+	let commentsSeverity: SeverityLevel | undefined = undefined;
+	let trailingCommasSeverity: SeverityLevel | undefined = undefined;
+	let schemaValidationSeverity: SeverityLevel | undefined = undefined;
+	let schemaRequestSeverity: SeverityLevel | undefined = undefined;
+	let keepLinesEnabled = false;
 
-	// The settings have changed. Is send on server activation as well.
+	// The settings have changed. Is sent on server activation as well.
 	connection.onDidChangeConfiguration((change) => {
-		let settings = <Settings>change.settings;
-		if (runtime.configureHttpRequests) {
-			runtime.configureHttpRequests(settings.http && settings.http.proxy, settings.http && settings.http.proxyStrictSSL);
-		}
-		jsonConfigurationSettings = settings.json && settings.json.schemas;
+		const settings = <Settings>change.settings;
+		runtime.configureHttpRequests?.(settings?.http?.proxy, !!settings.http?.proxyStrictSSL);
+		jsonConfigurationSettings = settings.json?.schemas;
+		validateEnabled = !!settings.json?.validate?.enable;
+		commentsSeverity = settings.json?.validate?.comments;
+		trailingCommasSeverity = settings.json?.validate?.trailingCommas;
+		schemaValidationSeverity = settings.json?.validate?.schemaValidation;
+		schemaRequestSeverity = settings.json?.validate?.schemaRequest;
+		keepLinesEnabled = settings.json?.keepLines?.enable || false;
 		updateConfiguration();
 
-		foldingRangeLimit = Math.trunc(Math.max(settings.json && settings.json.resultLimit || foldingRangeLimitDefault, 0));
-		resultLimit = Math.trunc(Math.max(settings.json && settings.json.resultLimit || Number.MAX_VALUE, 0));
+		const sanitizeLimitSetting = (settingValue: any) => Math.trunc(Math.max(settingValue, 0));
+		resultLimit = sanitizeLimitSetting(settings.json?.resultLimit || Number.MAX_VALUE);
+		jsonFoldingRangeLimit = sanitizeLimitSetting(settings.json?.jsonFoldingLimit || foldingRangeLimitDefault);
+		jsoncFoldingRangeLimit = sanitizeLimitSetting(settings.json?.jsoncFoldingLimit || foldingRangeLimitDefault);
+		jsonColorDecoratorLimit = sanitizeLimitSetting(settings.json?.jsonColorDecoratorLimit || Number.MAX_VALUE);
+		jsoncColorDecoratorLimit = sanitizeLimitSetting(settings.json?.jsoncColorDecoratorLimit || Number.MAX_VALUE);
 
 		// dynamically enable & disable the formatter
 		if (dynamicFormatterRegistration) {
-			const enableFormatter = settings && settings.json && settings.json.format && settings.json.format.enable;
+			const enableFormatter = settings.json?.format?.enable;
 			if (enableFormatter) {
 				if (!formatterRegistrations) {
 					const documentSelector = [{ language: 'json' }, { language: 'jsonc' }];
@@ -264,28 +299,43 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 	});
 
 	// A schema has changed
-	connection.onNotification(SchemaContentChangeNotification.type, uri => {
-		if (languageService.resetSchema(uri)) {
-			for (const doc of documents.all()) {
-				triggerValidation(doc);
+	connection.onNotification(SchemaContentChangeNotification.type, uriOrUris => {
+		let needsRevalidation = false;
+		if (Array.isArray(uriOrUris)) {
+			for (const uri of uriOrUris) {
+				if (languageService.resetSchema(uri)) {
+					needsRevalidation = true;
+				}
 			}
+		} else {
+			needsRevalidation = languageService.resetSchema(uriOrUris);
+		}
+		if (needsRevalidation) {
+			diagnosticsSupport?.requestRefresh();
 		}
 	});
 
 	// Retry schema validation on all open documents
-	connection.onRequest(ForceValidateRequest.type, uri => {
-		return new Promise<Diagnostic[]>(resolve => {
-			const document = documents.get(uri);
-			if (document) {
-				updateConfiguration();
-				validateTextDocument(document, diagnostics => {
-					resolve(diagnostics);
-				});
-			} else {
-				resolve([]);
-			}
-		});
+	connection.onRequest(ForceValidateAllRequest.type, async () => {
+		diagnosticsSupport?.requestRefresh();
 	});
+
+	connection.onRequest(ForceValidateRequest.type, async uri => {
+		const document = documents.get(uri);
+		if (document) {
+			updateConfiguration();
+			return await validateTextDocument(document);
+		}
+		return [];
+	});
+
+	connection.onRequest(ValidateContentRequest.type, async ({ schemaUri, content }) => {
+		const docURI = 'vscode://schemas/temp/' + new Date().getTime();
+		const document = TextDocument.create(docURI, 'json', 1, content);
+		updateConfiguration([{ uri: schemaUri, fileMatch: [docURI] }]);
+		return await validateTextDocument(document);
+	});
+
 
 	connection.onRequest(LanguageStatusRequest.type, async uri => {
 		const document = documents.get(uri);
@@ -297,9 +347,19 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 		}
 	});
 
-	function updateConfiguration() {
+	connection.onRequest(DocumentSortingRequest.type, async params => {
+		const uri = params.uri;
+		const options = params.options;
+		const document = documents.get(uri);
+		if (document) {
+			return languageService.sort(document, options);
+		}
+		return [];
+	});
+
+	function updateConfiguration(extraSchemas?: SchemaConfiguration[]) {
 		const languageSettings = {
-			validate: true,
+			validate: validateEnabled,
 			allowComments: true,
 			schemas: new Array<SchemaConfiguration>()
 		};
@@ -324,86 +384,43 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 					uri = schema.schema.id || `vscode://schemas/custom/${index}`;
 				}
 				if (uri) {
-					languageSettings.schemas.push({ uri, fileMatch: schema.fileMatch, schema: schema.schema });
+					languageSettings.schemas.push({ uri, fileMatch: schema.fileMatch, schema: schema.schema, folderUri: schema.folderUri });
 				}
 			});
 		}
+		if (extraSchemas) {
+			languageSettings.schemas.push(...extraSchemas);
+		}
+
 		languageService.configure(languageSettings);
 
-		// Revalidate any open text documents
-		documents.all().forEach(triggerValidation);
+		diagnosticsSupport?.requestRefresh();
 	}
 
-	// The content of a text document has changed. This event is emitted
-	// when the text document first opened or when its content has changed.
-	documents.onDidChangeContent((change) => {
-		limitExceededWarnings.cancel(change.document.uri);
-		triggerValidation(change.document);
-	});
-
-	// a document has closed: clear all diagnostics
-	documents.onDidClose(event => {
-		limitExceededWarnings.cancel(event.document.uri);
-		cleanPendingValidation(event.document);
-		connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] });
-	});
-
-	const pendingValidationRequests: { [uri: string]: Disposable; } = {};
-	const validationDelayMs = 300;
-
-	function cleanPendingValidation(textDocument: TextDocument): void {
-		const request = pendingValidationRequests[textDocument.uri];
-		if (request) {
-			request.dispose();
-			delete pendingValidationRequests[textDocument.uri];
-		}
-	}
-
-	function triggerValidation(textDocument: TextDocument): void {
-		cleanPendingValidation(textDocument);
-		pendingValidationRequests[textDocument.uri] = runtime.timer.setTimeout(() => {
-			delete pendingValidationRequests[textDocument.uri];
-			validateTextDocument(textDocument);
-		}, validationDelayMs);
-	}
-
-	function validateTextDocument(textDocument: TextDocument, callback?: (diagnostics: Diagnostic[]) => void): void {
-		const respond = (diagnostics: Diagnostic[]) => {
-			connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
-			if (callback) {
-				callback(diagnostics);
-			}
-		};
+	async function validateTextDocument(textDocument: TextDocument): Promise<Diagnostic[]> {
 		if (textDocument.getText().length === 0) {
-			respond([]); // ignore empty documents
-			return;
+			return []; // ignore empty documents
 		}
 		const jsonDocument = getJSONDocument(textDocument);
-		const version = textDocument.version;
-
-		const documentSettings: DocumentLanguageSettings = textDocument.languageId === 'jsonc' ? { comments: 'ignore', trailingCommas: 'warning' } : { comments: 'error', trailingCommas: 'error' };
-		languageService.doValidation(textDocument, jsonDocument, documentSettings).then(diagnostics => {
-			runtime.timer.setImmediate(() => {
-				const currDocument = documents.get(textDocument.uri);
-				if (currDocument && currDocument.version === version) {
-					respond(diagnostics); // Send the computed diagnostics to VSCode.
-				}
-			});
-		}, error => {
-			connection.console.error(formatError(`Error while validating ${textDocument.uri}`, error));
-		});
+		const documentSettings: DocumentLanguageSettings = {
+			comments: commentsSeverity ?? (textDocument.languageId === 'jsonc' ? 'ignore' : 'error'),
+			trailingCommas: trailingCommasSeverity ?? (textDocument.languageId === 'jsonc' ? 'warning' : 'error'),
+			schemaValidation: schemaValidationSeverity,
+			schemaRequest: schemaRequestSeverity
+		};
+		return await languageService.doValidation(textDocument, jsonDocument, documentSettings);
 	}
 
 	connection.onDidChangeWatchedFiles((change) => {
 		// Monitored files have changed in VSCode
 		let hasChanges = false;
-		change.changes.forEach(c => {
+		for (const c of change.changes) {
 			if (languageService.resetSchema(c.uri)) {
 				hasChanges = true;
 			}
-		});
+		}
 		if (hasChanges) {
-			documents.all().forEach(triggerValidation);
+			diagnosticsSupport?.requestRefresh();
 		}
 	});
 
@@ -446,18 +463,34 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 			const document = documents.get(documentSymbolParams.textDocument.uri);
 			if (document) {
 				const jsonDocument = getJSONDocument(document);
-				const onResultLimitExceeded = limitExceededWarnings.onResultLimitExceeded(document.uri, resultLimit, 'document symbols');
 				if (hierarchicalDocumentSymbolSupport) {
-					return languageService.findDocumentSymbols2(document, jsonDocument, { resultLimit, onResultLimitExceeded });
+					return languageService.findDocumentSymbols2(document, jsonDocument, { resultLimit });
 				} else {
-					return languageService.findDocumentSymbols(document, jsonDocument, { resultLimit, onResultLimitExceeded });
+					return languageService.findDocumentSymbols(document, jsonDocument, { resultLimit });
 				}
 			}
 			return [];
 		}, [], `Error while computing document symbols for ${documentSymbolParams.textDocument.uri}`, token);
 	});
 
+	connection.onCodeAction((codeActionParams, token) => {
+		return runSafeAsync(runtime, async () => {
+			const document = documents.get(codeActionParams.textDocument.uri);
+			if (document) {
+				const sortCodeAction = CodeAction.create('Sort JSON', sortCodeActionKind);
+				sortCodeAction.command = {
+					command: 'json.sort',
+					title: l10n.t('Sort JSON')
+				};
+				return [sortCodeAction];
+			}
+			return [];
+		}, [], `Error while computing code actions for ${codeActionParams.textDocument.uri}`, token);
+	});
+
 	function onFormat(textDocument: TextDocumentIdentifier, range: Range | undefined, options: FormattingOptions): TextEdit[] {
+
+		options.keepLines = keepLinesEnabled;
 		const document = documents.get(textDocument.uri);
 		if (document) {
 			const edits = languageService.format(document, range ?? getFullRange(document), options);
@@ -482,9 +515,10 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 		return runSafeAsync(runtime, async () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
-				const onResultLimitExceeded = limitExceededWarnings.onResultLimitExceeded(document.uri, resultLimit, 'document colors');
+
 				const jsonDocument = getJSONDocument(document);
-				return languageService.findDocumentColors(document, jsonDocument, { resultLimit, onResultLimitExceeded });
+				const resultLimit = document.languageId === 'jsonc' ? jsoncColorDecoratorLimit : jsonColorDecoratorLimit;
+				return languageService.findDocumentColors(document, jsonDocument, { resultLimit });
 			}
 			return [];
 		}, [], `Error while computing document colors for ${params.textDocument.uri}`, token);
@@ -505,8 +539,8 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 		return runSafe(runtime, () => {
 			const document = documents.get(params.textDocument.uri);
 			if (document) {
-				const onRangeLimitExceeded = limitExceededWarnings.onResultLimitExceeded(document.uri, foldingRangeLimit, 'folding ranges');
-				return languageService.getFoldingRanges(document, { rangeLimit: foldingRangeLimit, onRangeLimitExceeded });
+				const rangeLimit = document.languageId === 'jsonc' ? jsoncFoldingRangeLimit : jsonFoldingRangeLimit;
+				return languageService.getFoldingRanges(document, { rangeLimit });
 			}
 			return null;
 		}, null, `Error while computing folding ranges for ${params.textDocument.uri}`, token);
@@ -542,3 +576,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 function getFullRange(document: TextDocument): Range {
 	return Range.create(Position.create(0, 0), document.positionAt(document.getText().length));
 }
+
+
+
+

@@ -3,9 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IDisposable } from 'vs/base/common/lifecycle';
-import { URI } from 'vs/base/common/uri';
-import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
+import { IDisposable } from '../../../base/common/lifecycle.js';
+import { URI } from '../../../base/common/uri.js';
+import { createDecorator } from '../../instantiation/common/instantiation.js';
+import { NodeRemoteResourceResponse } from '../../remote/common/electronRemoteResources.js';
 
 export const IProtocolMainService = createDecorator<IProtocolMainService>('protocolMainService');
 
@@ -38,10 +39,15 @@ export interface IProtocolMainService {
 	createIPCObjectUrl<T>(): IIPCObjectUrl<T>;
 
 	/**
-	 * Adds a `URI` as root to the list of allowed
+	 * Adds a path as root to the list of allowed
 	 * resources for file access.
 	 *
-	 * @param root the URI to allow for file access
+	 * @param root the path to allow for file access
 	 */
-	addValidFileRoot(root: URI): IDisposable;
+	addValidFileRoot(root: string): IDisposable;
+
+	/**
+	 * Registers the protocol used to load resources from a remote file system.
+	 */
+	registerManagedRemoteResourceProtocol(requestRemoteResource: (url: URI) => Promise<NodeRemoteResourceResponse>): void;
 }

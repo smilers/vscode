@@ -3,23 +3,30 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as assert from 'assert';
-import { MultilineTokens2, SparseEncodedTokens, TokensStore2 } from 'vs/editor/common/model/tokensStore';
-import { Range } from 'vs/editor/common/core/range';
-import { TextModel } from 'vs/editor/common/model/textModel';
-import { IIdentifiedSingleEditOperation } from 'vs/editor/common/model';
-import { MetadataConsts, TokenMetadata, FontStyle, ColorId } from 'vs/editor/common/modes';
-import { createTextModel } from 'vs/editor/test/common/editorTestUtils';
-import { LineTokens } from 'vs/editor/common/core/lineTokens';
-import { LanguageIdCodec } from 'vs/editor/common/services/languagesRegistry';
+import assert from 'assert';
+import { DisposableStore } from '../../../../base/common/lifecycle.js';
+import { ensureNoDisposablesAreLeakedInTestSuite } from '../../../../base/test/common/utils.js';
+import { ISingleEditOperation } from '../../../common/core/editOperation.js';
+import { Position } from '../../../common/core/position.js';
+import { Range } from '../../../common/core/range.js';
+import { ColorId, FontStyle, MetadataConsts, TokenMetadata } from '../../../common/encodedTokenAttributes.js';
+import { ILanguageConfigurationService, LanguageConfigurationService } from '../../../common/languages/languageConfigurationRegistry.js';
+import { TextModel } from '../../../common/model/textModel.js';
+import { LanguageIdCodec } from '../../../common/services/languagesRegistry.js';
+import { LineTokens } from '../../../common/tokens/lineTokens.js';
+import { SparseMultilineTokens } from '../../../common/tokens/sparseMultilineTokens.js';
+import { SparseTokensStore } from '../../../common/tokens/sparseTokensStore.js';
+import { createModelServices, createTextModel, instantiateTextModel } from '../testTextModel.js';
 
 suite('TokensStore', () => {
 
-	const SEMANTIC_COLOR: ColorId = 5;
+	ensureNoDisposablesAreLeakedInTestSuite();
 
-	function parseTokensState(state: string[]): { text: string; tokens: MultilineTokens2; } {
-		let text: string[] = [];
-		let tokens: number[] = [];
+	const SEMANTIC_COLOR = 5 as ColorId;
+
+	function parseTokensState(state: string[]): { text: string; tokens: SparseMultilineTokens } {
+		const text: string[] = [];
+		const tokens: number[] = [];
 		let baseLine = 1;
 		for (let i = 0; i < state.length; i++) {
 			const line = state[i];
@@ -66,14 +73,14 @@ suite('TokensStore', () => {
 
 		return {
 			text: text.join('\n'),
-			tokens: new MultilineTokens2(baseLine, new SparseEncodedTokens(new Uint32Array(tokens)))
+			tokens: SparseMultilineTokens.create(baseLine, new Uint32Array(tokens))
 		};
 	}
 
 	function extractState(model: TextModel): string[] {
-		let result: string[] = [];
+		const result: string[] = [];
 		for (let lineNumber = 1; lineNumber <= model.getLineCount(); lineNumber++) {
-			const lineTokens = model.getLineTokens(lineNumber);
+			const lineTokens = model.tokenization.getLineTokens(lineNumber);
 			const lineContent = model.getLineContent(lineNumber);
 
 			let lineText = '';
@@ -95,12 +102,10 @@ suite('TokensStore', () => {
 		return result;
 	}
 
-	// function extractState
-
-	function testTokensAdjustment(rawInitialState: string[], edits: IIdentifiedSingleEditOperation[], rawFinalState: string[]) {
+	function testTokensAdjustment(rawInitialState: string[], edits: ISingleEditOperation[], rawFinalState: string[]) {
 		const initialState = parseTokensState(rawInitialState);
 		const model = createTextModel(initialState.text);
-		model.setSemanticTokens([initialState.tokens], true);
+		model.tokenization.setSemanticTokens([initialState.tokens], true);
 
 		model.applyEdits(edits);
 
@@ -171,186 +176,235 @@ suite('TokensStore', () => {
 		);
 	});
 
+	test('issue #179268: a complex edit', () => {
+		testTokensAdjustment(
+			[
+				`|export| |'interior_material_selector.dart'|;`,
+				`|export| |'mileage_selector.dart'|;`,
+				`|export| |'owners_selector.dart'|;`,
+				`|export| |'price_selector.dart'|;`,
+				`|export| |'seat_count_selector.dart'|;`,
+				`|export| |'year_selector.dart'|;`,
+				`|export| |'winter_options_selector.dart'|;|export| |'camera_selector.dart'|;`
+			],
+			[
+				{ range: new Range(1, 9, 1, 9), text: `camera_selector.dart';\nexport '` },
+				{ range: new Range(6, 9, 7, 9), text: `` },
+				{ range: new Range(7, 39, 7, 39), text: `\n` },
+				{ range: new Range(7, 47, 7, 48), text: `ye` },
+				{ range: new Range(7, 49, 7, 51), text: `` },
+				{ range: new Range(7, 52, 7, 53), text: `` },
+			],
+			[
+				`|export| |'|camera_selector.dart';`,
+				`export 'interior_material_selector.dart';`,
+				`|export| |'mileage_selector.dart'|;`,
+				`|export| |'owners_selector.dart'|;`,
+				`|export| |'price_selector.dart'|;`,
+				`|export| |'seat_count_selector.dart'|;`,
+				`|export| |'||winter_options_selector.dart'|;`,
+				`|export| |'year_selector.dart'|;`
+			]
+		);
+	});
+
 	test('issue #91936: Semantic token color highlighting fails on line with selected text', () => {
 		const model = createTextModel('                    else if ($s = 08) then \'\\b\'');
-		model.setSemanticTokens([
-			new MultilineTokens2(1, new SparseEncodedTokens(new Uint32Array([
-				0, 20, 24, 245768,
-				0, 25, 27, 245768,
-				0, 28, 29, 16392,
-				0, 29, 31, 262152,
-				0, 32, 33, 16392,
-				0, 34, 36, 98312,
-				0, 36, 37, 16392,
-				0, 38, 42, 245768,
-				0, 43, 47, 180232,
-			])))
+		model.tokenization.setSemanticTokens([
+			SparseMultilineTokens.create(1, new Uint32Array([
+				0, 20, 24, 0b01111000000000010000,
+				0, 25, 27, 0b01111000000000010000,
+				0, 28, 29, 0b00001000000000010000,
+				0, 29, 31, 0b10000000000000010000,
+				0, 32, 33, 0b00001000000000010000,
+				0, 34, 36, 0b00110000000000010000,
+				0, 36, 37, 0b00001000000000010000,
+				0, 38, 42, 0b01111000000000010000,
+				0, 43, 47, 0b01011000000000010000,
+			]))
 		], true);
-		const lineTokens = model.getLineTokens(1);
-		let decodedTokens: number[] = [];
+		const lineTokens = model.tokenization.getLineTokens(1);
+		const decodedTokens: number[] = [];
 		for (let i = 0, len = lineTokens.getCount(); i < len; i++) {
 			decodedTokens.push(lineTokens.getEndOffset(i), lineTokens.getMetadata(i));
 		}
 
 		assert.deepStrictEqual(decodedTokens, [
-			20, 16793600,
-			24, 17022976,
-			25, 16793600,
-			27, 17022976,
-			28, 16793600,
-			29, 16793600,
-			31, 17039360,
-			32, 16793600,
-			33, 16793600,
-			34, 16793600,
-			36, 16875520,
-			37, 16793600,
-			38, 16793600,
-			42, 17022976,
-			43, 16793600,
-			47, 16957440
+			20, 0b10000000001000010000000001,
+			24, 0b10000001111000010000000001,
+			25, 0b10000000001000010000000001,
+			27, 0b10000001111000010000000001,
+			28, 0b10000000001000010000000001,
+			29, 0b10000000001000010000000001,
+			31, 0b10000010000000010000000001,
+			32, 0b10000000001000010000000001,
+			33, 0b10000000001000010000000001,
+			34, 0b10000000001000010000000001,
+			36, 0b10000000110000010000000001,
+			37, 0b10000000001000010000000001,
+			38, 0b10000000001000010000000001,
+			42, 0b10000001111000010000000001,
+			43, 0b10000000001000010000000001,
+			47, 0b10000001011000010000000001
 		]);
 
 		model.dispose();
 	});
 
+	test('issue #147944: Language id "vs.editor.nullLanguage" is not configured nor known', () => {
+		const disposables = new DisposableStore();
+		const instantiationService = createModelServices(disposables, [
+			[ILanguageConfigurationService, LanguageConfigurationService]
+		]);
+		const model = disposables.add(instantiateTextModel(instantiationService, '--[[\n\n]]'));
+		model.tokenization.setSemanticTokens([
+			SparseMultilineTokens.create(1, new Uint32Array([
+				0, 2, 4, 0b100000000000010000,
+				1, 0, 0, 0b100000000000010000,
+				2, 0, 2, 0b100000000000010000,
+			]))
+		], true);
+		assert.strictEqual(model.getWordAtPosition(new Position(2, 1)), null);
+		disposables.dispose();
+	});
+
 	test('partial tokens 1', () => {
 		const codec = new LanguageIdCodec();
-		const store = new TokensStore2(codec);
+		const store = new SparseTokensStore(codec);
 
 		// setPartial: [1,1 -> 31,2], [(5,5-10),(10,5-10),(15,5-10),(20,5-10),(25,5-10),(30,5-10)]
 		store.setPartial(new Range(1, 1, 31, 2), [
-			new MultilineTokens2(5, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(5, new Uint32Array([
 				0, 5, 10, 1,
 				5, 5, 10, 2,
 				10, 5, 10, 3,
 				15, 5, 10, 4,
 				20, 5, 10, 5,
 				25, 5, 10, 6,
-			])))
+			]))
 		]);
 
 		// setPartial: [18,1 -> 42,1], [(20,5-10),(25,5-10),(30,5-10),(35,5-10),(40,5-10)]
 		store.setPartial(new Range(18, 1, 42, 1), [
-			new MultilineTokens2(20, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(20, new Uint32Array([
 				0, 5, 10, 4,
 				5, 5, 10, 5,
 				10, 5, 10, 6,
 				15, 5, 10, 7,
 				20, 5, 10, 8,
-			])))
+			]))
 		]);
 
 		// setPartial: [1,1 -> 31,2], [(5,5-10),(10,5-10),(15,5-10),(20,5-10),(25,5-10),(30,5-10)]
 		store.setPartial(new Range(1, 1, 31, 2), [
-			new MultilineTokens2(5, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(5, new Uint32Array([
 				0, 5, 10, 1,
 				5, 5, 10, 2,
 				10, 5, 10, 3,
 				15, 5, 10, 4,
 				20, 5, 10, 5,
 				25, 5, 10, 6,
-			])))
+			]))
 		]);
 
-		const lineTokens = store.addSemanticTokens(10, new LineTokens(new Uint32Array([12, 1]), `enum Enum1 {`, codec));
+		const lineTokens = store.addSparseTokens(10, new LineTokens(new Uint32Array([12, 1]), `enum Enum1 {`, codec));
 		assert.strictEqual(lineTokens.getCount(), 3);
 	});
 
 	test('partial tokens 2', () => {
 		const codec = new LanguageIdCodec();
-		const store = new TokensStore2(codec);
+		const store = new SparseTokensStore(codec);
 
 		// setPartial: [1,1 -> 31,2], [(5,5-10),(10,5-10),(15,5-10),(20,5-10),(25,5-10),(30,5-10)]
 		store.setPartial(new Range(1, 1, 31, 2), [
-			new MultilineTokens2(5, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(5, new Uint32Array([
 				0, 5, 10, 1,
 				5, 5, 10, 2,
 				10, 5, 10, 3,
 				15, 5, 10, 4,
 				20, 5, 10, 5,
 				25, 5, 10, 6,
-			])))
+			]))
 		]);
 
 		// setPartial: [6,1 -> 36,2], [(10,5-10),(15,5-10),(20,5-10),(25,5-10),(30,5-10),(35,5-10)]
 		store.setPartial(new Range(6, 1, 36, 2), [
-			new MultilineTokens2(10, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(10, new Uint32Array([
 				0, 5, 10, 2,
 				5, 5, 10, 3,
 				10, 5, 10, 4,
 				15, 5, 10, 5,
 				20, 5, 10, 6,
-			])))
+			]))
 		]);
 
 		// setPartial: [17,1 -> 42,1], [(20,5-10),(25,5-10),(30,5-10),(35,5-10),(40,5-10)]
 		store.setPartial(new Range(17, 1, 42, 1), [
-			new MultilineTokens2(20, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(20, new Uint32Array([
 				0, 5, 10, 4,
 				5, 5, 10, 5,
 				10, 5, 10, 6,
 				15, 5, 10, 7,
 				20, 5, 10, 8,
-			])))
+			]))
 		]);
 
-		const lineTokens = store.addSemanticTokens(20, new LineTokens(new Uint32Array([12, 1]), `enum Enum1 {`, codec));
+		const lineTokens = store.addSparseTokens(20, new LineTokens(new Uint32Array([12, 1]), `enum Enum1 {`, codec));
 		assert.strictEqual(lineTokens.getCount(), 3);
 	});
 
 	test('partial tokens 3', () => {
 		const codec = new LanguageIdCodec();
-		const store = new TokensStore2(codec);
+		const store = new SparseTokensStore(codec);
 
 		// setPartial: [1,1 -> 31,2], [(5,5-10),(10,5-10),(15,5-10),(20,5-10),(25,5-10),(30,5-10)]
 		store.setPartial(new Range(1, 1, 31, 2), [
-			new MultilineTokens2(5, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(5, new Uint32Array([
 				0, 5, 10, 1,
 				5, 5, 10, 2,
 				10, 5, 10, 3,
 				15, 5, 10, 4,
 				20, 5, 10, 5,
 				25, 5, 10, 6,
-			])))
+			]))
 		]);
 
 		// setPartial: [11,1 -> 16,2], [(15,5-10),(20,5-10)]
 		store.setPartial(new Range(11, 1, 16, 2), [
-			new MultilineTokens2(10, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(10, new Uint32Array([
 				0, 5, 10, 3,
 				5, 5, 10, 4,
-			])))
+			]))
 		]);
 
-		const lineTokens = store.addSemanticTokens(5, new LineTokens(new Uint32Array([12, 1]), `enum Enum1 {`, codec));
+		const lineTokens = store.addSparseTokens(5, new LineTokens(new Uint32Array([12, 1]), `enum Enum1 {`, codec));
 		assert.strictEqual(lineTokens.getCount(), 3);
 	});
 
 	test('issue #94133: Semantic colors stick around when using (only) range provider', () => {
 		const codec = new LanguageIdCodec();
-		const store = new TokensStore2(codec);
+		const store = new SparseTokensStore(codec);
 
 		// setPartial: [1,1 -> 1,20] [(1,9-11)]
 		store.setPartial(new Range(1, 1, 1, 20), [
-			new MultilineTokens2(1, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(1, new Uint32Array([
 				0, 9, 11, 1,
-			])))
+			]))
 		]);
 
 		// setPartial: [1,1 -> 1,20], []
 		store.setPartial(new Range(1, 1, 1, 20), []);
 
-		const lineTokens = store.addSemanticTokens(1, new LineTokens(new Uint32Array([12, 1]), `enum Enum1 {`, codec));
+		const lineTokens = store.addSparseTokens(1, new LineTokens(new Uint32Array([12, 1]), `enum Enum1 {`, codec));
 		assert.strictEqual(lineTokens.getCount(), 1);
 	});
 
 	test('bug', () => {
-		function createTokens(str: string): MultilineTokens2 {
+		function createTokens(str: string): SparseMultilineTokens {
 			str = str.replace(/^\[\(/, '');
 			str = str.replace(/\)\]$/, '');
 			const strTokens = str.split('),(');
-			let result: number[] = [];
+			const result: number[] = [];
 			let firstLineNumber = 0;
 			for (const strToken of strTokens) {
 				const pieces = strToken.split(',');
@@ -364,11 +418,11 @@ suite('TokensStore', () => {
 				}
 				result.push(lineNumber - firstLineNumber, startChar, endChar, (lineNumber + startChar) % 13);
 			}
-			return new MultilineTokens2(firstLineNumber, new SparseEncodedTokens(new Uint32Array(result)));
+			return SparseMultilineTokens.create(firstLineNumber, new Uint32Array(result));
 		}
 
 		const codec = new LanguageIdCodec();
-		const store = new TokensStore2(codec);
+		const store = new SparseTokensStore(codec);
 		// setPartial [36446,1 -> 36475,115] [(36448,24-29),(36448,33-46),(36448,47-54),(36450,25-35),(36450,36-50),(36451,28-33),(36451,36-49),(36451,50-57),(36452,35-53),(36452,54-62),(36454,33-38),(36454,41-54),(36454,55-60),(36455,35-53),(36455,54-62),(36457,33-44),(36457,45-49),(36457,50-56),(36457,62-83),(36457,84-88),(36458,35-53),(36458,54-62),(36460,33-37),(36460,38-42),(36460,47-57),(36460,58-67),(36461,35-53),(36461,54-62),(36463,34-38),(36463,39-45),(36463,46-51),(36463,54-63),(36463,64-71),(36463,76-80),(36463,81-87),(36463,88-92),(36463,97-107),(36463,108-119),(36464,35-53),(36464,54-62),(36466,33-71),(36466,72-76),(36467,35-53),(36467,54-62),(36469,24-29),(36469,33-46),(36469,47-54),(36470,24-35),(36470,38-46),(36473,25-35),(36473,36-51),(36474,28-33),(36474,36-49),(36474,50-58),(36475,35-53),(36475,54-62)]
 		store.setPartial(
 			new Range(36446, 1, 36475, 115),
@@ -390,7 +444,7 @@ suite('TokensStore', () => {
 			[createTokens('[(36442,25-35),(36442,36-50),(36443,30-39),(36443,42-46),(36443,47-53),(36443,54-58),(36443,63-73),(36443,74-84),(36443,87-91),(36443,92-98),(36443,101-105),(36443,106-112),(36443,113-119),(36444,28-37),(36444,38-42),(36444,47-57),(36444,58-75),(36444,80-95),(36444,96-105),(36445,35-53),(36445,54-62),(36448,24-29),(36448,33-46),(36448,47-54),(36450,25-35),(36450,36-50),(36451,28-33),(36451,36-49),(36451,50-57),(36452,35-53),(36452,54-62),(36454,33-38),(36454,41-54),(36454,55-60),(36455,35-53),(36455,54-62),(36457,33-44),(36457,45-49),(36457,50-56),(36457,62-83),(36457,84-88),(36458,35-53),(36458,54-62),(36460,33-37),(36460,38-42),(36460,47-57),(36460,58-67),(36461,35-53),(36461,54-62),(36463,34-38),(36463,39-45),(36463,46-51),(36463,54-63),(36463,64-71),(36463,76-80),(36463,81-87),(36463,88-92),(36463,97-107),(36463,108-119),(36464,35-53),(36464,54-62),(36466,33-71),(36466,72-76),(36467,35-53),(36467,54-62),(36469,24-29),(36469,33-46),(36469,47-54),(36470,24-35)]')]
 		);
 
-		const lineTokens = store.addSemanticTokens(36451, new LineTokens(new Uint32Array([60, 1]), `                        if (flags & ModifierFlags.Ambient) {`, codec));
+		const lineTokens = store.addSparseTokens(36451, new LineTokens(new Uint32Array([60, 1]), `                        if (flags & ModifierFlags.Ambient) {`, codec));
 		assert.strictEqual(lineTokens.getCount(), 7);
 	});
 
@@ -406,7 +460,7 @@ suite('TokensStore', () => {
 		}
 
 		function toArr(lineTokens: LineTokens): number[] {
-			let r: number[] = [];
+			const r: number[] = [];
 			for (let i = 0; i < lineTokens.getCount(); i++) {
 				r.push(lineTokens.getEndOffset(i));
 				r.push(lineTokens.getMetadata(i));
@@ -415,15 +469,15 @@ suite('TokensStore', () => {
 		}
 
 		const codec = new LanguageIdCodec();
-		const store = new TokensStore2(codec);
+		const store = new SparseTokensStore(codec);
 
 		store.set([
-			new MultilineTokens2(1, new SparseEncodedTokens(new Uint32Array([
+			SparseMultilineTokens.create(1, new Uint32Array([
 				0, 6, 11, (1 << MetadataConsts.FOREGROUND_OFFSET) | MetadataConsts.SEMANTIC_USE_FOREGROUND,
-			])))
+			]))
 		], true);
 
-		const lineTokens = store.addSemanticTokens(1, new LineTokens(new Uint32Array([
+		const lineTokens = store.addSparseTokens(1, new LineTokens(new Uint32Array([
 			5, createTMMetadata(5, FontStyle.Bold, 53),
 			14, createTMMetadata(1, FontStyle.None, 53),
 			17, createTMMetadata(6, FontStyle.None, 53),
@@ -440,4 +494,143 @@ suite('TokensStore', () => {
 			18, createTMMetadata(1, FontStyle.None, 53)
 		]);
 	});
+
+
+	test('BUG: setPartial with startLineNumber > 1 and token removal creates invalid state', () => {
+		/**
+		 * The bug is the same regardless of the starting line number.
+		 * If a piece starts at line 5 and all tokens are removed via setPartial:
+		 * - startLineNumber stays at 5
+		 * - endLineNumber becomes 5 + (-1) = 4
+		 */
+		const codec = new LanguageIdCodec();
+		const store = new SparseTokensStore(codec);
+
+		// Set initial tokens on line 5
+		store.set([
+			SparseMultilineTokens.create(5, new Uint32Array([
+				0, 5, 10, 1,  // line 5, chars 5-10
+			]))
+		], false);
+
+		assert.strictEqual(store.isEmpty(), false);
+
+		// Remove all tokens via setPartial
+		store.setPartial(new Range(5, 1, 5, 20), []);
+
+		// BUG: During processing, pieces can have invalid line numbers
+		// The store should remove empty pieces and remain valid
+		assert.strictEqual(store.isEmpty(), true,
+			'Store should be empty after setPartial removes all tokens');
+	});
+
+	test('BUG: setPartial with split that creates empty first piece with invalid line numbers', () => {
+		const codec = new LanguageIdCodec();
+		const store = new SparseTokensStore(codec);
+
+		// Set initial tokens - token is on line 11
+		store.set([
+			SparseMultilineTokens.create(1, new Uint32Array([
+				10, 5, 10, 1,  // line 11 (deltaLine=10 from startLineNumber=1), chars 5-10
+			]))
+		], false);
+
+		// setPartial with a range [1,1 -> 5,1] that will cause a split where the first piece is empty
+		store.setPartial(new Range(1, 1, 5, 1), []);
+
+		assert.strictEqual(store.isEmpty(), false, 'Store should still have the token on line 11');
+
+		// The token at line 11 should be retrievable after the split
+		const lineTokens = store.addSparseTokens(11, new LineTokens(new Uint32Array([22, 1]), `    test line text    `, codec));
+		assert.strictEqual(lineTokens.getCount(), 3, 'Should have 3 tokens: base token start + semantic token from line 11 + base token end');
+		assert.strictEqual(lineTokens.getStartOffset(1), 5, 'Semantic token should start at offset 5');
+		assert.strictEqual(lineTokens.getEndOffset(1), 10, 'Semantic token should end at offset 10');
+	});
+
+	test('addSparseTokens skips overlapping semantic tokens that produce backward endOffsets', () => {
+		// This test reproduces a rendering glitch where characters are duplicated in the DOM.
+		// When typing at a semantic token boundary, `acceptInsertText` can expand a token
+		// and create overlapping ranges (e.g., token '+' at (3,5) and token '2' at (4,5)).
+		// The merge in `addSparseTokens` must not produce backward endOffset sequences,
+		// otherwise `LineTokens.withInserted` re-copies characters causing duplication.
+		const codec = new LanguageIdCodec();
+		const store = new SparseTokensStore(codec);
+
+		// Simulate overlapping semantic tokens after an edit:
+		// Original: f=1+2 with tokens at (0,1), (1,2), (2,3), (3,4), (4,5)
+		// After inserting 'a' at offset 4: token (3,4) expands to (3,5), token (4,5) stays
+		// This creates overlap: (3,5) and (4,5)
+		const semanticMeta1 = (1 << MetadataConsts.FOREGROUND_OFFSET) | MetadataConsts.SEMANTIC_USE_FOREGROUND;
+		const semanticMeta2 = (2 << MetadataConsts.FOREGROUND_OFFSET) | MetadataConsts.SEMANTIC_USE_FOREGROUND;
+		store.set([
+			SparseMultilineTokens.create(1, new Uint32Array([
+				// deltaLine, startChar, endChar, metadata
+				0, 0, 1, semanticMeta1,  // 'f' at (0,1)
+				0, 1, 2, semanticMeta2,  // '=' at (1,2)
+				0, 2, 3, semanticMeta1,  // '1' at (2,3)
+				0, 3, 5, semanticMeta2,  // '+a' at (3,5) - expanded after edit
+				0, 4, 5, semanticMeta1,  // overlapping: 'a' at (4,5) - stale position
+			]))
+		], true);
+
+		const tmMeta = (3 << MetadataConsts.FOREGROUND_OFFSET) >>> 0;
+		const lineTokens = store.addSparseTokens(1, new LineTokens(new Uint32Array([
+			6, tmMeta, // entire line "f=1+a2" covered by one TM token
+		]), `f=1+a2`, codec));
+
+		// Verify endOffsets are monotonically increasing (no backward sequences)
+		const endOffsets: number[] = [];
+		for (let i = 0; i < lineTokens.getCount(); i++) {
+			endOffsets.push(lineTokens.getEndOffset(i));
+		}
+		for (let i = 1; i < endOffsets.length; i++) {
+			assert.ok(endOffsets[i] > endOffsets[i - 1],
+				`endOffset[${i}]=${endOffsets[i]} should be > endOffset[${i - 1}]=${endOffsets[i - 1]}`);
+		}
+
+		// When used with injected text, the resulting LineTokens must not duplicate characters.
+		// Simulate injected text "  " at offset 0 (like the repro's `before: { content: "  " }`)
+		const withInjected = lineTokens.withInserted([{ offset: 0, text: '  ', tokenMetadata: LineTokens.defaultTokenMetadata }]);
+		assert.strictEqual(withInjected.getLineContent(), '  f=1+a2',
+			'withInserted must not duplicate characters when semantic tokens overlap');
+	});
+
+	test('piece with startLineNumber 0 and endLineNumber -1 after encompassing deletion', () => {
+		const codec = new LanguageIdCodec();
+		const store = new SparseTokensStore(codec);
+
+		// Set initial tokens on lines 5-10
+		const piece = SparseMultilineTokens.create(5, new Uint32Array([
+			0, 0, 5, 1,  // line 5, chars 0-5
+			5, 0, 5, 2,  // line 10, chars 0-5
+		]));
+
+		store.set([piece], false);
+
+		// Verify initial state
+		assert.strictEqual(piece.startLineNumber, 5);
+		assert.strictEqual(piece.endLineNumber, 10);
+		assert.strictEqual(piece.isEmpty(), false);
+
+		// Perform an edit that completely encompasses the token range
+		// Delete from line 1 to line 20 (encompasses lines 5-10)
+		// This triggers the case in _acceptDeleteRange where:
+		// if (firstLineIndex < 0 && lastLineIndex >= tokenMaxDeltaLine + 1)
+		// Which sets this._startLineNumber = 0 and calls this._tokens.clear()
+		store.acceptEdit(
+			{ startLineNumber: 1, startColumn: 1, endLineNumber: 20, endColumn: 1 },
+			0, // eolCount - no new lines inserted
+			0, // firstLineLength
+			0, // lastLineLength
+			0  // firstCharCode
+		);
+
+		// After an encompassing deletion, the piece should be empty
+		assert.strictEqual(piece.isEmpty(), true, 'Piece should be empty after encompassing deletion');
+
+		// EXPECTED BEHAVIOR: The store should be empty (no pieces with invalid line numbers)
+		// Currently fails because the piece remains with startLineNumber=0, endLineNumber=-1
+		assert.strictEqual(store.isEmpty(), true, 'Store should be empty after all tokens are deleted by encompassing edit');
+	});
 });
+

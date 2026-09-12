@@ -3,40 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Range } from 'vs/editor/common/core/range';
-import { Selection } from 'vs/editor/common/core/selection';
-import { IViewModel, IViewWhitespaceViewportData, ViewLineRenderingData, ViewModelDecoration } from 'vs/editor/common/viewModel/viewModel';
-
-export interface IPartialViewLinesViewportData {
-	/**
-	 * Value to be substracted from `scrollTop` (in order to vertical offset numbers < 1MM)
-	 */
-	readonly bigNumbersDelta: number;
-	/**
-	 * The first (partially) visible line number.
-	 */
-	readonly startLineNumber: number;
-	/**
-	 * The last (partially) visible line number.
-	 */
-	readonly endLineNumber: number;
-	/**
-	 * relativeVerticalOffset[i] is the `top` position for line at `i` + `startLineNumber`.
-	 */
-	readonly relativeVerticalOffset: number[];
-	/**
-	 * The centered line in the viewport.
-	 */
-	readonly centeredLineNumber: number;
-	/**
-	 * The first completely visible line number.
-	 */
-	readonly completelyVisibleStartLineNumber: number;
-	/**
-	 * The last completely visible line number.
-	 */
-	readonly completelyVisibleEndLineNumber: number;
-}
+import { Range } from '../core/range.js';
+import { Selection } from '../core/selection.js';
+import { IPartialViewLinesViewportData, IViewModel, IViewWhitespaceViewportData, ViewLineRenderingData } from '../viewModel.js';
+import { ViewModelDecoration } from '../viewModel/viewModelDecoration.js';
 
 /**
  * Contains all data needed to render at a specific viewport.
@@ -77,6 +47,8 @@ export class ViewportData {
 
 	private readonly _model: IViewModel;
 
+	public readonly lineHeight: number;
+
 	constructor(
 		selections: Selection[],
 		partialData: IPartialViewLinesViewportData,
@@ -88,6 +60,7 @@ export class ViewportData {
 		this.endLineNumber = partialData.endLineNumber | 0;
 		this.relativeVerticalOffset = partialData.relativeVerticalOffset;
 		this.bigNumbersDelta = partialData.bigNumbersDelta | 0;
+		this.lineHeight = partialData.lineHeight | 0;
 		this.whitespaceViewportData = whitespaceViewportData;
 
 		this._model = model;
@@ -101,7 +74,11 @@ export class ViewportData {
 	}
 
 	public getViewLineRenderingData(lineNumber: number): ViewLineRenderingData {
-		return this._model.getViewLineRenderingData(this.visibleRange, lineNumber);
+		return this._model.getViewportViewLineRenderingData(this.visibleRange, lineNumber);
+	}
+
+	public getViewLineContinuesWithWrappedLine(lineNumber: number): boolean {
+		return this._model.getViewLineContinuesWithWrappedLine(lineNumber);
 	}
 
 	public getDecorationsInViewport(): ViewModelDecoration[] {

@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Event } from 'vs/base/common/event';
-import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
+import { Event } from '../../../base/common/event.js';
+import { createDecorator } from '../../instantiation/common/instantiation.js';
 
 export const IWebviewManagerService = createDecorator<IWebviewManagerService>('webviewManagerService');
 
@@ -17,23 +17,22 @@ export interface WebviewWindowId {
 }
 
 export interface FindInFrameOptions {
-	forward?: boolean;
-	findNext?: boolean;
-	matchCase?: boolean;
+	readonly forward?: boolean;
+	readonly findNext?: boolean;
+	readonly matchCase?: boolean;
 }
 
 export interface FoundInFrameResult {
-	requestId: number;
-	activeMatchOrdinal: number;
-	matches: number;
-	selectionArea: any;
-	finalUpdate: boolean;
+	readonly requestId: number;
+	readonly activeMatchOrdinal: number;
+	readonly matches: number;
+	readonly finalUpdate: boolean;
 }
 
 export interface IWebviewManagerService {
 	_serviceBrand: unknown;
 
-	onFoundInFrame: Event<FoundInFrameResult>;
+	readonly onFoundInFrame: Event<FoundInFrameResult>;
 
 	setIgnoreMenuShortcuts(id: WebviewWebContentsId | WebviewWindowId, enabled: boolean): Promise<void>;
 

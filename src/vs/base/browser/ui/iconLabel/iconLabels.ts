@@ -3,22 +3,24 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as dom from 'vs/base/browser/dom';
-import { CSSIcon } from 'vs/base/common/codicons';
+import * as dom from '../../dom.js';
+import { ThemeIcon } from '../../../common/themables.js';
 
-const labelWithIconsRegex = new RegExp(`(\\\\)?\\$\\((${CSSIcon.iconNameExpression}(?:${CSSIcon.iconModifierExpression})?)\\)`, 'g');
-export function renderLabelWithIcons(text: string): Array<HTMLSpanElement | string> {
+const labelWithIconsRegex = new RegExp(`(\\\\)?\\$\\((${ThemeIcon.iconNameExpression}(?:${ThemeIcon.iconModifierExpression})?)\\)`, 'g');
+export function renderLabelWithIcons(text: string, renderIconsInDefaultColor?: boolean): Array<HTMLSpanElement | string> {
 	const elements = new Array<HTMLSpanElement | string>();
-	let match: RegExpMatchArray | null;
+	let match: RegExpExecArray | null;
 
 	let textStart = 0, textStop = 0;
 	while ((match = labelWithIconsRegex.exec(text)) !== null) {
 		textStop = match.index || 0;
-		elements.push(text.substring(textStart, textStop));
+		if (textStart < textStop) {
+			elements.push(text.substring(textStart, textStop));
+		}
 		textStart = (match.index || 0) + match[0].length;
 
 		const [, escaped, codicon] = match;
-		elements.push(escaped ? `$(${codicon})` : renderIcon({ id: codicon }));
+		elements.push(escaped ? `$(${codicon})` : renderIcon({ id: codicon }, renderIconsInDefaultColor));
 	}
 
 	if (textStart < text.length) {
@@ -27,8 +29,12 @@ export function renderLabelWithIcons(text: string): Array<HTMLSpanElement | stri
 	return elements;
 }
 
-export function renderIcon(icon: CSSIcon): HTMLSpanElement {
+export function renderIcon(icon: ThemeIcon, renderDefaultColor?: boolean): HTMLSpanElement {
 	const node = dom.$(`span`);
-	node.classList.add(...CSSIcon.asClassNameArray(icon));
+	const classes = ThemeIcon.asClassNameArray(icon);
+	if (renderDefaultColor) {
+		classes.push('codicon-colored');
+	}
+	node.classList.add(...classes);
 	return node;
 }

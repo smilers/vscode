@@ -3,10 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as strings from 'vs/base/common/strings';
-import { Constants } from 'vs/base/common/uint';
-import { InlineDecoration, InlineDecorationType } from 'vs/editor/common/viewModel/viewModel';
-import { LinePartMetadata } from 'vs/editor/common/viewLayout/viewLineRenderer';
+import * as strings from '../../../base/common/strings.js';
+import { Constants } from '../../../base/common/uint.js';
+import { InlineDecoration, InlineDecorationType } from '../viewModel/inlineDecorations.js';
+import { LinePartMetadata } from './linePart.js';
 
 export class LineDecoration {
 	_lineDecorationBrand: void = undefined;
@@ -28,7 +28,7 @@ export class LineDecoration {
 		);
 	}
 
-	public static equalsArr(a: LineDecoration[], b: LineDecoration[]): boolean {
+	public static equalsArr(a: readonly LineDecoration[], b: readonly LineDecoration[]): boolean {
 		const aLen = a.length;
 		const bLen = b.length;
 		if (aLen !== bLen) {
@@ -65,7 +65,8 @@ export class LineDecoration {
 			return [];
 		}
 
-		let result: LineDecoration[] = [], resultLen = 0;
+		const result: LineDecoration[] = [];
+		let resultLen = 0;
 
 		for (let i = 0, len = lineDecorations.length; i < len; i++) {
 			const d = lineDecorations[i];
@@ -91,7 +92,9 @@ export class LineDecoration {
 	}
 
 	private static _typeCompare(a: InlineDecorationType, b: InlineDecorationType): number {
-		const ORDER = [2, 0, 1, 3];
+		// WidthOnly, Before, After, Regular, RegularAffectingLetterSpacing.
+		// Width only decorations come from injected text, which renders before any other decoration.
+		const ORDER = [3, 1, 2, 4, 0];
 		return ORDER[a] - ORDER[b];
 	}
 
@@ -212,7 +215,7 @@ export class LineDecorationsNormalizer {
 			return [];
 		}
 
-		let result: DecorationSegment[] = [];
+		const result: DecorationSegment[] = [];
 
 		const stack = new Stack();
 		let nextStartOffset = 0;

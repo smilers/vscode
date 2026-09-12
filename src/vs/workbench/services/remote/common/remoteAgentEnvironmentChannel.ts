@@ -3,116 +3,105 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as platform from 'vs/base/common/platform';
-import * as performance from 'vs/base/common/performance';
-import { URI, UriComponents } from 'vs/base/common/uri';
-import { IChannel } from 'vs/base/parts/ipc/common/ipc';
-import { IExtensionDescription, ExtensionIdentifier } from 'vs/platform/extensions/common/extensions';
-import { IRemoteAgentEnvironment } from 'vs/platform/remote/common/remoteAgentEnvironment';
-import { IDiagnosticInfoOptions, IDiagnosticInfo } from 'vs/platform/diagnostics/common/diagnostics';
-import { ITelemetryData } from 'vs/platform/telemetry/common/telemetry';
+import * as platform from '../../../../base/common/platform.js';
+import * as performance from '../../../../base/common/performance.js';
+import { URI, UriComponents, UriDto } from '../../../../base/common/uri.js';
+import { IChannel } from '../../../../base/parts/ipc/common/ipc.js';
+import { IRemoteAgentEnvironment } from '../../../../platform/remote/common/remoteAgentEnvironment.js';
+import { IDiagnosticInfoOptions, IDiagnosticInfo } from '../../../../platform/diagnostics/common/diagnostics.js';
+import { ITelemetryData, TelemetryLevel } from '../../../../platform/telemetry/common/telemetry.js';
+import { IExtensionHostExitInfo } from './remoteAgentService.js';
+import { revive } from '../../../../base/common/marshalling.js';
+import { IUserDataProfile } from '../../../../platform/userDataProfile/common/userDataProfile.js';
+import { ProtocolConstants } from '../../../../base/parts/ipc/common/ipc.net.js';
 
 export interface IGetEnvironmentDataArguments {
 	remoteAuthority: string;
+	profile?: string;
 }
 
-export interface IScanExtensionsArguments {
-	language: string;
+export interface IGetExtensionHostExitInfoArguments {
 	remoteAuthority: string;
-	extensionDevelopmentPath: UriComponents[] | undefined;
-	skipExtensions: ExtensionIdentifier[];
-}
-
-export interface IScanSingleExtensionArguments {
-	language: string;
-	remoteAuthority: string;
-	isBuiltin: boolean;
-	extensionLocation: UriComponents;
+	reconnectionToken: string;
 }
 
 export interface IRemoteAgentEnvironmentDTO {
 	pid: number;
 	connectionToken: string;
 	appRoot: UriComponents;
+	execPath: string;
+	tmpDir: UriComponents;
 	settingsPath: UriComponents;
+	mcpResource: UriComponents;
 	logsPath: UriComponents;
-	extensionsPath: UriComponents;
 	extensionHostLogsPath: UriComponents;
 	globalStorageHome: UriComponents;
 	workspaceStorageHome: UriComponents;
+	localHistoryHome: UriComponents;
 	userHome: UriComponents;
 	os: platform.OperatingSystem;
 	arch: string;
 	marks: performance.PerformanceMark[];
 	useHostProxy: boolean;
+	profiles: {
+		all: UriDto<IUserDataProfile[]>;
+		home: UriComponents;
+	};
+	isUnsupportedGlibc: boolean;
+	reconnectionGraceTime?: number;
 }
 
 export class RemoteExtensionEnvironmentChannelClient {
 
-	static async getEnvironmentData(channel: IChannel, remoteAuthority: string): Promise<IRemoteAgentEnvironment> {
+	static async getEnvironmentData(channel: IChannel, remoteAuthority: string, profile: string | undefined): Promise<IRemoteAgentEnvironment> {
 		const args: IGetEnvironmentDataArguments = {
-			remoteAuthority
+			remoteAuthority,
+			profile
 		};
 
 		const data = await channel.call<IRemoteAgentEnvironmentDTO>('getEnvironmentData', args);
+		const reconnectionGraceTime = (typeof data.reconnectionGraceTime === 'number' && data.reconnectionGraceTime >= 0)
+			? data.reconnectionGraceTime
+			: ProtocolConstants.ReconnectionGraceTime;
 
 		return {
 			pid: data.pid,
 			connectionToken: data.connectionToken,
 			appRoot: URI.revive(data.appRoot),
+			execPath: data.execPath,
+			tmpDir: URI.revive(data.tmpDir),
 			settingsPath: URI.revive(data.settingsPath),
+			mcpResource: URI.revive(data.mcpResource),
 			logsPath: URI.revive(data.logsPath),
-			extensionsPath: URI.revive(data.extensionsPath),
 			extensionHostLogsPath: URI.revive(data.extensionHostLogsPath),
 			globalStorageHome: URI.revive(data.globalStorageHome),
 			workspaceStorageHome: URI.revive(data.workspaceStorageHome),
+			localHistoryHome: URI.revive(data.localHistoryHome),
 			userHome: URI.revive(data.userHome),
 			os: data.os,
 			arch: data.arch,
 			marks: data.marks,
-			useHostProxy: data.useHostProxy
+			useHostProxy: data.useHostProxy,
+			profiles: revive(data.profiles),
+			isUnsupportedGlibc: data.isUnsupportedGlibc,
+			reconnectionGraceTime
 		};
 	}
 
-	static async whenExtensionsReady(channel: IChannel): Promise<void> {
-		await channel.call<void>('whenExtensionsReady');
-	}
-
-	static async scanExtensions(channel: IChannel, remoteAuthority: string, extensionDevelopmentPath: URI[] | undefined, skipExtensions: ExtensionIdentifier[]): Promise<IExtensionDescription[]> {
-		const args: IScanExtensionsArguments = {
-			language: platform.language,
+	static async getExtensionHostExitInfo(channel: IChannel, remoteAuthority: string, reconnectionToken: string): Promise<IExtensionHostExitInfo | null> {
+		const args: IGetExtensionHostExitInfoArguments = {
 			remoteAuthority,
-			extensionDevelopmentPath,
-			skipExtensions
+			reconnectionToken
 		};
-
-		const extensions = await channel.call<IExtensionDescription[]>('scanExtensions', args);
-		extensions.forEach(ext => { (<any>ext).extensionLocation = URI.revive(ext.extensionLocation); });
-
-		return extensions;
-	}
-
-	static async scanSingleExtension(channel: IChannel, remoteAuthority: string, isBuiltin: boolean, extensionLocation: URI): Promise<IExtensionDescription | null> {
-		const args: IScanSingleExtensionArguments = {
-			language: platform.language,
-			remoteAuthority,
-			isBuiltin,
-			extensionLocation
-		};
-
-		const extension = await channel.call<IExtensionDescription | null>('scanSingleExtension', args);
-		if (extension) {
-			(<any>extension).extensionLocation = URI.revive(extension.extensionLocation);
-		}
-		return extension;
+		return channel.call<IExtensionHostExitInfo | null>('getExtensionHostExitInfo', args);
 	}
 
 	static getDiagnosticInfo(channel: IChannel, options: IDiagnosticInfoOptions): Promise<IDiagnosticInfo> {
 		return channel.call<IDiagnosticInfo>('getDiagnosticInfo', options);
 	}
 
-	static disableTelemetry(channel: IChannel): Promise<void> {
-		return channel.call<void>('disableTelemetry');
+	static updateTelemetryLevel(channel: IChannel, telemetryLevel: TelemetryLevel): Promise<void> {
+		return channel.call<void>('updateTelemetryLevel', { telemetryLevel });
 	}
 
 	static logTelemetry(channel: IChannel, eventName: string, data: ITelemetryData): Promise<void> {
@@ -121,5 +110,9 @@ export class RemoteExtensionEnvironmentChannelClient {
 
 	static flushTelemetry(channel: IChannel): Promise<void> {
 		return channel.call<void>('flushTelemetry');
+	}
+
+	static async ping(channel: IChannel): Promise<void> {
+		await channel.call<void>('ping');
 	}
 }

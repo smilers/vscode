@@ -1,48 +1,51 @@
-name: "Code Scanning"
+name: CodeQL
 
 on:
+  push:
+    branches:
+      - main
+      - 'release/**/*'
+  pull_request:
+    branches:
+      - main
+      - 'release/**/*'
   schedule:
-    - cron: "0 0 * * 2"
+    - cron: '17 19 * * 6'
+
+permissions: {}
 
 jobs:
-  CodeQL-Build:
-    # CodeQL runs on ubuntu-latest and windows-latest
+  analyze:
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # Other detected languages occur only in test fixtures or build tooling.
+        include:
+          - language: javascript-typescript
+            build-mode: none
+          - language: rust
+            build-mode: none
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          # We must fetch at least the immediate parents so that if this is
-          # a pull request then we can checkout the head.
-          fetch-depth: 2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # If this run was triggered by a pull request event, then checkout
-      # the head of the pull request instead of the merge commit.
-      - run: git checkout HEAD^2
-        if: ${{ github.event_name == 'pull_request' }}
-
-      # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v1
+        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
-          languages: javascript
-
-      # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-      # If this step fails, then you should remove it and run the build manually (see below)
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v1
-
-      # ℹ️ Command-line programs to run using the OS shell.
-      # 📚 https://git.io/JvXDl
-
-      # ✏️ If the Autobuild fails above, remove it and uncomment the following three lines
-      #    and modify them (or add more) to build your code if your project
-      #    uses a compiled language
-
-      #- run: |
-      #   make bootstrap
-      #   make release
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          dependency-caching: true
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v1
+        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          category: /language:${{ matrix.language }}

@@ -3,11 +3,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as assert from 'assert';
-import { isFunction } from 'vs/base/common/types';
-import { Registry } from 'vs/platform/registry/common/platform';
+import assert from 'assert';
+import { isFunction } from '../../../../base/common/types.js';
+import { Registry } from '../../common/platform.js';
+import { ensureNoDisposablesAreLeakedInTestSuite } from '../../../../base/test/common/utils.js';
 
 suite('Platform / Registry', () => {
+
+	ensureNoDisposablesAreLeakedInTestSuite();
 
 	test('registry - api', function () {
 		assert.ok(isFunction(Registry.add));
@@ -26,7 +29,7 @@ suite('Platform / Registry', () => {
 
 	test('registry - knows, as', function () {
 
-		let ext = {};
+		const ext = {};
 
 		Registry.add('knows,as', ext);
 

@@ -3,13 +3,13 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { getLanguageModelCache } from '../languageModelCache';
+import { getLanguageModelCache } from '../languageModelCache.js';
 import {
 	LanguageService as HTMLLanguageService, HTMLDocument, DocumentContext, FormattingOptions,
 	HTMLFormatConfiguration, SelectionRange,
 	TextDocument, Position, Range, FoldingRange,
 	LanguageMode, Workspace, Settings
-} from './languageModes';
+} from './languageModes.js';
 
 export function getHTMLMode(htmlLanguageService: HTMLLanguageService, workspace: Workspace): LanguageMode {
 	const htmlDocuments = getLanguageModelCache<HTMLDocument>(10, 60, document => htmlLanguageService.parseHTMLDocument(document));
@@ -55,11 +55,21 @@ export function getHTMLMode(htmlLanguageService: HTMLLanguageService, workspace:
 		async getFoldingRanges(document: TextDocument): Promise<FoldingRange[]> {
 			return htmlLanguageService.getFoldingRanges(document);
 		},
-		async doAutoClose(document: TextDocument, position: Position) {
+		async doAutoInsert(document: TextDocument, position: Position, kind: 'autoQuote' | 'autoClose', settings = workspace.settings) {
 			const offset = document.offsetAt(position);
 			const text = document.getText();
-			if (offset > 0 && text.charAt(offset - 1).match(/[>\/]/g)) {
-				return htmlLanguageService.doTagComplete(document, position, htmlDocuments.get(document));
+			if (kind === 'autoQuote') {
+				if (offset > 0 && text.charAt(offset - 1) === '=') {
+					const htmlSettings = settings?.html;
+					const options = merge(htmlSettings?.suggest, {});
+					options.attributeDefaultValue = htmlSettings?.completion?.attributeDefaultValue ?? 'doublequotes';
+
+					return htmlLanguageService.doQuoteComplete(document, position, htmlDocuments.get(document), options);
+				}
+			} else if (kind === 'autoClose') {
+				if (offset > 0 && text.charAt(offset - 1).match(/[>\/]/g)) {
+					return htmlLanguageService.doTagComplete(document, position, htmlDocuments.get(document));
+				}
 			}
 			return null;
 		},

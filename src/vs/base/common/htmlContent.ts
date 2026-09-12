@@ -3,15 +3,25 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { illegalArgument } from 'vs/base/common/errors';
-import { escapeIcons } from 'vs/base/common/iconLabels';
-import { UriComponents } from 'vs/base/common/uri';
+import { illegalArgument } from './errors.js';
+import { escapeIcons } from './iconLabels.js';
+import { matchesSomeScheme, Schemas } from './network.js';
+import { isEqual } from './resources.js';
+import { escapeRegExpCharacters } from './strings.js';
+import { URI, UriComponents } from './uri.js';
+
+export interface MarkdownStringTrustedOptions {
+	readonly enabledCommands: readonly string[];
+}
 
 export interface IMarkdownString {
 	readonly value: string;
-	readonly isTrusted?: boolean;
+	readonly isTrusted?: boolean | MarkdownStringTrustedOptions;
 	readonly supportThemeIcons?: boolean;
 	readonly supportHtml?: boolean;
+	/** @internal */
+	readonly supportAlertSyntax?: boolean;
+	readonly baseUri?: UriComponents;
 	uris?: { [href: string]: UriComponents };
 }
 
@@ -23,13 +33,23 @@ export const enum MarkdownStringTextNewlineStyle {
 export class MarkdownString implements IMarkdownString {
 
 	public value: string;
-	public isTrusted?: boolean;
+	public isTrusted?: boolean | MarkdownStringTrustedOptions;
 	public supportThemeIcons?: boolean;
 	public supportHtml?: boolean;
+	public supportAlertSyntax?: boolean;
+	public baseUri?: URI;
+	public uris?: { [href: string]: UriComponents } | undefined;
+
+	public static lift(dto: IMarkdownString): MarkdownString {
+		const markdownString = new MarkdownString(dto.value, dto);
+		markdownString.uris = dto.uris;
+		markdownString.baseUri = dto.baseUri ? URI.revive(dto.baseUri) : undefined;
+		return markdownString;
+	}
 
 	constructor(
 		value: string = '',
-		isTrustedOrOptions: boolean | { isTrusted?: boolean, supportThemeIcons?: boolean, supportHtml?: boolean } = false,
+		isTrustedOrOptions: boolean | { isTrusted?: boolean | MarkdownStringTrustedOptions; supportThemeIcons?: boolean; supportHtml?: boolean; supportAlertSyntax?: boolean } = false,
 	) {
 		this.value = value;
 		if (typeof this.value !== 'string') {
@@ -40,19 +60,21 @@ export class MarkdownString implements IMarkdownString {
 			this.isTrusted = isTrustedOrOptions;
 			this.supportThemeIcons = false;
 			this.supportHtml = false;
+			this.supportAlertSyntax = false;
 		}
 		else {
 			this.isTrusted = isTrustedOrOptions.isTrusted ?? undefined;
 			this.supportThemeIcons = isTrustedOrOptions.supportThemeIcons ?? false;
 			this.supportHtml = isTrustedOrOptions.supportHtml ?? false;
+			this.supportAlertSyntax = isTrustedOrOptions.supportAlertSyntax ?? false;
 		}
 	}
 
 	appendText(value: string, newlineStyle: MarkdownStringTextNewlineStyle = MarkdownStringTextNewlineStyle.Paragraph): MarkdownString {
-		this.value += escapeMarkdownSyntaxTokens(this.supportThemeIcons ? escapeIcons(value) : value)
-			.replace(/([ \t]+)/g, (_match, g1) => '&nbsp;'.repeat(g1.length))
-			.replace(/\>/gm, '\\>')
-			.replace(/\n/g, newlineStyle === MarkdownStringTextNewlineStyle.Break ? '\\\n' : '\n\n');
+		this.value += escapeMarkdownSyntaxTokens(this.supportThemeIcons ? escapeIcons(value) : value) // CodeQL [SM02383] The Markdown is fully sanitized after being rendered.
+			.replace(/([ \t]+)/g, (_match, g1) => '&nbsp;'.repeat(g1.length)) // CodeQL [SM02383] The Markdown is fully sanitized after being rendered.
+			.replace(/\>/gm, '\\>') // CodeQL [SM02383] The Markdown is fully sanitized after being rendered.
+			.replace(/\n/g, newlineStyle === MarkdownStringTextNewlineStyle.Break ? '\\\n' : '\n\n'); // CodeQL [SM02383] The Markdown is fully sanitized after being rendered.
 
 		return this;
 	}
@@ -63,12 +85,31 @@ export class MarkdownString implements IMarkdownString {
 	}
 
 	appendCodeblock(langId: string, code: string): MarkdownString {
-		this.value += '\n```';
-		this.value += langId;
-		this.value += '\n';
-		this.value += code;
-		this.value += '\n```\n';
+		this.value += `\n${appendEscapedMarkdownCodeBlockFence(code, langId)}\n`;
 		return this;
+	}
+
+	appendLink(target: URI | string, label: string, title?: string): MarkdownString {
+		this.value += '[';
+		this.value += this._escape(label, ']');
+		this.value += '](';
+		this.value += this._escape(String(target), ')');
+		if (title) {
+			this.value += ` "${this._escape(this._escape(title, '"'), ')')}"`;
+		}
+		this.value += ')';
+		return this;
+	}
+
+	private _escape(value: string, ch: string): string {
+		const r = new RegExp(escapeRegExpCharacters(ch), 'g');
+		return value.replace(r, (match, offset) => {
+			if (value.charAt(offset - 1) !== '\\') {
+				return `\\${match}`;
+			} else {
+				return match;
+			}
+		});
 	}
 }
 
@@ -82,13 +123,14 @@ export function isEmptyMarkdownString(oneOrMany: IMarkdownString | IMarkdownStri
 	}
 }
 
-export function isMarkdownString(thing: any): thing is IMarkdownString {
+export function isMarkdownString(thing: unknown): thing is IMarkdownString {
 	if (thing instanceof MarkdownString) {
 		return true;
 	} else if (thing && typeof thing === 'object') {
 		return typeof (<IMarkdownString>thing).value === 'string'
-			&& (typeof (<IMarkdownString>thing).isTrusted === 'boolean' || (<IMarkdownString>thing).isTrusted === undefined)
-			&& (typeof (<IMarkdownString>thing).supportThemeIcons === 'boolean' || (<IMarkdownString>thing).supportThemeIcons === undefined);
+			&& (typeof (<IMarkdownString>thing).isTrusted === 'boolean' || typeof (<IMarkdownString>thing).isTrusted === 'object' || (<IMarkdownString>thing).isTrusted === undefined)
+			&& (typeof (<IMarkdownString>thing).supportThemeIcons === 'boolean' || (<IMarkdownString>thing).supportThemeIcons === undefined)
+			&& (typeof (<IMarkdownString>thing).supportAlertSyntax === 'boolean' || (<IMarkdownString>thing).supportAlertSyntax === undefined);
 	}
 	return false;
 }
@@ -99,23 +141,81 @@ export function markdownStringEqual(a: IMarkdownString, b: IMarkdownString): boo
 	} else if (!a || !b) {
 		return false;
 	} else {
-		return a.value === b.value && a.isTrusted === b.isTrusted && a.supportThemeIcons === b.supportThemeIcons;
+		return a.value === b.value
+			&& a.isTrusted === b.isTrusted
+			&& a.supportThemeIcons === b.supportThemeIcons
+			&& a.supportHtml === b.supportHtml
+			&& a.supportAlertSyntax === b.supportAlertSyntax
+			&& (a.baseUri === b.baseUri || !!a.baseUri && !!b.baseUri && isEqual(URI.from(a.baseUri), URI.from(b.baseUri)));
 	}
 }
 
 export function escapeMarkdownSyntaxTokens(text: string): string {
 	// escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
-	return text.replace(/[\\`*_{}[\]()#+\-!]/g, '\\$&');
+	return text
+		.replace(/[\\`*_{}[\]()#+!~]/g, '\\$&') // CodeQL [SM02383] Backslash is escaped in the character class
+		.replace(/^([ \t]*)-/gm, '$1\\-'); // CodeQL [SM02383] Backslash is escaped in the character class
+}
+
+/**
+ * Escapes only the characters that would break out of markdown link text
+ * (`[label](url)`) syntax: `\` and `]`. Use this when the escaped string is
+ * displayed as the visible label of a link, since renderers that extract the
+ * link text without re-parsing markdown (e.g. the chat inline anchor / skill
+ * pill) would otherwise show full `escapeMarkdownSyntaxTokens` backslashes
+ * (`\-`, `\.`, ...) verbatim.
+ */
+export function escapeMarkdownLinkLabel(text: string): string {
+	return text.replace(/[\\\]]/g, '\\$&');
+}
+
+/**
+ * @see https://github.com/microsoft/vscode/issues/193746
+ */
+export function appendEscapedMarkdownCodeBlockFence(code: string, langId: string) {
+	const longestFenceLength =
+		code.match(/^`+/gm)?.reduce((a, b) => (a.length > b.length ? a : b)).length ??
+		0;
+	const desiredFenceLength =
+		longestFenceLength >= 3 ? longestFenceLength + 1 : 3;
+
+	// the markdown result
+	return [
+		`${'`'.repeat(desiredFenceLength)}${langId}`,
+		code,
+		`${'`'.repeat(desiredFenceLength)}`,
+	].join('\n');
+}
+
+/**
+ * Wraps arbitrary text in a markdown inline code span using a backtick fence
+ * long enough to safely contain any backtick sequences present in the text.
+ *
+ * Backticks inside an inline code span cannot be backslash-escaped per the
+ * CommonMark spec — the only safe way is to choose a delimiter run longer
+ * than any run of backticks in the content (and pad with spaces if the
+ * content begins or ends with a backtick).
+ */
+export function appendEscapedMarkdownInlineCode(text: string): string {
+	const longestBacktickRun = Math.max(0, ...(text.match(/`+/g) ?? []).map(m => m.length));
+	const fence = '`'.repeat(longestBacktickRun + 1);
+	const needsSpace = text.startsWith('`') || text.endsWith('`');
+	const content = needsSpace ? ` ${text} ` : text;
+	return `${fence}${content}${fence}`;
+}
+
+export function escapeDoubleQuotes(input: string) {
+	return input.replace(/"/g, '&quot;');
 }
 
 export function removeMarkdownEscapes(text: string): string {
 	if (!text) {
 		return text;
 	}
-	return text.replace(/\\([\\`*_{}[\]()#+\-.!])/g, '$1');
+	return text.replace(/\\([\\`*_{}[\]()#+\-.!~])/g, '$1');
 }
 
-export function parseHrefAndDimensions(href: string): { href: string, dimensions: string[] } {
+export function parseHrefAndDimensions(href: string): { href: string; dimensions: string[] } {
 	const dimensions: string[] = [];
 	const splitted = href.split('|').map(s => s.trim());
 	href = splitted[0];
@@ -135,4 +235,53 @@ export function parseHrefAndDimensions(href: string): { href: string, dimensions
 		}
 	}
 	return { href, dimensions };
+}
+
+export function createMarkdownLink(text: string, href: string, title?: string, escapeTokens = true): string {
+	return `[${escapeTokens ? escapeMarkdownSyntaxTokens(text) : text}](${href}${title ? ` "${escapeMarkdownSyntaxTokens(title)}"` : ''})`;
+}
+
+export function createMarkdownCommandLink(command: { text: string; id: string; arguments?: unknown[]; tooltip: string }, escapeTokens = true): string {
+	const uri = createCommandUri(command.id, ...(command.arguments || [])).toString();
+	return createMarkdownLink(command.text, uri, command.tooltip, escapeTokens);
+}
+
+export function createCommandUri(commandId: string, ...commandArgs: unknown[]): URI {
+	return URI.from({
+		scheme: Schemas.command,
+		path: commandId,
+		query: commandArgs.length ? encodeURIComponent(JSON.stringify(commandArgs)) : undefined,
+	});
+}
+
+/**
+ * VS Code addresses some content with placeholder `http` URLs whose authority is wrapped in
+ * underscores, such as `http://_vscodecontentref_/0`. Underscores are illegal in hostnames, so
+ * no real site collides with this shape.
+ */
+const placeholderAuthority = /^https?:\/\/_[^/?#]*_(?:[/?#]|$)/i;
+
+/**
+ * Paths naming a location on this machine. Hand-rolled rather than reusing `extpath`, whose
+ * drive-letter handling follows the host platform: a Windows path must still be recognized
+ * when the copy happens on macOS.
+ */
+const absolutePath = /^(?:[/\\]|[a-z]:[/\\])/i;
+
+/** Whether a target still resolves once content is copied into another application. */
+export function isPortableLinkTarget(target: string): boolean {
+	const trimmed = target.trim();
+	return matchesSomeScheme(trimmed, Schemas.http, Schemas.https, Schemas.mailto)
+		&& !placeholderAuthority.test(trimmed);
+}
+
+/**
+ * Whether a markdown target is worth keeping when the markdown itself is shared. Wider than
+ * {@link isPortableLinkTarget}: document-relative targets such as `#section` name no machine,
+ * so they stay meaningful in whatever document the markdown lands in.
+ */
+export function isPortableMarkdownTarget(target: string): boolean {
+	const trimmed = target.trim();
+	return isPortableLinkTarget(trimmed)
+		|| (!!trimmed && !/^[a-z][a-z0-9.+-]*:/i.test(trimmed) && !absolutePath.test(trimmed));
 }

@@ -8,7 +8,6 @@
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
-const url = require('url');
 const minimatch = require('minimatch');
 
 // list of languagesId not shipped with VSCode. The information is used to associate an icon with a language association
@@ -44,9 +43,19 @@ const nonBuiltInLanguages = { // { fileNames, extensions  }
 // list of languagesId that inherit the icon from another language
 const inheritIconFromLanguage = {
 	"jsonc": 'json',
+	"jsonl": 'json',
 	"postcss": 'css',
-	"django-html": 'html'
-}
+	"django-html": 'html',
+	"blade": 'php',
+	"prompt": 'markdown',
+	"instructions": 'markdown',
+	"chatagent": 'markdown',
+	"skill": 'markdown'
+};
+
+const ignoreExtAssociation = {
+	"properties": true
+};
 
 const FROM_DISK = true; // set to true to take content from a repo checked out next to the vscode repo
 
@@ -87,10 +96,8 @@ function download(source) {
 		return readFile(source);
 	}
 	return new Promise((c, e) => {
-		const _url = url.parse(source);
-		const options = { host: _url.host, port: _url.port, path: _url.path, headers: { 'User-Agent': 'NodeJS' } };
 		let content = '';
-		https.get(options, function (response) {
+		https.get(new URL(source), { headers: { 'User-Agent': 'NodeJS' } }, function (response) {
 			response.on('data', function (data) {
 				content += data.toString();
 			}).on('end', function () {
@@ -398,7 +405,7 @@ exports.update = function () {
 					if (!nonBuiltInLanguages[lang] && !inheritIconFromLanguage[lang]) {
 						for (let i2 = 0; i2 < exts.length; i2++) {
 							// remove the extension association, unless it is different from the preferred
-							if (ext2Def[exts[i2]] === preferredDef) {
+							if (ext2Def[exts[i2]] === preferredDef || ignoreExtAssociation[exts[i2]]) {
 								delete ext2Def[exts[i2]];
 							}
 						}
@@ -462,6 +469,5 @@ exports.update = function () {
 if (path.basename(process.argv[1]) === 'update-icon-theme.js') {
 	exports.copyFont().then(() => exports.update());
 }
-
 
 

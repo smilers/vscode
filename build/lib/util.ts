@@ -3,22 +3,21 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-'use strict';
+import es from 'event-stream';
+import _debounce from 'debounce';
+import { filter as _filter, rename } from './gulp/facade.ts';
+import path from 'path';
+import fs from 'fs';
+import _rimraf from 'rimraf';
+import VinylFile from 'vinyl';
+import through from 'through';
+import sm from 'source-map';
+import { pathToFileURL } from 'url';
+import ternaryStream from 'ternary-stream';
+import type { Transform } from 'stream';
+import * as tar from 'tar';
 
-import * as es from 'event-stream';
-import debounce = require('debounce');
-import * as _filter from 'gulp-filter';
-import * as rename from 'gulp-rename';
-import * as _ from 'underscore';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as _rimraf from 'rimraf';
-import * as git from './git';
-import * as VinylFile from 'vinyl';
-import { ThroughStream } from 'through';
-import * as sm from 'source-map';
-
-const root = path.dirname(path.dirname(__dirname));
+const root = path.dirname(path.dirname(import.meta.dirname));
 
 export interface ICancellationToken {
 	isCancellationRequested(): boolean;
@@ -56,7 +55,7 @@ export function incremental(streamProvider: IStreamProvider, initial: NodeJS.Rea
 		run(initial, false);
 	}
 
-	const eventuallyRun = debounce(() => {
+	const eventuallyRun = _debounce(() => {
 		const paths = Object.keys(buffer);
 
 		if (paths.length === 0) {
@@ -73,6 +72,41 @@ export function incremental(streamProvider: IStreamProvider, initial: NodeJS.Rea
 
 		if (state === 'idle') {
 			eventuallyRun();
+		}
+	});
+
+	return es.duplex(input, output);
+}
+
+export function debounce(task: () => NodeJS.ReadWriteStream, duration = 500): NodeJS.ReadWriteStream {
+	const input = es.through();
+	const output = es.through();
+	let state = 'idle';
+
+	const run = () => {
+		state = 'running';
+
+		task()
+			.pipe(es.through(undefined, () => {
+				const shouldRunAgain = state === 'stale';
+				state = 'idle';
+
+				if (shouldRunAgain) {
+					eventuallyRun();
+				}
+			}))
+			.pipe(output);
+	};
+
+	run();
+
+	const eventuallyRun = _debounce(() => run(), duration);
+
+	input.on('data', () => {
+		if (state === 'idle') {
+			eventuallyRun();
+		} else {
+			state = 'stale';
 		}
 	});
 
@@ -96,9 +130,10 @@ export function fixWin32DirectoryPermissions(): NodeJS.ReadWriteStream {
 export function setExecutableBit(pattern?: string | string[]): NodeJS.ReadWriteStream {
 	const setBit = es.mapSync<VinylFile, VinylFile>(f => {
 		if (!f.stat) {
-			f.stat = { isFile() { return true; } } as any;
+			const stat: Pick<fs.Stats, 'isFile' | 'mode'> = { isFile() { return true; }, mode: 0 };
+			f.stat = stat as fs.Stats;
 		}
-		f.stat.mode = /* 100755 */ 33261;
+		f.stat!.mode = /* 100755 */ 33261;
 		return f;
 	});
 
@@ -152,9 +187,7 @@ export function cleanNodeModules(rulePath: string): NodeJS.ReadWriteStream {
 	return es.duplex(input, output);
 }
 
-declare class FileSourceMap extends VinylFile {
-	public sourceMap: sm.RawSourceMap;
-}
+type FileSourceMap = VinylFile & { sourceMap: sm.RawSourceMap };
 
 export function loadSourcemaps(): NodeJS.ReadWriteStream {
 	const input = es.through();
@@ -171,11 +204,10 @@ export function loadSourcemaps(): NodeJS.ReadWriteStream {
 				return;
 			}
 
-			const contents = (<Buffer>f.contents).toString('utf8');
-
+			const contents = (f.contents as Buffer).toString('utf8');
 			const reg = /\/\/# sourceMappingURL=(.*)$/g;
-			let lastMatch: RegExpMatchArray | null = null;
-			let match: RegExpMatchArray | null = null;
+			let lastMatch: RegExpExecArray | null = null;
+			let match: RegExpExecArray | null = null;
 
 			while (match = reg.exec(contents)) {
 				lastMatch = match;
@@ -186,7 +218,7 @@ export function loadSourcemaps(): NodeJS.ReadWriteStream {
 					version: '3',
 					names: [],
 					mappings: '',
-					sources: [f.relative],
+					sources: [f.relative.replace(/\\/g, '/')],
 					sourcesContent: [contents]
 				};
 
@@ -212,8 +244,34 @@ export function stripSourceMappingURL(): NodeJS.ReadWriteStream {
 
 	const output = input
 		.pipe(es.mapSync<VinylFile, VinylFile>(f => {
-			const contents = (<Buffer>f.contents).toString('utf8');
+			const contents = (f.contents as Buffer).toString('utf8');
 			f.contents = Buffer.from(contents.replace(/\n\/\/# sourceMappingURL=(.*)$/gm, ''), 'utf8');
+			return f;
+		}));
+
+	return es.duplex(input, output);
+}
+
+/** Splits items in the stream based on the predicate, sending them to onTrue if true, or onFalse otherwise */
+export function $if(test: boolean | ((f: VinylFile) => boolean), onTrue: NodeJS.ReadWriteStream, onFalse: NodeJS.ReadWriteStream = es.through()) {
+	if (typeof test === 'boolean') {
+		return test ? onTrue : onFalse;
+	}
+
+	return ternaryStream(test, onTrue, onFalse);
+}
+
+/** Operator that appends the js files' original path a sourceURL, so debug locations map */
+export function appendOwnPathSourceURL(): NodeJS.ReadWriteStream {
+	const input = es.through();
+
+	const output = input
+		.pipe(es.mapSync<VinylFile, VinylFile>(f => {
+			if (!(f.contents instanceof Buffer)) {
+				throw new Error(`contents of ${f.path} are not a buffer`);
+			}
+
+			f.contents = Buffer.concat([f.contents, Buffer.from(`\n//# sourceURL=${pathToFileURL(f.path)}`)]);
 			return f;
 		}));
 
@@ -225,7 +283,7 @@ export function rewriteSourceMappingURL(sourceMappingURLBase: string): NodeJS.Re
 
 	const output = input
 		.pipe(es.mapSync<VinylFile, VinylFile>(f => {
-			const contents = (<Buffer>f.contents).toString('utf8');
+			const contents = (f.contents as Buffer).toString('utf8');
 			const str = `//# sourceMappingURL=${sourceMappingURLBase}/${path.dirname(f.relative).replace(/\\/g, '/')}/$1`;
 			f.contents = Buffer.from(contents.replace(/\n\/\/# sourceMappingURL=(.*)$/gm, str));
 			return f;
@@ -244,7 +302,7 @@ export function rimraf(dir: string): () => Promise<void> {
 					return c();
 				}
 
-				if (err.code === 'ENOTEMPTY' && ++retries < 5) {
+				if ((err.code === 'ENOTEMPTY' || err.code === 'EBUSY' || err.code === 'EPERM') && ++retries < 5) {
 					return setTimeout(() => retry(), 10);
 				}
 
@@ -271,7 +329,7 @@ function _rreaddir(dirPath: string, prepend: string, result: string[]): void {
 }
 
 export function rreddir(dirPath: string): string[] {
-	let result: string[] = [];
+	const result: string[] = [];
 	_rreaddir(dirPath, '', result);
 	return result;
 }
@@ -284,16 +342,6 @@ export function ensureDir(dirPath: string): void {
 	fs.mkdirSync(dirPath);
 }
 
-export function getVersion(root: string): string | undefined {
-	let version = process.env['BUILD_SOURCEVERSION'];
-
-	if (!version || !/^[0-9a-f]{40}$/i.test(version)) {
-		version = git.getVersion(root);
-	}
-
-	return version;
-}
-
 export function rebase(count: number): NodeJS.ReadWriteStream {
 	return rename(f => {
 		const parts = f.dirname ? f.dirname.split(/[\/\\]/) : [];
@@ -302,30 +350,20 @@ export function rebase(count: number): NodeJS.ReadWriteStream {
 }
 
 export interface FilterStream extends NodeJS.ReadWriteStream {
-	restore: ThroughStream;
+	restore: through.ThroughStream;
 }
 
 export function filter(fn: (data: any) => boolean): FilterStream {
-	const result = <FilterStream><any>es.through(function (data) {
+	const result = es.through(function (data) {
 		if (fn(data)) {
 			this.emit('data', data);
 		} else {
 			result.restore.push(data);
 		}
-	});
+	}) as unknown as FilterStream;
 
 	result.restore = es.through();
 	return result;
-}
-
-export function versionStringToNumber(versionStr: string) {
-	const semverRegex = /(\d+)\.(\d+)\.(\d+)/;
-	const match = versionStr.match(semverRegex);
-	if (!match) {
-		throw new Error('Version string is not properly formatted: ' + versionStr);
-	}
-
-	return parseInt(match[1], 10) * 1e4 + parseInt(match[2], 10) * 1e2 + parseInt(match[3], 10);
 }
 
 export function streamToPromise(stream: NodeJS.ReadWriteStream): Promise<void> {
@@ -335,72 +373,95 @@ export function streamToPromise(stream: NodeJS.ReadWriteStream): Promise<void> {
 	});
 }
 
-export function getElectronVersion(): string {
-	const yarnrc = fs.readFileSync(path.join(root, '.yarnrc'), 'utf8');
-	const target = /^target "(.*)"$/m.exec(yarnrc)![1];
-	return target;
+export function getVersionedResourcesFolder(platform: string, commit: string): string {
+	const productJson = JSON.parse(fs.readFileSync(path.join(root, 'product.json'), 'utf8'));
+	const useVersionedUpdate = platform === 'win32' && productJson.win32VersionedUpdate;
+	return useVersionedUpdate ? commit.substring(0, 10) : '';
 }
 
-export function acquireWebNodePaths() {
-	const root = path.join(__dirname, '..', '..');
-	const webPackageJSON = path.join(root, '/remote/web', 'package.json');
-	const webPackages = JSON.parse(fs.readFileSync(webPackageJSON, 'utf8')).dependencies;
-	const nodePaths: { [key: string]: string } = { };
-	for (const key of Object.keys(webPackages)) {
-		const packageJSON = path.join(root, 'node_modules', key, 'package.json');
-		const packageData = JSON.parse(fs.readFileSync(packageJSON, 'utf8'));
-		let entryPoint = packageData.browser ?? packageData.main;
-		// On rare cases a package doesn't have an entrypoint so we assume it has a dist folder with a min.js
-		if (!entryPoint) {
-			console.warn(`No entry point for ${key} assuming dist/${key}.min.js`);
-			entryPoint = `dist/${key}.min.js`;
-		}
-		// Remove any starting path information so it's all relative info
-		if (entryPoint.startsWith('./')) {
-			entryPoint = entryPoint.substr(2);
-		} else if (entryPoint.startsWith('/')) {
-			entryPoint = entryPoint.substr(1);
-		}
-		nodePaths[key] = entryPoint;
+export class VinylStat implements fs.Stats {
+
+	readonly dev: number;
+	readonly ino: number;
+	readonly mode: number;
+	readonly nlink: number;
+	readonly uid: number;
+	readonly gid: number;
+	readonly rdev: number;
+	readonly size: number;
+	readonly blksize: number;
+	readonly blocks: number;
+	readonly atimeMs: number;
+	readonly mtimeMs: number;
+	readonly ctimeMs: number;
+	readonly birthtimeMs: number;
+	readonly atime: Date;
+	readonly mtime: Date;
+	readonly ctime: Date;
+	readonly birthtime: Date;
+
+	constructor(stat: Partial<fs.Stats>) {
+		this.dev = stat.dev ?? 0;
+		this.ino = stat.ino ?? 0;
+		this.mode = stat.mode ?? 0;
+		this.nlink = stat.nlink ?? 0;
+		this.uid = stat.uid ?? 0;
+		this.gid = stat.gid ?? 0;
+		this.rdev = stat.rdev ?? 0;
+		this.size = stat.size ?? 0;
+		this.blksize = stat.blksize ?? 0;
+		this.blocks = stat.blocks ?? 0;
+		this.atimeMs = stat.atimeMs ?? 0;
+		this.mtimeMs = stat.mtimeMs ?? 0;
+		this.ctimeMs = stat.ctimeMs ?? 0;
+		this.birthtimeMs = stat.birthtimeMs ?? 0;
+		this.atime = stat.atime ?? new Date(0);
+		this.mtime = stat.mtime ?? new Date(0);
+		this.ctime = stat.ctime ?? new Date(0);
+		this.birthtime = stat.birthtime ?? new Date(0);
 	}
-	return nodePaths;
+
+	isFile(): boolean { return true; }
+	isDirectory(): boolean { return false; }
+	isBlockDevice(): boolean { return false; }
+	isCharacterDevice(): boolean { return false; }
+	isSymbolicLink(): boolean { return false; }
+	isFIFO(): boolean { return false; }
+	isSocket(): boolean { return false; }
 }
 
-export function createExternalLoaderConfig(webEndpoint?: string, commit?: string, quality?: string) {
-	if (!webEndpoint || !commit || !quality) {
-		return undefined;
-	}
-	webEndpoint = webEndpoint + `/${quality}/${commit}`;
-	let nodePaths = acquireWebNodePaths();
-	Object.keys(nodePaths).map(function (key, _) {
-		nodePaths[key] = `${webEndpoint}/node_modules/${key}/${nodePaths[key]}`;
-	});
-	const externalLoaderConfig = {
-		baseUrl: `${webEndpoint}/out`,
-		recordStats: true,
-		paths: nodePaths
-	};
-	return externalLoaderConfig;
+export function untar(): Transform {
+	return es.through(function (this: through.ThroughStream, f: VinylFile) {
+		if (!f.contents || !Buffer.isBuffer(f.contents)) {
+			this.emit('error', new Error('Expected file with Buffer contents'));
+			return;
+		}
+
+		const self = this;
+		const parser = new tar.Parser();
+
+		parser.on('entry', (entry: tar.ReadEntry) => {
+			if (entry.type === 'File') {
+				const chunks: Buffer[] = [];
+				entry.on('data', (chunk: Buffer) => chunks.push(chunk));
+				entry.on('end', () => {
+					const file = new VinylFile({
+						path: entry.path,
+						contents: Buffer.concat(chunks),
+						stat: new VinylStat({
+							mode: entry.mode,
+							mtime: entry.mtime,
+							size: entry.size
+						})
+					});
+					self.emit('data', file);
+				});
+			} else {
+				entry.resume();
+			}
+		});
+
+		parser.on('error', (err: Error) => self.emit('error', err));
+		parser.end(f.contents);
+	}) as Transform;
 }
-
-export function buildWebNodePaths(outDir: string) {
-	const result = () => new Promise<void>((resolve, _) => {
-		const root = path.join(__dirname, '..', '..');
-		const nodePaths = acquireWebNodePaths();
-		// Now we write the node paths to out/vs
-		const outDirectory = path.join(root, outDir, 'vs');
-		fs.mkdirSync(outDirectory, { recursive: true });
-		const headerWithGeneratedFileWarning = `/*---------------------------------------------------------------------------------------------
-	 *  Copyright (c) Microsoft Corporation. All rights reserved.
-	 *  Licensed under the MIT License. See License.txt in the project root for license information.
-	 *--------------------------------------------------------------------------------------------*/
-
-	// This file is generated by build/npm/postinstall.js. Do not edit.`;
-		const fileContents = `${headerWithGeneratedFileWarning}\nself.webPackagePaths = ${JSON.stringify(nodePaths, null, 2)};`;
-		fs.writeFileSync(path.join(outDirectory, 'webPackagePaths.js'), fileContents, 'utf8');
-		resolve();
-	});
-	result.taskName = 'build-web-node-paths';
-	return result;
-}
-

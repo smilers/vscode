@@ -3,10 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { DataTransfers } from 'vs/base/browser/dnd';
-import { Schemas } from 'vs/base/common/network';
-import { URI } from 'vs/base/common/uri';
-import { ITerminalInstance } from 'vs/workbench/contrib/terminal/browser/terminal';
+import { Schemas } from '../../../../base/common/network.js';
+import { URI } from '../../../../base/common/uri.js';
+import { ITerminalInstance, TerminalDataTransfers } from './terminal.js';
+
+export interface ITerminalUriMetadata {
+	title?: string;
+	commandId?: string;
+	commandLine?: string;
+}
 
 export function parseTerminalUri(resource: URI): ITerminalIdentifier {
 	const [, workspaceId, instanceId] = resource.path.split('/');
@@ -16,13 +21,19 @@ export function parseTerminalUri(resource: URI): ITerminalIdentifier {
 	return { workspaceId, instanceId: Number.parseInt(instanceId) };
 }
 
-export function getTerminalUri(workspaceId: string, instanceId: number, title?: string): URI {
+export function getTerminalUri(workspaceId: string, instanceId: number, title?: string, commandId?: string): URI {
+	const params = new URLSearchParams();
+	if (commandId) {
+		params.set('command', commandId);
+	}
 	return URI.from({
 		scheme: Schemas.vscodeTerminal,
 		path: `/${workspaceId}/${instanceId}`,
 		fragment: title || undefined,
+		query: commandId ? params.toString() : undefined
 	});
 }
+
 
 export interface ITerminalIdentifier {
 	workspaceId: string;
@@ -34,7 +45,7 @@ export interface IPartialDragEvent {
 }
 
 export function getTerminalResourcesFromDragEvent(event: IPartialDragEvent): URI[] | undefined {
-	const resources = event.dataTransfer?.getData(DataTransfers.TERMINALS);
+	const resources = event.dataTransfer?.getData(TerminalDataTransfers.Terminals);
 	if (resources) {
 		const json = JSON.parse(resources);
 		const result = [];

@@ -10,30 +10,48 @@ export class Editors {
 	constructor(private code: Code) { }
 
 	async saveOpenedFile(): Promise<any> {
-		if (process.platform === 'darwin') {
-			await this.code.dispatchKeybinding('cmd+s');
-		} else {
-			await this.code.dispatchKeybinding('ctrl+s');
-		}
+		await this.code.dispatchKeybinding(process.platform === 'darwin' ? 'cmd+s' : 'ctrl+s', async () => {
+			await this.code.waitForElements('.tab.active.dirty', false, results => results.length === 0);
+		});
 	}
 
 	async selectTab(fileName: string): Promise<void> {
-		await this.code.waitAndClick(`.tabs-container div.tab[data-resource-name$="${fileName}"]`);
-		await this.waitForEditorFocus(fileName);
+
+		// Selecting a tab and making an editor have keyboard focus
+		// is critical to almost every test. As such, we try our
+		// best to retry this task in case some other component steals
+		// focus away from the editor while we attempt to get focus
+
+		let error: unknown | undefined = undefined;
+		let retries = 0;
+		while (retries < 10) {
+			await this.code.waitAndClick(`.tabs-container div.tab[data-resource-name$="${fileName}"]`);
+
+			try {
+				await this.waitForEditorFocus(fileName, 5 /* 5 retries * 100ms delay = 0.5s */);
+				return;
+			} catch (e) {
+				error = e;
+				retries++;
+			}
+		}
+
+		// We failed after 10 retries
+		throw error;
 	}
 
-	async waitForActiveEditor(fileName: string): Promise<any> {
-		const selector = `.editor-instance .monaco-editor[data-uri$="${fileName}"] textarea`;
-		return this.code.waitForActiveElement(selector);
+	async waitForEditorFocus(fileName: string, retryCount?: number): Promise<void> {
+		await this.waitForActiveTab(fileName, undefined, retryCount);
+		await this.waitForActiveEditor(fileName, retryCount);
 	}
 
-	async waitForEditorFocus(fileName: string): Promise<void> {
-		await this.waitForActiveTab(fileName);
-		await this.waitForActiveEditor(fileName);
+	private async waitForActiveTab(fileName: string, isDirty: boolean = false, retryCount?: number): Promise<void> {
+		await this.code.waitForElement(`.tabs-container div.tab.active${isDirty ? '.dirty' : ''}[aria-selected="true"][data-resource-name$="${fileName}"]`, undefined, retryCount);
 	}
 
-	async waitForActiveTab(fileName: string, isDirty: boolean = false): Promise<void> {
-		await this.code.waitForElement(`.tabs-container div.tab.active${isDirty ? '.dirty' : ''}[aria-selected="true"][data-resource-name$="${fileName}"]`);
+	async waitForActiveEditor(fileName: string, retryCount?: number): Promise<any> {
+		const selector = `.editor-instance .monaco-editor[data-uri$="${fileName}"] ${!this.code.editContextEnabled ? 'textarea' : '.native-edit-context'}`;
+		return this.code.waitForActiveElement(selector, retryCount);
 	}
 
 	async waitForTab(fileName: string, isDirty: boolean = false): Promise<void> {
@@ -41,12 +59,11 @@ export class Editors {
 	}
 
 	async newUntitledFile(): Promise<void> {
+		const accept = () => this.waitForEditorFocus('Untitled-1');
 		if (process.platform === 'darwin') {
-			await this.code.dispatchKeybinding('cmd+n');
+			await this.code.dispatchKeybinding('cmd+n', accept);
 		} else {
-			await this.code.dispatchKeybinding('ctrl+n');
+			await this.code.dispatchKeybinding('ctrl+n', accept);
 		}
-
-		await this.waitForEditorFocus('Untitled-1');
 	}
 }

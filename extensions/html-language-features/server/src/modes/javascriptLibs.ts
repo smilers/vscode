@@ -8,7 +8,9 @@ import { readFileSync } from 'fs';
 
 const contents: { [name: string]: string } = {};
 
-const serverFolder = basename(__dirname) === 'dist' ? dirname(__dirname) : dirname(dirname(__dirname));
+// Resolve the server root from either the compiled `out` tree or the source tree.
+const thisDir = import.meta.dirname;
+const serverFolder = basename(thisDir) === 'dist' ? dirname(thisDir) : dirname(dirname(thisDir));
 const TYPESCRIPT_LIB_SOURCE = join(serverFolder, '../../node_modules/typescript/lib');
 const JQUERY_PATH = join(serverFolder, 'lib/jquery.d.ts');
 
@@ -24,7 +26,7 @@ export function loadLibrary(name: string) {
 		try {
 			content = readFileSync(libPath).toString();
 		} catch (e) {
-			console.log(`Unable to load library ${name} at ${libPath}: ${e.message}`);
+			console.log(`Unable to load library ${name} at ${libPath}`);
 			content = '';
 		}
 		contents[name] = content;

@@ -7,7 +7,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -18,7 +23,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -29,7 +39,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -40,7 +55,12 @@
 			"light_plus": "entity.name.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "entity.name.function: #DCDCAA"
+			"hc_black": "entity.name.function: #DCDCAA",
+			"dark_modern": "entity.name.function: #DCDCAA",
+			"hc_light": "entity.name.function: #5E2CBC",
+			"light_modern": "entity.name.function: #795E26",
+			"2026-dark": "entity.name.function: #D2A8FF",
+			"2026-light": "entity.name.function: #8250DF"
 		}
 	},
 	{
@@ -51,7 +71,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -62,7 +87,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -73,7 +103,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -84,7 +119,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -95,7 +135,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -106,7 +151,12 @@
 			"light_plus": "entity.name.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "entity.name.function: #DCDCAA"
+			"hc_black": "entity.name.function: #DCDCAA",
+			"dark_modern": "entity.name.function: #DCDCAA",
+			"hc_light": "entity.name.function: #5E2CBC",
+			"light_modern": "entity.name.function: #795E26",
+			"2026-dark": "entity.name.function: #D2A8FF",
+			"2026-light": "entity.name.function: #8250DF"
 		}
 	},
 	{
@@ -117,7 +167,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -128,7 +183,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -139,7 +199,12 @@
 			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "constant.character: #569CD6"
+			"hc_black": "constant.character: #569CD6",
+			"dark_modern": "constant.character.escape: #D7BA7D",
+			"hc_light": "constant.character.escape: #EE0000",
+			"light_modern": "constant.character.escape: #EE0000",
+			"2026-dark": "constant.character.escape: #D7BA7D",
+			"2026-light": "constant.character.escape: #EE0000"
 		}
 	},
 	{
@@ -150,7 +215,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -161,7 +231,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -172,7 +247,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -183,7 +263,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -194,7 +279,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -205,7 +295,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -216,7 +311,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -227,18 +327,60 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
-		"c": " second,second",
+		"c": " second",
 		"t": "source.makefile meta.scope.target.makefile meta.scope.prerequisites.makefile string.interpolated.makefile string.interpolated.makefile meta.scope.function-call.makefile",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": ",",
+		"t": "source.makefile meta.scope.target.makefile meta.scope.prerequisites.makefile string.interpolated.makefile string.interpolated.makefile meta.scope.function-call.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "second",
+		"t": "source.makefile meta.scope.target.makefile meta.scope.prerequisites.makefile string.interpolated.makefile string.interpolated.makefile meta.scope.function-call.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -249,7 +391,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -260,7 +407,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -271,7 +423,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -282,7 +439,12 @@
 			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "constant.character: #569CD6"
+			"hc_black": "constant.character: #569CD6",
+			"dark_modern": "constant.character.escape: #D7BA7D",
+			"hc_light": "constant.character.escape: #EE0000",
+			"light_modern": "constant.character.escape: #EE0000",
+			"2026-dark": "constant.character.escape: #D7BA7D",
+			"2026-light": "constant.character.escape: #EE0000"
 		}
 	},
 	{
@@ -293,7 +455,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -304,7 +471,12 @@
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "punctuation.definition.comment: #8B949E",
+			"2026-light": "punctuation.definition.comment: #6E7781"
 		}
 	},
 	{
@@ -315,7 +487,12 @@
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "comment: #8B949E",
+			"2026-light": "comment: #6E7781"
 		}
 	},
 	{
@@ -326,7 +503,12 @@
 			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "constant.character: #569CD6"
+			"hc_black": "constant.character: #569CD6",
+			"dark_modern": "constant.character.escape: #D7BA7D",
+			"hc_light": "constant.character.escape: #EE0000",
+			"light_modern": "constant.character.escape: #EE0000",
+			"2026-dark": "constant.character.escape: #D7BA7D",
+			"2026-light": "constant.character.escape: #EE0000"
 		}
 	},
 	{
@@ -337,7 +519,12 @@
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "comment: #8B949E",
+			"2026-light": "comment: #6E7781"
 		}
 	},
 	{
@@ -348,7 +535,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -359,7 +551,12 @@
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "punctuation.definition.comment: #8B949E",
+			"2026-light": "punctuation.definition.comment: #6E7781"
 		}
 	},
 	{
@@ -370,7 +567,12 @@
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "comment: #8B949E",
+			"2026-light": "comment: #6E7781"
 		}
 	},
 	{
@@ -381,7 +583,12 @@
 			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "constant.character: #569CD6"
+			"hc_black": "constant.character: #569CD6",
+			"dark_modern": "constant.character.escape: #D7BA7D",
+			"hc_light": "constant.character.escape: #EE0000",
+			"light_modern": "constant.character.escape: #EE0000",
+			"2026-dark": "constant.character.escape: #D7BA7D",
+			"2026-light": "constant.character.escape: #EE0000"
 		}
 	},
 	{
@@ -392,7 +599,12 @@
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "comment: #8B949E",
+			"2026-light": "comment: #6E7781"
 		}
 	},
 	{
@@ -403,7 +615,12 @@
 			"light_plus": "entity.name.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "entity.name.function: #DCDCAA"
+			"hc_black": "entity.name.function: #DCDCAA",
+			"dark_modern": "entity.name.function: #DCDCAA",
+			"hc_light": "entity.name.function: #5E2CBC",
+			"light_modern": "entity.name.function: #795E26",
+			"2026-dark": "entity.name.function: #D2A8FF",
+			"2026-light": "entity.name.function: #8250DF"
 		}
 	},
 	{
@@ -414,7 +631,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -425,7 +647,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -436,7 +663,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -447,7 +679,12 @@
 			"light_plus": "entity.name.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "entity.name.function: #DCDCAA"
+			"hc_black": "entity.name.function: #DCDCAA",
+			"dark_modern": "entity.name.function: #DCDCAA",
+			"hc_light": "entity.name.function: #5E2CBC",
+			"light_modern": "entity.name.function: #795E26",
+			"2026-dark": "entity.name.function: #D2A8FF",
+			"2026-light": "entity.name.function: #8250DF"
 		}
 	},
 	{
@@ -458,7 +695,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -469,7 +711,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -480,7 +727,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -491,7 +743,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -502,7 +759,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -513,7 +775,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -524,7 +791,12 @@
 			"light_plus": "entity.name.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "entity.name.function: #DCDCAA"
+			"hc_black": "entity.name.function: #DCDCAA",
+			"dark_modern": "entity.name.function: #DCDCAA",
+			"hc_light": "entity.name.function: #5E2CBC",
+			"light_modern": "entity.name.function: #795E26",
+			"2026-dark": "entity.name.function: #D2A8FF",
+			"2026-light": "entity.name.function: #8250DF"
 		}
 	},
 	{
@@ -535,7 +807,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -546,7 +823,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -557,7 +839,12 @@
 			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "constant.character: #569CD6"
+			"hc_black": "constant.character: #569CD6",
+			"dark_modern": "constant.character.escape: #D7BA7D",
+			"hc_light": "constant.character.escape: #EE0000",
+			"light_modern": "constant.character.escape: #EE0000",
+			"2026-dark": "constant.character.escape: #D7BA7D",
+			"2026-light": "constant.character.escape: #EE0000"
 		}
 	},
 	{
@@ -568,7 +855,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -579,7 +871,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -590,7 +887,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -601,7 +903,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -612,7 +919,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -623,7 +935,12 @@
 			"light_plus": "variable.language: #0000FF",
 			"dark_vs": "variable.language: #569CD6",
 			"light_vs": "variable.language: #0000FF",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable.language: #569CD6",
+			"hc_light": "variable.language: #0F4A85",
+			"light_modern": "variable.language: #0000FF",
+			"2026-dark": "variable.language: #79C0FF",
+			"2026-light": "variable.language: #0550AE"
 		}
 	},
 	{
@@ -634,7 +951,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -645,7 +967,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -656,7 +983,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -667,7 +999,12 @@
 			"light_plus": "entity.name.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "entity.name.function: #DCDCAA"
+			"hc_black": "entity.name.function: #DCDCAA",
+			"dark_modern": "entity.name.function: #DCDCAA",
+			"hc_light": "entity.name.function: #5E2CBC",
+			"light_modern": "entity.name.function: #795E26",
+			"2026-dark": "entity.name.function: #D2A8FF",
+			"2026-light": "entity.name.function: #8250DF"
 		}
 	},
 	{
@@ -678,7 +1015,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -689,7 +1031,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -700,7 +1047,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -711,7 +1063,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -722,7 +1079,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -733,7 +1095,12 @@
 			"light_plus": "entity.name.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "entity.name.function: #DCDCAA"
+			"hc_black": "entity.name.function: #DCDCAA",
+			"dark_modern": "entity.name.function: #DCDCAA",
+			"hc_light": "entity.name.function: #5E2CBC",
+			"light_modern": "entity.name.function: #795E26",
+			"2026-dark": "entity.name.function: #D2A8FF",
+			"2026-light": "entity.name.function: #8250DF"
 		}
 	},
 	{
@@ -744,7 +1111,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -755,7 +1127,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -766,7 +1143,12 @@
 			"light_plus": "variable.language: #0000FF",
 			"dark_vs": "variable.language: #569CD6",
 			"light_vs": "variable.language: #0000FF",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable.language: #569CD6",
+			"hc_light": "variable.language: #0F4A85",
+			"light_modern": "variable.language: #0000FF",
+			"2026-dark": "variable.language: #79C0FF",
+			"2026-light": "variable.language: #0550AE"
 		}
 	},
 	{
@@ -777,7 +1159,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -788,7 +1175,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -799,7 +1191,12 @@
 			"light_plus": "variable.language: #0000FF",
 			"dark_vs": "variable.language: #569CD6",
 			"light_vs": "variable.language: #0000FF",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable.language: #569CD6",
+			"hc_light": "variable.language: #0F4A85",
+			"light_modern": "variable.language: #0000FF",
+			"2026-dark": "variable.language: #79C0FF",
+			"2026-light": "variable.language: #0550AE"
 		}
 	},
 	{
@@ -810,7 +1207,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -821,7 +1223,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -832,7 +1239,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -843,7 +1255,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -854,7 +1271,12 @@
 			"light_plus": "entity.name.function: #795E26",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "entity.name.function: #DCDCAA"
+			"hc_black": "entity.name.function: #DCDCAA",
+			"dark_modern": "entity.name.function: #DCDCAA",
+			"hc_light": "entity.name.function: #5E2CBC",
+			"light_modern": "entity.name.function: #795E26",
+			"2026-dark": "entity.name.function: #D2A8FF",
+			"2026-light": "entity.name.function: #8250DF"
 		}
 	},
 	{
@@ -865,7 +1287,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -876,7 +1303,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -887,7 +1319,12 @@
 			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "constant.character: #569CD6"
+			"hc_black": "constant.character: #569CD6",
+			"dark_modern": "constant.character.escape: #D7BA7D",
+			"hc_light": "constant.character.escape: #EE0000",
+			"light_modern": "constant.character.escape: #EE0000",
+			"2026-dark": "constant.character.escape: #D7BA7D",
+			"2026-light": "constant.character.escape: #EE0000"
 		}
 	},
 	{
@@ -898,7 +1335,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -909,7 +1351,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -920,7 +1367,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -931,7 +1383,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -942,7 +1399,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -953,7 +1415,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -964,7 +1431,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -975,7 +1447,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -986,7 +1463,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -997,7 +1479,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -1008,7 +1495,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1019,7 +1511,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1030,7 +1527,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -1041,7 +1543,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1052,7 +1559,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1063,7 +1575,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1074,7 +1591,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -1085,7 +1607,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1096,7 +1623,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1107,7 +1639,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1118,7 +1655,12 @@
 			"light_plus": "variable.language: #0000FF",
 			"dark_vs": "variable.language: #569CD6",
 			"light_vs": "variable.language: #0000FF",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable.language: #569CD6",
+			"hc_light": "variable.language: #0F4A85",
+			"light_modern": "variable.language: #0000FF",
+			"2026-dark": "variable.language: #79C0FF",
+			"2026-light": "variable.language: #0550AE"
 		}
 	},
 	{
@@ -1129,7 +1671,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1140,7 +1687,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1151,7 +1703,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -1162,7 +1719,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1173,7 +1735,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -1184,7 +1751,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1195,7 +1767,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -1206,7 +1783,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1217,7 +1799,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1228,18 +1815,28 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
-		"c": " Checking existance of ",
+		"c": " Checking existence of ",
 		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile meta.scope.function-call.makefile",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1250,7 +1847,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1261,7 +1863,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -1272,7 +1879,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1283,7 +1895,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1294,7 +1911,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1305,7 +1927,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -1316,7 +1943,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1327,7 +1959,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1338,7 +1975,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -1349,7 +1991,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1360,7 +2007,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1371,7 +2023,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1382,7 +2039,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1393,7 +2055,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1404,7 +2071,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -1415,7 +2087,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1426,7 +2103,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1437,18 +2119,44 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
-		"c": " undefined,",
+		"c": " undefined",
 		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile meta.scope.function-call.makefile",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": ",",
+		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile meta.scope.function-call.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1459,7 +2167,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1470,7 +2183,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -1481,7 +2199,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1492,7 +2215,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1503,7 +2231,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -1514,7 +2247,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1525,7 +2263,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1536,18 +2279,76 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
-		"c": ",0,1",
+		"c": ",",
+		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile meta.scope.function-call.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "0",
 		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile meta.scope.function-call.makefile",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": ",",
+		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile meta.scope.function-call.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "1",
+		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile meta.scope.function-call.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1558,7 +2359,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1569,7 +2375,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -1580,7 +2391,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -1591,7 +2407,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1602,7 +2423,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1613,7 +2439,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -1624,7 +2455,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1635,7 +2471,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1646,18 +2487,60 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
-		"c": " defined,TOP_DIR",
+		"c": " defined",
 		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile meta.scope.function-call.makefile",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": ",",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile meta.scope.function-call.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "TOP_DIR",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile meta.scope.function-call.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1668,7 +2551,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1679,18 +2567,44 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
-		"c": ",0)",
+		"c": ",",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "0)",
 		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1701,7 +2615,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1712,7 +2631,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1723,7 +2647,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -1734,7 +2663,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1745,7 +2679,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1756,7 +2695,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -1767,7 +2711,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -1778,7 +2727,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1789,7 +2743,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1800,7 +2759,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -1811,7 +2775,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1822,7 +2791,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1833,7 +2807,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -1844,7 +2823,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1855,7 +2839,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1866,7 +2855,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -1877,7 +2871,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1888,7 +2887,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1899,18 +2903,60 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
-		"c": " defined,CODIT_DIR",
+		"c": " defined",
 		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile meta.scope.function-call.makefile",
 		"r": {
 			"dark_plus": "string: #CE9178",
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": ",",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile meta.scope.function-call.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "CODIT_DIR",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile meta.scope.function-call.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1921,7 +2967,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1932,18 +2983,44 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
-		"c": ",0)",
+		"c": ",",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "0)",
 		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1954,7 +3031,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -1965,7 +3047,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1976,7 +3063,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -1987,7 +3079,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -1998,7 +3095,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2009,7 +3111,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2020,7 +3127,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2031,7 +3143,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2042,7 +3159,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2053,7 +3175,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -2064,7 +3191,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2075,7 +3207,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2086,7 +3223,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2097,7 +3239,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2108,7 +3255,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2119,7 +3271,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -2130,7 +3287,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2141,7 +3303,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2152,7 +3319,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2163,7 +3335,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2174,7 +3351,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2185,7 +3367,12 @@
 			"light_plus": "variable.language: #0000FF",
 			"dark_vs": "variable.language: #569CD6",
 			"light_vs": "variable.language: #0000FF",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable.language: #569CD6",
+			"hc_light": "variable.language: #0F4A85",
+			"light_modern": "variable.language: #0000FF",
+			"2026-dark": "variable.language: #79C0FF",
+			"2026-light": "variable.language: #0550AE"
 		}
 	},
 	{
@@ -2196,7 +3383,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2207,7 +3399,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2218,7 +3415,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2229,7 +3431,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2240,7 +3447,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2251,7 +3463,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2262,7 +3479,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2273,7 +3495,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -2284,7 +3511,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2295,7 +3527,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2306,7 +3543,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2317,7 +3559,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2328,7 +3575,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2339,7 +3591,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2350,7 +3607,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -2361,7 +3623,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2372,7 +3639,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2383,7 +3655,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2394,7 +3671,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2405,7 +3687,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2416,7 +3703,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -2427,7 +3719,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2438,7 +3735,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2449,7 +3751,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2460,18 +3767,60 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
-		"c": "\", \"skip\")",
+		"c": "\"",
 		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": ",",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": " \"skip\")",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.condition.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2482,7 +3831,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2493,7 +3847,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2504,7 +3863,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2515,7 +3879,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2526,18 +3895,44 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
-		"c": "  ",
+		"c": "else ifeq",
+		"t": "source.makefile meta.scope.conditional.makefile keyword.control.else.makefile",
+		"r": {
+			"dark_plus": "keyword.control: #C586C0",
+			"light_plus": "keyword.control: #AF00DB",
+			"dark_vs": "keyword.control: #569CD6",
+			"light_vs": "keyword.control: #0000FF",
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
+		}
+	},
+	{
+		"c": " (\"",
 		"t": "source.makefile meta.scope.conditional.makefile",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2548,7 +3943,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2559,7 +3959,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2570,7 +3975,124 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "\"",
+		"t": "source.makefile meta.scope.conditional.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": ",",
+		"t": "source.makefile meta.scope.conditional.makefile punctuation.separator.delimeter.comma.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": " \"skip\")",
+		"t": "source.makefile meta.scope.conditional.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "  ",
+		"t": "source.makefile meta.scope.conditional.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "${",
+		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "ok",
+		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile variable.other.makefile",
+		"r": {
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
+		}
+	},
+	{
+		"c": "}",
+		"t": "source.makefile meta.scope.conditional.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2581,7 +4103,188 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "else",
+		"t": "source.makefile meta.scope.conditional.makefile keyword.control.else.makefile",
+		"r": {
+			"dark_plus": "keyword.control: #C586C0",
+			"light_plus": "keyword.control: #AF00DB",
+			"dark_vs": "keyword.control: #569CD6",
+			"light_vs": "keyword.control: #0000FF",
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
+		}
+	},
+	{
+		"c": "  ",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "$(",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile entity.name.function.target.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "info",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile entity.name.function.target.makefile string.interpolated.makefile meta.scope.function-call.makefile support.function.info.makefile",
+		"r": {
+			"dark_plus": "support.function: #DCDCAA",
+			"light_plus": "support.function: #795E26",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
+		}
+	},
+	{
+		"c": " Else",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile entity.name.function.target.makefile string.interpolated.makefile meta.scope.function-call.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": ":",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile punctuation.separator.key-value.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": " ",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile meta.scope.prerequisites.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "${",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile meta.scope.prerequisites.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "ok",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile meta.scope.prerequisites.makefile string.interpolated.makefile variable.other.makefile",
+		"r": {
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
+		}
+	},
+	{
+		"c": "}",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile meta.scope.prerequisites.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": ")",
+		"t": "source.makefile meta.scope.conditional.makefile meta.scope.target.makefile meta.scope.prerequisites.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2592,7 +4295,12 @@
 			"light_plus": "keyword.control: #AF00DB",
 			"dark_vs": "keyword.control: #569CD6",
 			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
 		}
 	},
 	{
@@ -2603,7 +4311,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2614,7 +4327,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2625,7 +4343,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2636,7 +4359,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2647,7 +4375,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2658,7 +4391,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2669,7 +4407,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2680,7 +4423,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2691,7 +4439,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2702,7 +4455,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -2713,7 +4471,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2724,7 +4487,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2735,7 +4503,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2746,7 +4519,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2757,7 +4535,12 @@
 			"light_plus": "support.function: #795E26",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
 		}
 	},
 	{
@@ -2768,7 +4551,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2779,7 +4567,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2790,7 +4583,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2801,7 +4599,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2812,7 +4615,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -2823,7 +4631,12 @@
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "punctuation.definition.comment: #8B949E",
+			"2026-light": "punctuation.definition.comment: #6E7781"
 		}
 	},
 	{
@@ -2834,7 +4647,12 @@
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "comment: #8B949E",
+			"2026-light": "comment: #6E7781"
 		}
 	},
 	{
@@ -2845,7 +4663,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2856,7 +4679,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2867,7 +4695,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2878,7 +4711,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2889,7 +4727,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2900,7 +4743,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2911,7 +4759,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2922,7 +4775,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2933,7 +4791,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2944,7 +4807,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2955,7 +4823,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2966,7 +4839,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2977,7 +4855,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -2988,7 +4871,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -2999,7 +4887,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -3010,7 +4903,12 @@
 			"light_plus": "constant.character.escape: #EE0000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "constant.character: #569CD6"
+			"hc_black": "constant.character: #569CD6",
+			"dark_modern": "constant.character.escape: #D7BA7D",
+			"hc_light": "constant.character.escape: #EE0000",
+			"light_modern": "constant.character.escape: #EE0000",
+			"2026-dark": "constant.character.escape: #D7BA7D",
+			"2026-light": "constant.character.escape: #EE0000"
 		}
 	},
 	{
@@ -3021,7 +4919,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -3032,7 +4935,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -3043,7 +4951,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -3054,7 +4967,12 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
@@ -3065,7 +4983,12 @@
 			"light_plus": "variable: #001080",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -3076,73 +4999,60 @@
 			"light_plus": "string: #A31515",
 			"dark_vs": "string: #CE9178",
 			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
 		}
 	},
 	{
-		"c": "var-",
+		"c": "var",
 		"t": "source.makefile variable.other.makefile",
 		"r": {
 			"dark_plus": "variable: #9CDCFE",
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
-		"c": "$(",
-		"t": "source.makefile variable.other.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": "nested-var",
-		"t": "source.makefile variable.other.makefile string.interpolated.makefile variable.other.makefile",
-		"r": {
-			"dark_plus": "variable: #9CDCFE",
-			"light_plus": "variable: #001080",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
-		}
-	},
-	{
-		"c": ")",
-		"t": "source.makefile variable.other.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": "=",
+		"c": ":=",
 		"t": "source.makefile punctuation.separator.key-value.makefile",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
-		"c": "val",
+		"c": "blah",
 		"t": "source.makefile",
 		"r": {
 			"dark_plus": "default: #D4D4D4",
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -3153,227 +5063,44 @@
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "punctuation.definition.comment: #8B949E",
+			"2026-light": "punctuation.definition.comment: #6E7781"
 		}
 	},
 	{
-		"c": " Spaces in a nested shell will hurt a colorizing of variable,",
+		"c": "comment",
 		"t": "source.makefile comment.line.number-sign.makefile",
 		"r": {
 			"dark_plus": "comment: #6A9955",
 			"light_plus": "comment: #008000",
 			"dark_vs": "comment: #6A9955",
 			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "comment: #8B949E",
+			"2026-light": "comment: #6E7781"
 		}
 	},
 	{
-		"c": "#",
-		"t": "source.makefile comment.line.number-sign.makefile punctuation.definition.comment.makefile",
-		"r": {
-			"dark_plus": "comment: #6A9955",
-			"light_plus": "comment: #008000",
-			"dark_vs": "comment: #6A9955",
-			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
-		}
-	},
-	{
-		"c": " but not so much.",
-		"t": "source.makefile comment.line.number-sign.makefile",
-		"r": {
-			"dark_plus": "comment: #6A9955",
-			"light_plus": "comment: #008000",
-			"dark_vs": "comment: #6A9955",
-			"light_vs": "comment: #008000",
-			"hc_black": "comment: #7CA668"
-		}
-	},
-	{
-		"c": "var-",
-		"t": "source.makefile",
-		"r": {
-			"dark_plus": "default: #D4D4D4",
-			"light_plus": "default: #000000",
-			"dark_vs": "default: #D4D4D4",
-			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
-		}
-	},
-	{
-		"c": "$(",
-		"t": "source.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": "shell",
-		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile support.function.shell.makefile",
-		"r": {
-			"dark_plus": "support.function: #DCDCAA",
-			"light_plus": "support.function: #795E26",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
-		}
-	},
-	{
-		"c": " printf 2",
-		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": ")",
-		"t": "source.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": " := val2",
-		"t": "source.makefile",
-		"r": {
-			"dark_plus": "default: #D4D4D4",
-			"light_plus": "default: #000000",
-			"dark_vs": "default: #D4D4D4",
-			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
-		}
-	},
-	{
-		"c": "$(",
-		"t": "source.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": "info",
-		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile support.function.info.makefile",
-		"r": {
-			"dark_plus": "support.function: #DCDCAA",
-			"light_plus": "support.function: #795E26",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "support.function: #DCDCAA"
-		}
-	},
-	{
-		"c": " Should be 'val2' here: ",
-		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": "$(",
-		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": "var-2",
-		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile variable.other.makefile",
-		"r": {
-			"dark_plus": "variable: #9CDCFE",
-			"light_plus": "variable: #001080",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "variable: #9CDCFE"
-		}
-	},
-	{
-		"c": ")",
-		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": ")",
-		"t": "source.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
-		"r": {
-			"dark_plus": "string: #CE9178",
-			"light_plus": "string: #A31515",
-			"dark_vs": "string: #CE9178",
-			"light_vs": "string: #A31515",
-			"hc_black": "string: #CE9178"
-		}
-	},
-	{
-		"c": "export",
-		"t": "source.makefile keyword.control.export.makefile",
-		"r": {
-			"dark_plus": "keyword.control: #C586C0",
-			"light_plus": "keyword.control: #AF00DB",
-			"dark_vs": "keyword.control: #569CD6",
-			"light_vs": "keyword.control: #0000FF",
-			"hc_black": "keyword.control: #C586C0"
-		}
-	},
-	{
-		"c": " ",
-		"t": "source.makefile",
-		"r": {
-			"dark_plus": "default: #D4D4D4",
-			"light_plus": "default: #000000",
-			"dark_vs": "default: #D4D4D4",
-			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
-		}
-	},
-	{
-		"c": "a",
+		"c": "var",
 		"t": "source.makefile variable.other.makefile",
 		"r": {
 			"dark_plus": "variable: #9CDCFE",
 			"light_plus": "variable: #001080",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "variable: #9CDCFE"
-		}
-	},
-	{
-		"c": " ",
-		"t": "source.makefile",
-		"r": {
-			"dark_plus": "default: #D4D4D4",
-			"light_plus": "default: #000000",
-			"dark_vs": "default: #D4D4D4",
-			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
 		}
 	},
 	{
@@ -3384,7 +5111,604 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "blah\\#not_a_comment",
+		"t": "source.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "var",
+		"t": "source.makefile variable.other.makefile",
+		"r": {
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
+		}
+	},
+	{
+		"c": ":=",
+		"t": "source.makefile punctuation.separator.key-value.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "blah\\\\",
+		"t": "source.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "#",
+		"t": "source.makefile comment.line.number-sign.makefile punctuation.definition.comment.makefile",
+		"r": {
+			"dark_plus": "comment: #6A9955",
+			"light_plus": "comment: #008000",
+			"dark_vs": "comment: #6A9955",
+			"light_vs": "comment: #008000",
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "punctuation.definition.comment: #8B949E",
+			"2026-light": "punctuation.definition.comment: #6E7781"
+		}
+	},
+	{
+		"c": "comment",
+		"t": "source.makefile comment.line.number-sign.makefile",
+		"r": {
+			"dark_plus": "comment: #6A9955",
+			"light_plus": "comment: #008000",
+			"dark_vs": "comment: #6A9955",
+			"light_vs": "comment: #008000",
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "comment: #8B949E",
+			"2026-light": "comment: #6E7781"
+		}
+	},
+	{
+		"c": "var",
+		"t": "source.makefile variable.other.makefile",
+		"r": {
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
+		}
+	},
+	{
+		"c": "!=",
+		"t": "source.makefile punctuation.separator.key-value.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "blah\\\\\\#not_a_comment",
+		"t": "source.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "var-",
+		"t": "source.makefile variable.other.makefile",
+		"r": {
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
+		}
+	},
+	{
+		"c": "$(",
+		"t": "source.makefile variable.other.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "nested-var",
+		"t": "source.makefile variable.other.makefile string.interpolated.makefile variable.other.makefile",
+		"r": {
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
+		}
+	},
+	{
+		"c": ")",
+		"t": "source.makefile variable.other.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "=",
+		"t": "source.makefile punctuation.separator.key-value.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "val",
+		"t": "source.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "#",
+		"t": "source.makefile comment.line.number-sign.makefile punctuation.definition.comment.makefile",
+		"r": {
+			"dark_plus": "comment: #6A9955",
+			"light_plus": "comment: #008000",
+			"dark_vs": "comment: #6A9955",
+			"light_vs": "comment: #008000",
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "punctuation.definition.comment: #8B949E",
+			"2026-light": "punctuation.definition.comment: #6E7781"
+		}
+	},
+	{
+		"c": " Spaces in a nested shell will hurt a colorizing of variable,",
+		"t": "source.makefile comment.line.number-sign.makefile",
+		"r": {
+			"dark_plus": "comment: #6A9955",
+			"light_plus": "comment: #008000",
+			"dark_vs": "comment: #6A9955",
+			"light_vs": "comment: #008000",
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "comment: #8B949E",
+			"2026-light": "comment: #6E7781"
+		}
+	},
+	{
+		"c": "#",
+		"t": "source.makefile comment.line.number-sign.makefile punctuation.definition.comment.makefile",
+		"r": {
+			"dark_plus": "comment: #6A9955",
+			"light_plus": "comment: #008000",
+			"dark_vs": "comment: #6A9955",
+			"light_vs": "comment: #008000",
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "punctuation.definition.comment: #8B949E",
+			"2026-light": "punctuation.definition.comment: #6E7781"
+		}
+	},
+	{
+		"c": " but not so much.",
+		"t": "source.makefile comment.line.number-sign.makefile",
+		"r": {
+			"dark_plus": "comment: #6A9955",
+			"light_plus": "comment: #008000",
+			"dark_vs": "comment: #6A9955",
+			"light_vs": "comment: #008000",
+			"hc_black": "comment: #7CA668",
+			"dark_modern": "comment: #6A9955",
+			"hc_light": "comment: #515151",
+			"light_modern": "comment: #008000",
+			"2026-dark": "comment: #8B949E",
+			"2026-light": "comment: #6E7781"
+		}
+	},
+	{
+		"c": "var-",
+		"t": "source.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "$(",
+		"t": "source.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "shell",
+		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile support.function.shell.makefile",
+		"r": {
+			"dark_plus": "support.function: #DCDCAA",
+			"light_plus": "support.function: #795E26",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
+		}
+	},
+	{
+		"c": " printf 2",
+		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": ")",
+		"t": "source.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": " := val2",
+		"t": "source.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "$(",
+		"t": "source.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "info",
+		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile support.function.info.makefile",
+		"r": {
+			"dark_plus": "support.function: #DCDCAA",
+			"light_plus": "support.function: #795E26",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "support.function: #DCDCAA",
+			"dark_modern": "support.function: #DCDCAA",
+			"hc_light": "support.function: #5E2CBC",
+			"light_modern": "support.function: #795E26",
+			"2026-dark": "support.function: #DCDCAA",
+			"2026-light": "support.function: #795E26"
+		}
+	},
+	{
+		"c": " Should be 'val2' here: ",
+		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "$(",
+		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "var-2",
+		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile variable.other.makefile",
+		"r": {
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
+		}
+	},
+	{
+		"c": ")",
+		"t": "source.makefile string.interpolated.makefile meta.scope.function-call.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": ")",
+		"t": "source.makefile string.interpolated.makefile punctuation.definition.variable.makefile",
+		"r": {
+			"dark_plus": "string: #CE9178",
+			"light_plus": "string: #A31515",
+			"dark_vs": "string: #CE9178",
+			"light_vs": "string: #A31515",
+			"hc_black": "string: #CE9178",
+			"dark_modern": "string: #CE9178",
+			"hc_light": "string: #0F4A85",
+			"light_modern": "string: #A31515",
+			"2026-dark": "string: #A5D6FF",
+			"2026-light": "string: #0A3069"
+		}
+	},
+	{
+		"c": "export",
+		"t": "source.makefile keyword.control.export.makefile",
+		"r": {
+			"dark_plus": "keyword.control: #C586C0",
+			"light_plus": "keyword.control: #AF00DB",
+			"dark_vs": "keyword.control: #569CD6",
+			"light_vs": "keyword.control: #0000FF",
+			"hc_black": "keyword.control: #C586C0",
+			"dark_modern": "keyword.control: #C586C0",
+			"hc_light": "keyword.control: #B5200D",
+			"light_modern": "keyword.control: #AF00DB",
+			"2026-dark": "keyword.control: #C586C0",
+			"2026-light": "keyword.control: #AF00DB"
+		}
+	},
+	{
+		"c": " ",
+		"t": "source.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "a",
+		"t": "source.makefile variable.other.makefile",
+		"r": {
+			"dark_plus": "variable: #9CDCFE",
+			"light_plus": "variable: #001080",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "variable: #9CDCFE",
+			"dark_modern": "variable: #9CDCFE",
+			"hc_light": "variable: #001080",
+			"light_modern": "variable: #001080",
+			"2026-dark": "variable.other: #C9D1D9",
+			"2026-light": "variable.other: #1F2328"
+		}
+	},
+	{
+		"c": " ",
+		"t": "source.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
+		}
+	},
+	{
+		"c": "?=",
+		"t": "source.makefile punctuation.separator.key-value.makefile",
+		"r": {
+			"dark_plus": "default: #D4D4D4",
+			"light_plus": "default: #000000",
+			"dark_vs": "default: #D4D4D4",
+			"light_vs": "default: #000000",
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	},
 	{
@@ -3395,7 +5719,12 @@
 			"light_plus": "default: #000000",
 			"dark_vs": "default: #D4D4D4",
 			"light_vs": "default: #000000",
-			"hc_black": "default: #FFFFFF"
+			"hc_black": "default: #FFFFFF",
+			"dark_modern": "default: #CCCCCC",
+			"hc_light": "default: #292929",
+			"light_modern": "default: #3B3B3B",
+			"2026-dark": "default: #BBBEBF",
+			"2026-light": "default: #202020"
 		}
 	}
 ]

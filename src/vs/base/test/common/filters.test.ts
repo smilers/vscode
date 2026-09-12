@@ -2,11 +2,12 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as assert from 'assert';
-import { anyScore, createMatches, fuzzyScore, fuzzyScoreGraceful, fuzzyScoreGracefulAggressive, FuzzyScorer, IFilter, IMatch, matchesCamelCase, matchesContiguousSubString, matchesPrefix, matchesStrictPrefix, matchesSubString, matchesWords, or } from 'vs/base/common/filters';
+import assert from 'assert';
+import { anyScore, createMatches, fuzzyScore, fuzzyScoreGraceful, fuzzyScoreGracefulAggressive, FuzzyScorer, IFilter, IMatch, matchesBaseContiguousSubString, matchesCamelCase, matchesContiguousSubString, matchesPrefix, matchesStrictPrefix, matchesSubString, matchesWords, or } from '../../common/filters.js';
+import { ensureNoDisposablesAreLeakedInTestSuite } from './utils.js';
 
-function filterOk(filter: IFilter, word: string, wordToMatchAgainst: string, highlights?: { start: number; end: number; }[]) {
-	let r = filter(word, wordToMatchAgainst);
+function filterOk(filter: IFilter, word: string, wordToMatchAgainst: string, highlights?: { start: number; end: number }[]) {
+	const r = filter(word, wordToMatchAgainst);
 	assert(r, `${word} didn't match ${wordToMatchAgainst}`);
 	if (highlights) {
 		assert.deepStrictEqual(r, highlights);
@@ -18,10 +19,13 @@ function filterNotOk(filter: IFilter, word: string, wordToMatchAgainst: string) 
 }
 
 suite('Filters', () => {
+	ensureNoDisposablesAreLeakedInTestSuite();
+
 	test('or', () => {
 		let filter: IFilter;
 		let counters: number[];
-		let newFilter = function (i: number, r: boolean): IFilter {
+		const newFilter = function (i: number, r: boolean): IFilter {
+			// eslint-disable-next-line local/code-no-any-casts
 			return function (): IMatch[] { counters[i]++; return r as any; };
 		};
 
@@ -154,6 +158,30 @@ suite('Filters', () => {
 		]);
 	});
 
+	test('matchesBaseContiguousSubString', () => {
+		filterOk(matchesBaseContiguousSubString, 'cela', 'cancelAnimationFrame()', [
+			{ start: 3, end: 7 }
+		]);
+		filterOk(matchesBaseContiguousSubString, 'cafe', 'café', [
+			{ start: 0, end: 4 }
+		]);
+		filterOk(matchesBaseContiguousSubString, 'cafe', 'caféBar', [
+			{ start: 0, end: 4 }
+		]);
+		filterOk(matchesBaseContiguousSubString, 'resume', 'résumé', [
+			{ start: 0, end: 6 }
+		]);
+		filterOk(matchesBaseContiguousSubString, 'naïve', 'naïve', [
+			{ start: 0, end: 5 }
+		]);
+		filterOk(matchesBaseContiguousSubString, 'naive', 'naïve', [
+			{ start: 0, end: 5 }
+		]);
+		filterOk(matchesBaseContiguousSubString, 'aeou', 'àéöü', [
+			{ start: 0, end: 4 }
+		]);
+	});
+
 	test('matchesSubString', () => {
 		filterOk(matchesSubString, 'cmm', 'cancelAnimationFrame()', [
 			{ start: 0, end: 1 },
@@ -185,23 +213,27 @@ suite('Filters', () => {
 		assert(matchesWords('Debug Console', 'Open: Debug Console'));
 
 		filterOk(matchesWords, 'gp', 'Git: Pull', [{ start: 0, end: 1 }, { start: 5, end: 6 }]);
-		filterOk(matchesWords, 'g p', 'Git: Pull', [{ start: 0, end: 1 }, { start: 3, end: 4 }, { start: 5, end: 6 }]);
+		filterOk(matchesWords, 'g p', 'Git: Pull', [{ start: 0, end: 1 }, { start: 5, end: 6 }]);
 		filterOk(matchesWords, 'gipu', 'Git: Pull', [{ start: 0, end: 2 }, { start: 5, end: 7 }]);
 
 		filterOk(matchesWords, 'gp', 'Category: Git: Pull', [{ start: 10, end: 11 }, { start: 15, end: 16 }]);
-		filterOk(matchesWords, 'g p', 'Category: Git: Pull', [{ start: 10, end: 11 }, { start: 13, end: 14 }, { start: 15, end: 16 }]);
+		filterOk(matchesWords, 'g p', 'Category: Git: Pull', [{ start: 10, end: 11 }, { start: 15, end: 16 }]);
 		filterOk(matchesWords, 'gipu', 'Category: Git: Pull', [{ start: 10, end: 12 }, { start: 15, end: 17 }]);
 
 		filterNotOk(matchesWords, 'it', 'Git: Pull');
 		filterNotOk(matchesWords, 'll', 'Git: Pull');
 
 		filterOk(matchesWords, 'git: プル', 'git: プル', [{ start: 0, end: 7 }]);
-		filterOk(matchesWords, 'git プル', 'git: プル', [{ start: 0, end: 4 }, { start: 5, end: 7 }]);
+		filterOk(matchesWords, 'git プル', 'git: プル', [{ start: 0, end: 3 }, { start: 5, end: 7 }]);
 
 		filterOk(matchesWords, 'öäk', 'Öhm: Älles Klar', [{ start: 0, end: 1 }, { start: 5, end: 6 }, { start: 11, end: 12 }]);
 
 		// Handles issue #123915
 		filterOk(matchesWords, 'C++', 'C/C++: command', [{ start: 2, end: 5 }]);
+
+		// Handles issue #154533
+		filterOk(matchesWords, '.', ':', []);
+		filterOk(matchesWords, '.', '.', [{ start: 0, end: 1 }]);
 
 		// assert.ok(matchesWords('gipu', 'Category: Git: Pull', true) === null);
 		// assert.deepStrictEqual(matchesWords('pu', 'Category: Git: Pull', true), [{ start: 15, end: 17 }]);
@@ -222,11 +254,30 @@ suite('Filters', () => {
 		filterOk(matchesWords, 'foo:bar', 'foo:bar');
 	});
 
-	function assertMatches(pattern: string, word: string, decoratedWord: string | undefined, filter: FuzzyScorer, opts: { patternPos?: number, wordPos?: number, firstMatchCanBeWeak?: boolean } = {}) {
-		let r = filter(pattern, pattern.toLowerCase(), opts.patternPos || 0, word, word.toLowerCase(), opts.wordPos || 0, opts.firstMatchCanBeWeak || false);
+	test('matchesWords performance (#309582)', function () {
+		// Searching for a term containing a word separator (e.g. `.`) against
+		// command-id-like targets used to cause catastrophic backtracking and
+		// freeze the Keyboard Shortcuts editor. Without the fix this loop
+		// exceeds Mocha's default test timeout.
+		const targets = [
+			'workbench.action.terminal.focusNextLine',
+			'editor.action.clipboardCopyAction',
+			'workbench.action.editor.changeLanguageMode',
+			'editor.action.smartSelect.expand',
+			'workbench.action.files.saveAll',
+		];
+		for (let i = 0; i < 1000; i++) {
+			for (const t of targets) {
+				matchesWords('editor.action', t);
+			}
+		}
+	});
+
+	function assertMatches(pattern: string, word: string, decoratedWord: string | undefined, filter: FuzzyScorer, opts: { patternPos?: number; wordPos?: number; firstMatchCanBeWeak?: boolean } = {}) {
+		const r = filter(pattern, pattern.toLowerCase(), opts.patternPos || 0, word, word.toLowerCase(), opts.wordPos || 0, { firstMatchCanBeWeak: opts.firstMatchCanBeWeak ?? false, boostFullMatch: true });
 		assert.ok(!decoratedWord === !r);
 		if (r) {
-			let matches = createMatches(r);
+			const matches = createMatches(r);
 			let actualWord = '';
 			let pos = 0;
 			for (const match of matches) {
@@ -403,9 +454,9 @@ suite('Filters', () => {
 	});
 
 	test('Cannot set property \'1\' of undefined, #26511', function () {
-		let word = new Array<void>(123).join('a');
-		let pattern = new Array<void>(120).join('a');
-		fuzzyScore(pattern, pattern.toLowerCase(), 0, word, word.toLowerCase(), 0, false);
+		const word = new Array<void>(123).join('a');
+		const pattern = new Array<void>(120).join('a');
+		fuzzyScore(pattern, pattern.toLowerCase(), 0, word, word.toLowerCase(), 0);
 		assert.ok(true); // must not explode
 	});
 
@@ -435,7 +486,7 @@ suite('Filters', () => {
 		let topIdx = 0;
 		for (let i = 0; i < words.length; i++) {
 			const word = words[i];
-			const m = filter(pattern, pattern.toLowerCase(), 0, word, word.toLowerCase(), 0, false);
+			const m = filter(pattern, pattern.toLowerCase(), 0, word, word.toLowerCase(), 0);
 			if (m) {
 				const [score] = m;
 				if (score > topScore) {
@@ -494,6 +545,11 @@ suite('Filters', () => {
 		assertTopScore(fuzzyScore, '_lineS', 0, '_lineS', '_lines');
 	});
 
+	test.skip('Bad completion ranking changes valid variable name to class name when pressing "." #187055', function () {
+		assertTopScore(fuzzyScore, 'a', 1, 'A', 'a');
+		assertTopScore(fuzzyScore, 'theme', 1, 'Theme', 'theme');
+	});
+
 	test('HTML closing tag proposal filtered out #38880', function () {
 		assertMatches('\t\t<', '\t\t</body>', '^\t^\t^</body>', fuzzyScore, { patternPos: 0 });
 		assertMatches('\t\t<', '\t\t</body>', '\t\t^</body>', fuzzyScore, { patternPos: 2 });
@@ -538,7 +594,7 @@ suite('Filters', () => {
 	});
 
 	test('"Go to Symbol" with the exact method name doesn\'t work as expected #84787', function () {
-		const match = fuzzyScore(':get', ':get', 1, 'get', 'get', 0, true);
+		const match = fuzzyScore(':get', ':get', 1, 'get', 'get', 0, { firstMatchCanBeWeak: true, boostFullMatch: true });
 		assert.ok(Boolean(match));
 	});
 
@@ -556,5 +612,42 @@ suite('Filters', () => {
 		assertMatches('lo', 'log', '^l^og', fuzzyScore);
 		assertMatches('.lo', 'log', '^l^og', anyScore);
 		assertMatches('.', 'log', 'log', anyScore);
+	});
+
+	test('anyScore should not require a strong first match', function () {
+		assertMatches('bar', 'foobAr', 'foo^b^A^r', anyScore);
+		assertMatches('bar', 'foobar', 'foo^b^a^r', anyScore);
+	});
+
+	test('configurable full match boost', function () {
+		const prefix = 'create';
+		const a = 'createModelServices';
+		const b = 'create';
+
+		let aBoost = fuzzyScore(prefix, prefix, 0, a, a.toLowerCase(), 0, { boostFullMatch: true, firstMatchCanBeWeak: true });
+		let bBoost = fuzzyScore(prefix, prefix, 0, b, b.toLowerCase(), 0, { boostFullMatch: true, firstMatchCanBeWeak: true });
+		assert.ok(aBoost);
+		assert.ok(bBoost);
+		assert.ok(aBoost[0] < bBoost[0]);
+
+		// also works with wordStart > 0 (https://github.com/microsoft/vscode/issues/187921)
+		const wordPrefix = '$(symbol-function) ';
+		aBoost = fuzzyScore(prefix, prefix, 0, `${wordPrefix}${a}`, `${wordPrefix}${a}`.toLowerCase(), wordPrefix.length, { boostFullMatch: true, firstMatchCanBeWeak: true });
+		bBoost = fuzzyScore(prefix, prefix, 0, `${wordPrefix}${b}`, `${wordPrefix}${b}`.toLowerCase(), wordPrefix.length, { boostFullMatch: true, firstMatchCanBeWeak: true });
+		assert.ok(aBoost);
+		assert.ok(bBoost);
+		assert.ok(aBoost[0] < bBoost[0]);
+
+		const aScore = fuzzyScore(prefix, prefix, 0, a, a.toLowerCase(), 0, { boostFullMatch: false, firstMatchCanBeWeak: true });
+		const bScore = fuzzyScore(prefix, prefix, 0, b, b.toLowerCase(), 0, { boostFullMatch: false, firstMatchCanBeWeak: true });
+		assert.ok(aScore);
+		assert.ok(bScore);
+		assert.ok(aScore[0] === bScore[0]);
+	});
+
+	test('Unexpected suggest highlighting ignores whole word match in favor of matching first letter#147423', function () {
+
+		assertMatches('i', 'machine/{id}', 'machine/{^id}', fuzzyScore);
+		assertMatches('ok', 'obobobf{ok}/user', '^obobobf{o^k}/user', fuzzyScore);
 	});
 });

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestService } from '../requests';
+import { RequestService } from '../requests.js';
 import { URI as Uri } from 'vscode-uri';
 
 import * as fs from 'fs';
@@ -16,7 +16,7 @@ export function getNodeFSRequestService(): RequestService {
 		}
 	}
 	return {
-		getContent(location: string, encoding?: string) {
+		getContent(location: string, encoding?: BufferEncoding) {
 			ensureFileUri(location);
 			return new Promise((c, e) => {
 				const uri = Uri.parse(location);

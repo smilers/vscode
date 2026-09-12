@@ -58,7 +58,7 @@ export function updateEmmetExtensionsPath(forceRefresh: boolean = false) {
  */
 export function migrateEmmetExtensionsPath() {
 	// Get the detail info of emmet.extensionsPath setting
-	let config = vscode.workspace.getConfiguration().inspect('emmet.extensionsPath');
+	const config = vscode.workspace.getConfiguration().inspect('emmet.extensionsPath');
 
 	// Update Global setting if the value type is string or the value is null
 	if (typeof config?.globalValue === 'string') {
@@ -100,12 +100,12 @@ export const LANGUAGE_MODES: { [id: string]: string[] } = {
 };
 
 export function isStyleSheet(syntax: string): boolean {
-	let stylesheetSyntaxes = ['css', 'scss', 'sass', 'less', 'stylus'];
+	const stylesheetSyntaxes = ['css', 'scss', 'sass', 'less', 'stylus'];
 	return stylesheetSyntaxes.includes(syntax);
 }
 
 export function validate(allowStylesheet: boolean = true): boolean {
-	let editor = vscode.window.activeTextEditor;
+	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
 		vscode.window.showInformationMessage('No editor is active');
 		return false;
@@ -197,7 +197,7 @@ export function parsePartialStylesheet(document: vscode.TextDocument, position: 
 
 	function findOpeningCommentBeforePosition(pos: number): number | undefined {
 		const text = document.getText().substring(0, pos);
-		let offset = text.lastIndexOf('/*');
+		const offset = text.lastIndexOf('/*');
 		if (offset === -1) {
 			return;
 		}
@@ -226,7 +226,7 @@ export function parsePartialStylesheet(document: vscode.TextDocument, position: 
 	}
 
 	function consumeBlockCommentBackwards() {
-		if (stream.peek() === slash) {
+		if (!stream.sof() && stream.peek() === slash) {
 			if (stream.backUp(1) === star) {
 				stream.pos = findOpeningCommentBeforePosition(stream.pos) ?? startOffset;
 			} else {
@@ -354,7 +354,7 @@ export function getFlatNode(root: FlatNode | undefined, offset: number, includeN
 			|| (includeNodeBoundary && nodeStart <= offset && nodeEnd >= offset)) {
 			return getFlatNodeChildren(child.children) ?? child;
 		}
-		else if ('close' in <any>child) {
+		else if ('close' in child) {
 			// We have an HTML node in this case.
 			// In case this node is an invalid unpaired HTML node,
 			// we still want to search its children
@@ -606,8 +606,8 @@ export function sameNodes(node1: FlatNode | undefined, node2: FlatNode | undefin
 
 export function getEmmetConfiguration(syntax: string) {
 	const emmetConfig = vscode.workspace.getConfiguration('emmet');
-	const syntaxProfiles = Object.assign({}, emmetConfig['syntaxProfiles'] || {});
-	const preferences = Object.assign({}, emmetConfig['preferences'] || {});
+	const syntaxProfiles = Object.assign({}, emmetConfig.syntaxProfiles || {});
+	const preferences = Object.assign({}, emmetConfig.preferences || {});
 	// jsx, xml and xsl syntaxes need to have self closing tags unless otherwise configured by user
 	if (syntax === 'jsx' || syntax === 'xml' || syntax === 'xsl') {
 		syntaxProfiles[syntax] = syntaxProfiles[syntax] || {};
@@ -624,12 +624,12 @@ export function getEmmetConfiguration(syntax: string) {
 
 	return {
 		preferences,
-		showExpandedAbbreviation: emmetConfig['showExpandedAbbreviation'],
-		showAbbreviationSuggestions: emmetConfig['showAbbreviationSuggestions'],
+		showExpandedAbbreviation: emmetConfig.showExpandedAbbreviation,
+		showAbbreviationSuggestions: emmetConfig.showAbbreviationSuggestions,
 		syntaxProfiles,
-		variables: emmetConfig['variables'],
-		excludeLanguages: emmetConfig['excludeLanguages'],
-		showSuggestionsAsSnippets: emmetConfig['showSuggestionsAsSnippets']
+		variables: emmetConfig.variables,
+		excludeLanguages: emmetConfig.excludeLanguages,
+		showSuggestionsAsSnippets: emmetConfig.showSuggestionsAsSnippets
 	};
 }
 

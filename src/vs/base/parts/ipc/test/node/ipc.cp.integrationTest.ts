@@ -3,76 +3,87 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as assert from 'assert';
-import { Client } from 'vs/base/parts/ipc/node/ipc.cp';
-import { getPathFromAmdModule } from 'vs/base/test/node/testUtils';
-import { TestServiceClient } from './testService';
+import assert from 'assert';
+import { timeout } from '../../../../common/async.js';
+import { Event } from '../../../../common/event.js';
+import { IChannel } from '../../common/ipc.js';
+import { Client } from '../../node/ipc.cp.js';
+import { ITestService, TestServiceClient } from './testService.js';
+import { FileAccess } from '../../../../common/network.js';
 
-function createClient(): Client {
-	return new Client(getPathFromAmdModule(require, 'bootstrap-fork'), {
+function createClient(env?: Record<string, string>): Client {
+	return new Client(FileAccess.asFileUri('bootstrap-fork').fsPath, {
 		serverName: 'TestServer',
-		env: { VSCODE_AMD_ENTRYPOINT: 'vs/base/parts/ipc/test/node/testApp', verbose: true }
+		env: { VSCODE_ESM_ENTRYPOINT: 'vs/base/parts/ipc/test/node/testApp', verbose: true, ...env }
 	});
 }
 
-suite('IPC, Child Process', () => {
-	test('createChannel', () => {
-		const client = createClient();
-		const channel = client.getChannel('test');
-		const service = new TestServiceClient(channel);
+suite('IPC, Child Process', function () {
+	this.slow(2000);
+	this.timeout(10000);
 
-		const result = service.pong('ping').then(r => {
-			assert.strictEqual(r.incoming, 'ping');
-			assert.strictEqual(r.outgoing, 'pong');
-		});
+	let client: Client;
+	let channel: IChannel;
+	let service: ITestService;
 
-		return result.finally(() => client.dispose());
+	setup(() => {
+		client = createClient();
+		channel = client.getChannel('test');
+		service = new TestServiceClient(channel);
 	});
 
-	test('events', () => {
-		const client = createClient();
-		const channel = client.getChannel('test');
-		const service = new TestServiceClient(channel);
-
-		const event = new Promise((c, e) => {
-			service.onMarco(({ answer }) => {
-				try {
-					assert.strictEqual(answer, 'polo');
-					c(undefined);
-				} catch (err) {
-					e(err);
-				}
-			});
-		});
-
-		const request = service.marco();
-		const result = Promise.all([request, event]);
-
-		return result.finally(() => client.dispose());
+	teardown(() => {
+		client.dispose();
 	});
 
-	test('event dispose', () => {
-		const client = createClient();
-		const channel = client.getChannel('test');
-		const service = new TestServiceClient(channel);
+	test('createChannel', async () => {
+		const result = await service.pong('ping');
+		assert.strictEqual(result.incoming, 'ping');
+		assert.strictEqual(result.outgoing, 'pong');
+	});
 
+	test('events', async () => {
+		const event = Event.toPromise(Event.once(service.onMarco));
+		const promise = service.marco();
+
+		const [promiseResult, eventResult] = await Promise.all([promise, event]);
+
+		assert.strictEqual(promiseResult, 'polo');
+		assert.strictEqual(eventResult.answer, 'polo');
+	});
+
+	test('event dispose', async () => {
 		let count = 0;
 		const disposable = service.onMarco(() => count++);
 
-		const result = service.marco().then(async answer => {
-			assert.strictEqual(answer, 'polo');
-			assert.strictEqual(count, 1);
+		const answer = await service.marco();
+		assert.strictEqual(answer, 'polo');
+		assert.strictEqual(count, 1);
 
-			const answer_1 = await service.marco();
-			assert.strictEqual(answer_1, 'polo');
-			assert.strictEqual(count, 2);
-			disposable.dispose();
+		const answer_1 = await service.marco();
+		assert.strictEqual(answer_1, 'polo');
+		assert.strictEqual(count, 2);
+		disposable.dispose();
 
-			const answer_2 = await service.marco();
-			assert.strictEqual(answer_2, 'polo');
-			assert.strictEqual(count, 2);
-		});
+		const answer_2 = await service.marco();
+		assert.strictEqual(answer_2, 'polo');
+		assert.strictEqual(count, 2);
+	});
 
-		return result.finally(() => client.dispose());
+	test('rejected call does not cause an unhandled rejection', async () => {
+		await assert.rejects(channel.call('unknown'), /command not found: unknown/);
+		await timeout(0);
+	});
+
+	test('deferred cancellation does not cause unhandled rejections', async () => {
+		client.dispose();
+		client = createClient({ VSCODE_IPC_TEST_DEFERRED_CANCELLATION: 'true' });
+		channel = client.getChannel('test');
+		const onDidProcessExit = Event.toPromise(Event.once(client.onDidProcessExit));
+		const result = channel.call('start');
+
+		const { code } = await onDidProcessExit;
+		await assert.rejects(result, /Canceled/);
+		assert.strictEqual(code, 0);
 	});
 });

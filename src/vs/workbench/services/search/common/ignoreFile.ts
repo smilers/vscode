@@ -3,15 +3,33 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as glob from 'vs/base/common/glob';
-
+import * as glob from '../../../../base/common/glob.js';
+import { startsWithIgnoreCase } from '../../../../base/common/strings.js';
 
 export class IgnoreFile {
 
 	private isPathIgnored: (path: string, isDir: boolean, parent?: IgnoreFile) => boolean;
 
-	constructor(contents: string, location: string, parent?: IgnoreFile) {
-		this.isPathIgnored = this.parseIgnoreFile(contents, location, parent);
+	constructor(
+		contents: string,
+		private readonly location: string,
+		private readonly parent?: IgnoreFile,
+		private readonly ignoreCase = false) {
+		if (location[location.length - 1] === '\\') {
+			throw Error('Unexpected path format, do not use trailing backslashes');
+		}
+		if (location[location.length - 1] !== '/') {
+			location += '/';
+		}
+		this.isPathIgnored = this.parseIgnoreFile(contents, this.location, this.parent);
+	}
+
+	/**
+	 * Updates the contents of the ignore file. Preserving the location and parent
+	 * @param contents The new contents of the gitignore file
+	 */
+	updateContents(contents: string) {
+		this.isPathIgnored = this.parseIgnoreFile(contents, this.location, this.parent);
 	}
 
 	/**
@@ -24,7 +42,7 @@ export class IgnoreFile {
 	 */
 	isPathIncludedInTraversal(path: string, isDir: boolean): boolean {
 		if (path[0] !== '/' || path[path.length - 1] === '/') {
-			throw Error('Unexpected path format, expectred to begin with slash and end without. got:' + path);
+			throw Error('Unexpected path format, expected to begin with slash and end without. got:' + path);
 		}
 
 		const ignored = this.isPathIgnored(path, isDir);
@@ -34,11 +52,11 @@ export class IgnoreFile {
 
 	/**
 	 * Returns true if an arbitrary path has not been ignored.
-	 * This is an expensive operation and should only be used ouside of traversals.
+	 * This is an expensive operation and should only be used outside of traversals.
 	 */
 	isArbitraryPathIgnored(path: string, isDir: boolean): boolean {
 		if (path[0] !== '/' || path[path.length - 1] === '/') {
-			throw Error('Unexpected path format, expectred to begin with slash and end without. got:' + path);
+			throw Error('Unexpected path format, expected to begin with slash and end without. got:' + path);
 		}
 
 		const segments = path.split('/').filter(x => x);
@@ -69,9 +87,8 @@ export class IgnoreFile {
 			includeExpression[line] = true;
 		}
 
-		return glob.parse(includeExpression, { trimForExclusions });
+		return glob.parse(includeExpression, { trimForExclusions, ignoreCase: this.ignoreCase });
 	}
-
 
 	private parseIgnoreFile(ignoreContents: string, dirPath: string, parent: IgnoreFile | undefined): (path: string, isDir: boolean) => boolean {
 		const contentLines = ignoreContents
@@ -85,7 +102,7 @@ export class IgnoreFile {
 		const fileIgnoreLines = fileLines.filter(line => !line.includes('!'));
 		const isFileIgnored = this.gitignoreLinesToExpression(fileIgnoreLines, dirPath, true);
 
-		// TODO: Slight hack... this naieve approach may reintroduce too many files in cases of weirdly complex .gitignores
+		// TODO: Slight hack... this naive approach may reintroduce too many files in cases of weirdly complex .gitignores
 		const fileIncludeLines = fileLines.filter(line => line.includes('!')).map(line => line.replace(/!/g, ''));
 		const isFileIncluded = this.gitignoreLinesToExpression(fileIncludeLines, dirPath, false);
 
@@ -98,9 +115,19 @@ export class IgnoreFile {
 		const isDirIncluded = this.gitignoreLinesToExpression(dirIncludeLines, dirPath, false);
 
 		const isPathIgnored = (path: string, isDir: boolean) => {
-			if (!path.startsWith(dirPath)) { return false; }
-			if (isDir && isDirIgnored(path) && !isDirIncluded(path)) { return true; }
-			if (isFileIgnored(path) && !isFileIncluded(path)) { return true; }
+			if (!(this.ignoreCase ? startsWithIgnoreCase(path, dirPath) : path.startsWith(dirPath))) { return false; }
+
+			const dirIncluded = isDir && isDirIncluded(path);
+			if (isDir && isDirIgnored(path) && !dirIncluded) { return true; }
+
+			const fileIncluded = isFileIncluded(path);
+			if (isFileIgnored(path) && !fileIncluded) { return true; }
+
+			// If this file explicitly un-ignores a path via a negation pattern
+			// (e.g., `!.myconfig/`), do not delegate to the parent. In git, a
+			// negation in a child .gitignore overrides a positive pattern in a
+			// parent or global .gitignore.
+			if (dirIncluded || fileIncluded) { return false; }
 
 			if (parent) { return parent.isPathIgnored(path, isDir); }
 
@@ -116,7 +143,13 @@ export class IgnoreFile {
 			line = '**/' + line;
 		} else {
 			if (firstSep === 0) {
-				line = line.slice(1);
+				if (dirPath.slice(-1) === '/') {
+					line = line.slice(1);
+				}
+			} else {
+				if (dirPath.slice(-1) !== '/') {
+					line = '/' + line;
+				}
 			}
 			line = dirPath + line;
 		}

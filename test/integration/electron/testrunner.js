@@ -3,14 +3,17 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+//@ts-check
 'use strict';
 
 const paths = require('path');
 const glob = require('glob');
 // Linux: prevent a weird NPE when mocha on Linux requires the window size from the TTY
-// Since we are not running in a tty environment, we just implementt he method statically
+// Since we are not running in a tty environment, we just implement the method statically
 const tty = require('tty');
+// @ts-ignore
 if (!tty.getWindowSize) {
+	// @ts-ignore
 	tty.getWindowSize = function () { return [80, 75]; };
 }
 const Mocha = require('mocha');
@@ -21,6 +24,9 @@ let mocha = new Mocha({
 });
 
 exports.configure = function configure(opts) {
+	if (process.env.MOCHA_GREP) {
+		opts.grep = process.env.MOCHA_GREP;
+	}
 	mocha = new Mocha(opts);
 };
 

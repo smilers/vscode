@@ -3,9 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { UriComponents } from 'vs/base/common/uri';
-import { ISerializableEnvironmentVariableCollection } from 'vs/platform/terminal/common/environmentVariable';
-import { IFixedTerminalDimensions, IRawTerminalTabLayoutInfo, ITerminalEnvironment, ITerminalTabLayoutInfoById, TerminalIcon, TitleEventSource } from 'vs/platform/terminal/common/terminal';
+import { UriComponents } from '../../../base/common/uri.js';
+import { ISerializableEnvironmentVariableCollection, ISerializableEnvironmentVariableCollections } from './environmentVariable.js';
+import { IFixedTerminalDimensions, IRawTerminalTabLayoutInfo, IReconnectionProperties, ITerminalEnvironment, ITerminalTabAction, ITerminalTabLayoutInfoById, TerminalIcon, TerminalType, TitleEventSource, WaitOnExitValue } from './terminal.js';
 
 export interface ISingleTerminalConfiguration<T> {
 	userValue: T | undefined;
@@ -14,15 +14,6 @@ export interface ISingleTerminalConfiguration<T> {
 }
 
 export interface ICompleteTerminalConfiguration {
-	'terminal.integrated.automationShell.windows': ISingleTerminalConfiguration<string | string[]>;
-	'terminal.integrated.automationShell.osx': ISingleTerminalConfiguration<string | string[]>;
-	'terminal.integrated.automationShell.linux': ISingleTerminalConfiguration<string | string[]>;
-	'terminal.integrated.shell.windows': ISingleTerminalConfiguration<string | string[]>;
-	'terminal.integrated.shell.osx': ISingleTerminalConfiguration<string | string[]>;
-	'terminal.integrated.shell.linux': ISingleTerminalConfiguration<string | string[]>;
-	'terminal.integrated.shellArgs.windows': ISingleTerminalConfiguration<string | string[]>;
-	'terminal.integrated.shellArgs.osx': ISingleTerminalConfiguration<string | string[]>;
-	'terminal.integrated.shellArgs.linux': ISingleTerminalConfiguration<string | string[]>;
 	'terminal.integrated.env.windows': ISingleTerminalConfiguration<ITerminalEnvironment>;
 	'terminal.integrated.env.osx': ISingleTerminalConfiguration<ITerminalEnvironment>;
 	'terminal.integrated.env.linux': ISingleTerminalConfiguration<ITerminalEnvironment>;
@@ -41,6 +32,7 @@ export interface IWorkspaceFolderData {
 export interface ISetTerminalLayoutInfoArgs {
 	workspaceId: string;
 	tabs: ITerminalTabLayoutInfoById[];
+	background: number[] | null;
 }
 
 export interface IGetTerminalLayoutInfoArgs {
@@ -59,11 +51,21 @@ export interface IProcessDetails {
 	icon: TerminalIcon | undefined;
 	color: string | undefined;
 	fixedDimensions: IFixedTerminalDimensions | undefined;
+	environmentVariableCollections: ISerializableEnvironmentVariableCollections | undefined;
+	reconnectionProperties?: IReconnectionProperties;
+	waitOnExit?: WaitOnExitValue;
+	hideFromUser?: boolean;
+	isFeatureTerminal?: boolean;
+	type?: TerminalType;
+	hasChildProcesses: boolean;
+	shellIntegrationNonce: string;
+	tabActions?: ITerminalTabAction[];
 }
 
 export type ITerminalTabLayoutInfoDto = IRawTerminalTabLayoutInfo<IProcessDetails>;
 
-export interface ReplayEntry { cols: number; rows: number; data: string; }
-export interface IPtyHostProcessReplayEvent {
-	events: ReplayEntry[];
+export interface ReplayEntry {
+	cols: number;
+	rows: number;
+	data: string;
 }

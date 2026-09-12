@@ -3,48 +3,54 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import type { Profile, ProfileNode } from 'v8-inspect-profiler';
-import { TernarySearchTree } from 'vs/base/common/map';
-import { realpathSync } from 'vs/base/node/extpath';
-import { IExtensionHostProfile, IExtensionService, ProfileSegmentId, ProfileSession } from 'vs/workbench/services/extensions/common/extensions';
-import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
-import { withNullAsUndefined } from 'vs/base/common/types';
-import { Schemas } from 'vs/base/common/network';
-import { URI } from 'vs/base/common/uri';
+import { TernarySearchTree } from '../../../../base/common/ternarySearchTree.js';
+import { IExtensionHostProfile, IExtensionService, ProfileSegmentId, ProfileSession } from '../common/extensions.js';
+import { IExtensionDescription } from '../../../../platform/extensions/common/extensions.js';
+import { Schemas } from '../../../../base/common/network.js';
+import { URI } from '../../../../base/common/uri.js';
+import { IV8InspectProfilingService, IV8Profile, IV8ProfileNode } from '../../../../platform/profiling/common/profiling.js';
+import { createSingleCallFunction } from '../../../../base/common/functional.js';
 
 export class ExtensionHostProfiler {
 
-	constructor(private readonly _port: number, @IExtensionService private readonly _extensionService: IExtensionService) {
+	constructor(
+		private readonly _host: string,
+		private readonly _port: number,
+		@IExtensionService private readonly _extensionService: IExtensionService,
+		@IV8InspectProfilingService private readonly _profilingService: IV8InspectProfilingService,
+	) {
 	}
 
 	public async start(): Promise<ProfileSession> {
-		const profiler = await import('v8-inspect-profiler');
-		const session = await profiler.startProfiling({ port: this._port, checkForPaused: true });
+
+		const id = await this._profilingService.startProfiling({ host: this._host, port: this._port });
+
 		return {
-			stop: async () => {
-				const profile = await session.stop();
-				const extensions = await this._extensionService.getExtensions();
-				return this.distill((profile as any).profile, extensions);
-			}
+			stop: createSingleCallFunction(async () => {
+				const profile = await this._profilingService.stopProfiling(id);
+				await this._extensionService.whenInstalledExtensionsRegistered();
+				const extensions = this._extensionService.extensions;
+				return this._distill(profile, extensions);
+			})
 		};
 	}
 
-	private distill(profile: Profile, extensions: IExtensionDescription[]): IExtensionHostProfile {
-		let searchTree = TernarySearchTree.forUris<IExtensionDescription>();
-		for (let extension of extensions) {
+	private _distill(profile: IV8Profile, extensions: readonly IExtensionDescription[]): IExtensionHostProfile {
+		const searchTree = TernarySearchTree.forUris<IExtensionDescription>();
+		for (const extension of extensions) {
 			if (extension.extensionLocation.scheme === Schemas.file) {
-				searchTree.set(URI.file(realpathSync(extension.extensionLocation.fsPath)), extension);
+				searchTree.set(URI.file(extension.extensionLocation.fsPath), extension);
 			}
 		}
 
-		let nodes = profile.nodes;
-		let idsToNodes = new Map<number, ProfileNode>();
-		let idsToSegmentId = new Map<number, ProfileSegmentId | null>();
-		for (let node of nodes) {
+		const nodes = profile.nodes;
+		const idsToNodes = new Map<number, IV8ProfileNode>();
+		const idsToSegmentId = new Map<number, ProfileSegmentId | null>();
+		for (const node of nodes) {
 			idsToNodes.set(node.id, node);
 		}
 
-		function visit(node: ProfileNode, segmentId: ProfileSegmentId | null) {
+		function visit(node: IV8ProfileNode, segmentId: ProfileSegmentId | null) {
 			if (!segmentId) {
 				switch (node.callFrame.functionName) {
 					case '(root)':
@@ -84,21 +90,21 @@ export class ExtensionHostProfiler {
 		visit(nodes[0], null);
 
 		const samples = profile.samples || [];
-		let timeDeltas = profile.timeDeltas || [];
-		let distilledDeltas: number[] = [];
-		let distilledIds: ProfileSegmentId[] = [];
+		const timeDeltas = profile.timeDeltas || [];
+		const distilledDeltas: number[] = [];
+		const distilledIds: ProfileSegmentId[] = [];
 
 		let currSegmentTime = 0;
 		let currSegmentId: string | undefined;
 		for (let i = 0; i < samples.length; i++) {
-			let id = samples[i];
-			let segmentId = idsToSegmentId.get(id);
+			const id = samples[i];
+			const segmentId = idsToSegmentId.get(id);
 			if (segmentId !== currSegmentId) {
 				if (currSegmentId) {
 					distilledIds.push(currSegmentId);
 					distilledDeltas.push(currSegmentTime);
 				}
-				currSegmentId = withNullAsUndefined(segmentId);
+				currSegmentId = segmentId ?? undefined;
 				currSegmentTime = 0;
 			}
 			currSegmentTime += timeDeltas[i];
@@ -115,9 +121,9 @@ export class ExtensionHostProfiler {
 			ids: distilledIds,
 			data: profile,
 			getAggregatedTimes: () => {
-				let segmentsToTime = new Map<ProfileSegmentId, number>();
+				const segmentsToTime = new Map<ProfileSegmentId, number>();
 				for (let i = 0; i < distilledIds.length; i++) {
-					let id = distilledIds[i];
+					const id = distilledIds[i];
 					segmentsToTime.set(id, (segmentsToTime.get(id) || 0) + distilledDeltas[i]);
 				}
 				return segmentsToTime;

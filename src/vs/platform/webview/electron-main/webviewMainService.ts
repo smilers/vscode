@@ -4,24 +4,26 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { WebContents, webContents, WebFrameMain } from 'electron';
-import { Emitter } from 'vs/base/common/event';
-import { Disposable } from 'vs/base/common/lifecycle';
-import { FindInFrameOptions, FoundInFrameResult, IWebviewManagerService, WebviewWebContentsId, WebviewWindowId } from 'vs/platform/webview/common/webviewManagerService';
-import { WebviewProtocolProvider } from 'vs/platform/webview/electron-main/webviewProtocolProvider';
-import { IWindowsMainService } from 'vs/platform/windows/electron-main/windows';
+import { Emitter } from '../../../base/common/event.js';
+import { Disposable } from '../../../base/common/lifecycle.js';
+import { FindInFrameOptions, FoundInFrameResult, IWebviewManagerService, WebviewWebContentsId, WebviewWindowId } from '../common/webviewManagerService.js';
+import { WebviewProtocolProvider } from './webviewProtocolProvider.js';
+import { IWindowsMainService } from '../../windows/electron-main/windows.js';
+import { IFileService } from '../../files/common/files.js';
 
 export class WebviewMainService extends Disposable implements IWebviewManagerService {
 
 	declare readonly _serviceBrand: undefined;
 
 	private readonly _onFoundInFrame = this._register(new Emitter<FoundInFrameResult>());
-	public onFoundInFrame = this._onFoundInFrame.event;
+	public readonly onFoundInFrame = this._onFoundInFrame.event;
 
 	constructor(
+		@IFileService fileService: IFileService,
 		@IWindowsMainService private readonly windowsMainService: IWindowsMainService,
 	) {
 		super();
-		this._register(new WebviewProtocolProvider());
+		this._register(new WebviewProtocolProvider(fileService));
 	}
 
 	public async setIgnoreMenuShortcuts(id: WebviewWebContentsId | WebviewWindowId, enabled: boolean): Promise<void> {
@@ -47,11 +49,13 @@ export class WebviewMainService extends Disposable implements IWebviewManagerSer
 		}
 	}
 
-	public async findInFrame(windowId: WebviewWindowId, frameName: string, text: string, options: { findNext?: boolean, forward?: boolean }): Promise<void> {
+	public async findInFrame(windowId: WebviewWindowId, frameName: string, text: string, options: { findNext?: boolean; forward?: boolean }): Promise<void> {
 		const initialFrame = this.getFrameByName(windowId, frameName);
 
-		type WebFrameMainWithFindSupport = typeof WebFrameMain & {
+		type WebFrameMainWithFindSupport = WebFrameMain & {
 			findInFrame?(text: string, findOptions: FindInFrameOptions): void;
+			on(event: 'found-in-frame', listener: Function): WebFrameMain;
+			removeListener(event: 'found-in-frame', listener: Function): WebFrameMain;
 		};
 		const frame = initialFrame as unknown as WebFrameMainWithFindSupport;
 		if (typeof frame.findInFrame === 'function') {
@@ -62,17 +66,17 @@ export class WebviewMainService extends Disposable implements IWebviewManagerSer
 			const foundInFrameHandler = (_: unknown, result: FoundInFrameResult) => {
 				if (result.finalUpdate) {
 					this._onFoundInFrame.fire(result);
-					initialFrame.removeListener('found-in-frame', foundInFrameHandler);
+					frame.removeListener('found-in-frame', foundInFrameHandler);
 				}
 			};
-			initialFrame.on('found-in-frame', foundInFrameHandler);
+			frame.on('found-in-frame', foundInFrameHandler);
 		}
 	}
 
 	public async stopFindInFrame(windowId: WebviewWindowId, frameName: string, options: { keepSelection?: boolean }): Promise<void> {
 		const initialFrame = this.getFrameByName(windowId, frameName);
 
-		type WebFrameMainWithFindSupport = typeof WebFrameMain & {
+		type WebFrameMainWithFindSupport = WebFrameMain & {
 			stopFindInFrame?(stopOption: 'keepSelection' | 'clearSelection'): void;
 		};
 

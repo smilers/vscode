@@ -13,142 +13,180 @@
 
 //#region --- workbench common
 
-import 'vs/workbench/workbench.common.main';
+import './workbench.common.main.js';
 
 //#endregion
 
 
 //#region --- workbench parts
 
-import 'vs/workbench/browser/parts/dialogs/dialog.web.contribution';
+import './browser/parts/dialogs/dialog.web.contribution.js';
 
 //#endregion
 
 
 //#region --- workbench (web main)
 
-import 'vs/workbench/browser/web.main';
+import './browser/web.main.js';
 
 //#endregion
 
 
 //#region --- workbench services
 
-import 'vs/workbench/services/integrity/browser/integrityService';
-import 'vs/workbench/services/textMate/browser/textMateService';
-import 'vs/workbench/services/search/browser/searchService';
-import 'vs/workbench/services/textfile/browser/browserTextFileService';
-import 'vs/workbench/services/keybinding/browser/keyboardLayoutService';
-import 'vs/workbench/services/extensions/browser/extensionService';
-import 'vs/workbench/services/extensionManagement/common/extensionManagementServerService';
-import 'vs/workbench/services/extensionManagement/browser/extensionUrlTrustService';
-import 'vs/workbench/services/telemetry/browser/telemetryService';
-import 'vs/workbench/services/credentials/browser/credentialsService';
-import 'vs/workbench/services/url/browser/urlService';
-import 'vs/workbench/services/update/browser/updateService';
-import 'vs/workbench/services/workspaces/browser/workspacesService';
-import 'vs/workbench/services/workspaces/browser/workspaceEditingService';
-import 'vs/workbench/services/dialogs/browser/fileDialogService';
-import 'vs/workbench/services/host/browser/browserHostService';
-import 'vs/workbench/services/lifecycle/browser/lifecycleService';
-import 'vs/workbench/services/clipboard/browser/clipboardService';
-import 'vs/workbench/services/extensionResourceLoader/browser/extensionResourceLoaderService';
-import 'vs/workbench/services/path/browser/pathService';
-import 'vs/workbench/services/themes/browser/browserHostColorSchemeService';
-import 'vs/workbench/services/encryption/browser/encryptionService';
-import 'vs/workbench/services/workingCopy/browser/workingCopyBackupService';
-import 'vs/workbench/services/remote/browser/tunnelServiceImpl';
-import 'vs/workbench/services/userDataSync/browser/userDataAutoSyncEnablementService';
-import 'vs/workbench/services/files/browser/elevatedFileService';
+import './services/integrity/browser/integrityService.js';
+import './services/search/browser/searchService.js';
+import './services/textfile/browser/browserTextFileService.js';
+import './services/keybinding/browser/keyboardLayoutService.js';
+import './services/extensions/browser/extensionService.js';
+import './services/extensionManagement/browser/extensionsProfileScannerService.js';
+import './services/extensions/browser/extensionsScannerService.js';
+import './services/extensionManagement/browser/webExtensionsScannerService.js';
+import './services/extensionManagement/common/extensionManagementServerService.js';
+import './services/mcp/browser/mcpWorkbenchManagementService.js';
+import './services/extensionManagement/browser/extensionGalleryManifestService.js';
+import './services/telemetry/browser/telemetryService.js';
+import './services/url/browser/urlService.js';
+import './services/update/browser/updateService.js';
+import './services/workspaces/browser/workspacesService.js';
+import './services/workspaces/browser/workspaceEditingService.js';
+import './services/dialogs/browser/fileDialogService.js';
+import './services/host/browser/browserHostService.js';
+import '../platform/meteredConnection/browser/meteredConnectionService.js';
+import './services/lifecycle/browser/lifecycleService.js';
+import './services/clipboard/browser/clipboardService.js';
+import './services/localization/browser/localeService.js';
+import './services/path/browser/pathService.js';
+import './services/themes/browser/browserHostColorSchemeService.js';
+import './services/encryption/browser/encryptionService.js';
+import './services/imageResize/browser/imageResizeService.js';
+import './services/secrets/browser/secretStorageService.js';
+import './services/workingCopy/browser/workingCopyBackupService.js';
+import './services/tunnel/browser/tunnelService.js';
+import './services/files/browser/elevatedFileService.js';
+import './services/workingCopy/browser/workingCopyHistoryService.js';
+import './services/userDataSync/browser/webUserDataSyncEnablementService.js';
+import './services/userDataProfile/browser/userDataProfileStorageService.js';
+import './services/configurationResolver/browser/configurationResolverService.js';
+import '../platform/extensionResourceLoader/browser/extensionResourceLoaderService.js';
+import './services/auxiliaryWindow/browser/auxiliaryWindowService.js';
+import './services/power/browser/powerService.js';
+import './services/localTranscription/browser/localTranscriptionService.js';
+import '../platform/sandbox/browser/sandboxHelperService.js';
 
-import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
-import { IAccessibilityService } from 'vs/platform/accessibility/common/accessibility';
-import { IContextMenuService } from 'vs/platform/contextview/browser/contextView';
-import { ContextMenuService } from 'vs/platform/contextview/browser/contextMenuService';
-import { IExtensionTipsService } from 'vs/platform/extensionManagement/common/extensionManagement';
-import { ExtensionTipsService } from 'vs/platform/extensionManagement/common/extensionTipsService';
-import { IWorkbenchExtensionManagementService } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
-import { ExtensionManagementService } from 'vs/workbench/services/extensionManagement/common/extensionManagementService';
-import { ILoggerService } from 'vs/platform/log/common/log';
-import { FileLoggerService } from 'vs/platform/log/common/fileLog';
-import { UserDataSyncMachinesService, IUserDataSyncMachinesService } from 'vs/platform/userDataSync/common/userDataSyncMachines';
-import { IUserDataSyncStoreService, IUserDataSyncService, IUserDataAutoSyncService, IUserDataSyncBackupStoreService } from 'vs/platform/userDataSync/common/userDataSync';
-import { UserDataSyncStoreService } from 'vs/platform/userDataSync/common/userDataSyncStoreService';
-import { UserDataSyncBackupStoreService } from 'vs/platform/userDataSync/common/userDataSyncBackupStoreService';
-import { UserDataSyncService } from 'vs/platform/userDataSync/common/userDataSyncService';
-import { IUserDataSyncAccountService, UserDataSyncAccountService } from 'vs/platform/userDataSync/common/userDataSyncAccount';
-import { UserDataAutoSyncService } from 'vs/platform/userDataSync/common/userDataAutoSyncService';
-import { AccessibilityService } from 'vs/platform/accessibility/browser/accessibilityService';
-import { ICustomEndpointTelemetryService } from 'vs/platform/telemetry/common/telemetry';
-import { NullEndpointTelemetryService } from 'vs/platform/telemetry/common/telemetryUtils';
-import { ITitleService } from 'vs/workbench/services/title/common/titleService';
-import { TitlebarPart } from 'vs/workbench/browser/parts/titlebar/titlebarPart';
-import { ITimerService, TimerService } from 'vs/workbench/services/timer/browser/timerService';
-import { IConfigurationResolverService } from 'vs/workbench/services/configurationResolver/common/configurationResolver';
-import { ConfigurationResolverService } from 'vs/workbench/services/configurationResolver/browser/configurationResolverService';
-import { IUserConfigurationFileService, UserConfigurationFileService } from 'vs/platform/configuration/common/userConfigurationFileService';
+import { InstantiationType, registerSingleton } from '../platform/instantiation/common/extensions.js';
+import { IAccessibilityService } from '../platform/accessibility/common/accessibility.js';
+import { IContextMenuService } from '../platform/contextview/browser/contextView.js';
+import { ContextMenuService } from '../platform/contextview/browser/contextMenuService.js';
+import { IExtensionTipsService } from '../platform/extensionManagement/common/extensionManagement.js';
+import { ExtensionTipsService } from '../platform/extensionManagement/common/extensionTipsService.js';
+import { IWorkbenchExtensionManagementService } from './services/extensionManagement/common/extensionManagement.js';
+import { ExtensionManagementService } from './services/extensionManagement/common/extensionManagementService.js';
+import { UserDataSyncMachinesService, IUserDataSyncMachinesService } from '../platform/userDataSync/common/userDataSyncMachines.js';
+import { IUserDataSyncStoreService, IUserDataSyncService, IUserDataAutoSyncService, IUserDataSyncLocalStoreService, IUserDataSyncResourceProviderService } from '../platform/userDataSync/common/userDataSync.js';
+import { UserDataSyncStoreService } from '../platform/userDataSync/common/userDataSyncStoreService.js';
+import { UserDataSyncLocalStoreService } from '../platform/userDataSync/common/userDataSyncLocalStoreService.js';
+import { UserDataSyncService } from '../platform/userDataSync/common/userDataSyncService.js';
+import { IUserDataSyncAccountService, UserDataSyncAccountService } from '../platform/userDataSync/common/userDataSyncAccount.js';
+import { UserDataAutoSyncService } from '../platform/userDataSync/common/userDataAutoSyncService.js';
+import { AccessibilityService } from '../platform/accessibility/browser/accessibilityService.js';
+import { ICustomEndpointTelemetryService } from '../platform/telemetry/common/telemetry.js';
+import { NullEndpointTelemetryService } from '../platform/telemetry/common/telemetryUtils.js';
+import { ITitleService } from './services/title/browser/titleService.js';
+import { BrowserTitleService } from './browser/parts/titlebar/titlebarPart.js';
+import { ITimerService, TimerService } from './services/timer/browser/timerService.js';
+import { IDiagnosticsService, NullDiagnosticsService } from '../platform/diagnostics/common/diagnostics.js';
+import { ILanguagePackService } from '../platform/languagePacks/common/languagePacks.js';
+import { WebLanguagePacksService } from '../platform/languagePacks/browser/languagePacks.js';
+import { IWebContentExtractorService, NullWebContentExtractorService, ISharedWebContentExtractorService, NullSharedWebContentExtractorService } from '../platform/webContentExtractor/common/webContentExtractor.js';
+import { IMcpGalleryManifestService } from '../platform/mcp/common/mcpGalleryManifest.js';
+import { WorkbenchMcpGalleryManifestService } from './services/mcp/browser/mcpGalleryManifestService.js';
+import { UserDataSyncResourceProviderService } from '../platform/userDataSync/common/userDataSyncResourceProvider.js';
+import { IAgentHostService } from '../platform/agentHost/common/agentService.js';
+import { EditorRemoteAgentHostServiceClient } from './services/agentHost/browser/editorRemoteAgentHostServiceClient.js';
+import { IRemoteAgentHostService, NullRemoteAgentHostService } from '../platform/agentHost/common/remoteAgentHostService.js';
+import { BrowserAgentHostDebugLogsExportService, IAgentHostDebugLogsExportService } from './contrib/chat/browser/actions/exportAgentHostDebugLogsAction.js';
+import './services/agentHost/browser/webAgentHostEnablementService.js';
 
-registerSingleton(IUserConfigurationFileService, UserConfigurationFileService);
-registerSingleton(IWorkbenchExtensionManagementService, ExtensionManagementService);
-registerSingleton(IAccessibilityService, AccessibilityService, true);
-registerSingleton(IContextMenuService, ContextMenuService);
-registerSingleton(ILoggerService, FileLoggerService);
-registerSingleton(IUserDataSyncStoreService, UserDataSyncStoreService);
-registerSingleton(IUserDataSyncMachinesService, UserDataSyncMachinesService);
-registerSingleton(IUserDataSyncBackupStoreService, UserDataSyncBackupStoreService);
-registerSingleton(IUserDataSyncAccountService, UserDataSyncAccountService);
-registerSingleton(IUserDataSyncService, UserDataSyncService);
-registerSingleton(IUserDataAutoSyncService, UserDataAutoSyncService);
-registerSingleton(ITitleService, TitlebarPart);
-registerSingleton(IExtensionTipsService, ExtensionTipsService);
-registerSingleton(ITimerService, TimerService);
-registerSingleton(IConfigurationResolverService, ConfigurationResolverService, true);
-registerSingleton(ICustomEndpointTelemetryService, NullEndpointTelemetryService, true);
+registerSingleton(IWorkbenchExtensionManagementService, ExtensionManagementService, InstantiationType.Delayed);
+registerSingleton(IAccessibilityService, AccessibilityService, InstantiationType.Delayed);
+registerSingleton(IContextMenuService, ContextMenuService, InstantiationType.Delayed);
+registerSingleton(IUserDataSyncStoreService, UserDataSyncStoreService, InstantiationType.Delayed);
+registerSingleton(IUserDataSyncMachinesService, UserDataSyncMachinesService, InstantiationType.Delayed);
+registerSingleton(IUserDataSyncLocalStoreService, UserDataSyncLocalStoreService, InstantiationType.Delayed);
+registerSingleton(IUserDataSyncAccountService, UserDataSyncAccountService, InstantiationType.Delayed);
+registerSingleton(IUserDataSyncService, UserDataSyncService, InstantiationType.Delayed);
+registerSingleton(IUserDataSyncResourceProviderService, UserDataSyncResourceProviderService, InstantiationType.Delayed);
+registerSingleton(IUserDataAutoSyncService, UserDataAutoSyncService, InstantiationType.Eager /* Eager to start auto sync */);
+registerSingleton(ITitleService, BrowserTitleService, InstantiationType.Eager);
+registerSingleton(IExtensionTipsService, ExtensionTipsService, InstantiationType.Delayed);
+registerSingleton(ITimerService, TimerService, InstantiationType.Delayed);
+registerSingleton(ICustomEndpointTelemetryService, NullEndpointTelemetryService, InstantiationType.Delayed);
+registerSingleton(IDiagnosticsService, NullDiagnosticsService, InstantiationType.Delayed);
+registerSingleton(ILanguagePackService, WebLanguagePacksService, InstantiationType.Delayed);
+registerSingleton(IWebContentExtractorService, NullWebContentExtractorService, InstantiationType.Delayed);
+registerSingleton(ISharedWebContentExtractorService, NullSharedWebContentExtractorService, InstantiationType.Delayed);
+registerSingleton(IMcpGalleryManifestService, WorkbenchMcpGalleryManifestService, InstantiationType.Delayed);
+registerSingleton(IAgentHostService, EditorRemoteAgentHostServiceClient, InstantiationType.Delayed);
+registerSingleton(IRemoteAgentHostService, NullRemoteAgentHostService, InstantiationType.Delayed);
+registerSingleton(IAgentHostDebugLogsExportService, BrowserAgentHostDebugLogsExportService, InstantiationType.Delayed);
 
 //#endregion
 
 
 //#region --- workbench contributions
 
-// Output
-import 'vs/workbench/contrib/output/common/outputChannelModelService';
+// Logs
+import './contrib/logs/browser/logs.contribution.js';
 
-// Explorer
-import 'vs/workbench/contrib/files/browser/files.web.contribution';
+// Localization
+import './contrib/localization/browser/localization.contribution.js';
 
 // Performance
-import 'vs/workbench/contrib/performance/browser/performance.web.contribution';
+import './contrib/performance/browser/performance.web.contribution.js';
 
 // Preferences
-import 'vs/workbench/contrib/preferences/browser/keyboardLayoutPicker';
+import './contrib/preferences/browser/keyboardLayoutPicker.js';
 
 // Debug
-import 'vs/workbench/contrib/debug/browser/extensionHostDebugService';
+import './contrib/debug/browser/extensionHostDebugService.js';
 
 // Welcome Banner
-import 'vs/workbench/contrib/welcome/banner/browser/welcomeBanner.contribution';
+import './contrib/welcomeBanner/browser/welcomeBanner.contribution.js';
 
 // Webview
-import 'vs/workbench/contrib/webview/browser/webview.web.contribution';
+import './contrib/webview/browser/webview.web.contribution.js';
 
 // Extensions Management
-import 'vs/workbench/contrib/extensions/browser/extensions.web.contribution';
+import './contrib/extensions/browser/extensions.web.contribution.js';
 
 // Terminal
-import 'vs/workbench/contrib/terminal/browser/terminal.web.contribution';
-import 'vs/workbench/contrib/externalTerminal/browser/externalTerminal.contribution';
-import 'vs/workbench/contrib/terminal/browser/terminalInstanceService';
+import './contrib/terminal/browser/terminal.web.contribution.js';
+import './contrib/externalTerminal/browser/externalTerminal.contribution.js';
+import './contrib/terminal/browser/terminalInstanceService.js';
 
 // Tasks
-import 'vs/workbench/contrib/tasks/browser/taskService';
+import './contrib/tasks/browser/taskService.js';
 
 // Tags
-import 'vs/workbench/contrib/tags/browser/workspaceTagsService';
+import './contrib/tags/browser/workspaceTagsService.js';
 
 // Issues
-import 'vs/workbench/contrib/issue/browser/issue.web.contribution';
+import './contrib/issue/browser/issue.contribution.js';
+
+// Surveys
+import './contrib/surveys/browser/survey.contribution.js';
 
 // Splash
-import 'vs/workbench/contrib/splash/browser/splash.contribution';
+import './contrib/splash/browser/splash.contribution.js';
+
+// Remote Start Entry for the Web
+import './contrib/remote/browser/remoteStartEntry.contribution.js';
+
+// Process Explorer
+import './contrib/processExplorer/browser/processExplorer.web.contribution.js';
+
+// Browser View
+import './contrib/browserView/browser/browserView.contribution.js';
 
 //#endregion

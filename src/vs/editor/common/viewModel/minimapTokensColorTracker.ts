@@ -3,10 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Emitter, Event } from 'vs/base/common/event';
-import { Disposable, markAsSingleton } from 'vs/base/common/lifecycle';
-import { RGBA8 } from 'vs/editor/common/core/rgba';
-import { ColorId, TokenizationRegistry } from 'vs/editor/common/modes';
+import { Emitter, Event } from '../../../base/common/event.js';
+import { Disposable, markAsSingleton } from '../../../base/common/lifecycle.js';
+import { RGBA8 } from '../core/misc/rgba.js';
+import { TokenizationRegistry } from '../languages.js';
+import { ColorId } from '../encodedTokenAttributes.js';
+import { BugIndicatingError, onUnexpectedError } from '../../../base/common/errors.js';
 
 export class MinimapTokensColorTracker extends Disposable {
 	private static _INSTANCE: MinimapTokensColorTracker | null = null;
@@ -20,7 +22,7 @@ export class MinimapTokensColorTracker extends Disposable {
 	private _colors!: RGBA8[];
 	private _backgroundIsLight!: boolean;
 
-	private readonly _onDidChange = new Emitter<void>();
+	private readonly _onDidChange = this._register(new Emitter<void>());
 	public readonly onDidChange: Event<void> = this._onDidChange.event;
 
 	private constructor() {
@@ -36,7 +38,10 @@ export class MinimapTokensColorTracker extends Disposable {
 	private _updateColorMap(): void {
 		const colorMap = TokenizationRegistry.getColorMap();
 		if (!colorMap) {
-			this._colors = [RGBA8.Empty];
+			this._colors = [];
+			for (let i = 0; i <= ColorId.DefaultBackground; i++) {
+				this._colors[i] = RGBA8.Empty;
+			}
 			this._backgroundIsLight = true;
 			return;
 		}
@@ -46,7 +51,7 @@ export class MinimapTokensColorTracker extends Disposable {
 			// Use a VM friendly data-type
 			this._colors[colorId] = new RGBA8(source.r, source.g, source.b, Math.round(source.a * 255));
 		}
-		let backgroundLuminosity = colorMap[ColorId.DefaultBackground].getRelativeLuminance();
+		const backgroundLuminosity = colorMap[ColorId.DefaultBackground].getRelativeLuminance();
 		this._backgroundIsLight = backgroundLuminosity >= 0.5;
 		this._onDidChange.fire(undefined);
 	}
@@ -56,7 +61,12 @@ export class MinimapTokensColorTracker extends Disposable {
 			// background color (basically invisible)
 			colorId = ColorId.DefaultBackground;
 		}
-		return this._colors[colorId];
+		let color = this._colors[colorId];
+		if (!color) {
+			onUnexpectedError(new BugIndicatingError(`Missing color for colorId ${colorId}`));
+			color = RGBA8.Empty;
+		}
+		return color;
 	}
 
 	public backgroundIsLight(): boolean {

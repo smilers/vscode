@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { VSBuffer } from 'vs/base/common/buffer';
-import { regExpFlags } from 'vs/base/common/strings';
-import { URI, UriComponents } from 'vs/base/common/uri';
+import { VSBuffer } from './buffer.js';
+import { URI, UriComponents } from './uri.js';
+import { MarshalledId } from './marshallingIds.js';
 
-export function stringify(obj: any): string {
+export function stringify(obj: unknown): string {
 	return JSON.stringify(obj, replacer);
 }
 
@@ -15,22 +15,6 @@ export function parse(text: string): any {
 	let data = JSON.parse(text);
 	data = revive(data);
 	return data;
-}
-
-export const enum MarshalledId {
-	Uri = 1,
-	Regexp,
-	ScmResource,
-	ScmResourceGroup,
-	ScmProvider,
-	CommentController,
-	CommentThread,
-	CommentThreadReply,
-	CommentNode,
-	CommentThreadNode,
-	TimelineActionContext,
-	NotebookCellActionContext,
-	TestItemContext,
 }
 
 export interface MarshalledObject {
@@ -43,7 +27,7 @@ function replacer(key: string, value: any): any {
 		return {
 			$mid: MarshalledId.Regexp,
 			source: value.source,
-			flags: regExpFlags(value),
+			flags: value.flags,
 		};
 	}
 	return value;
@@ -66,14 +50,19 @@ export function revive<T = any>(obj: any, depth = 0): Revived<T> {
 	if (typeof obj === 'object') {
 
 		switch ((<MarshalledObject>obj).$mid) {
+			// eslint-disable-next-line local/code-no-any-casts
 			case MarshalledId.Uri: return <any>URI.revive(obj);
+			// eslint-disable-next-line local/code-no-any-casts
 			case MarshalledId.Regexp: return <any>new RegExp(obj.source, obj.flags);
+			// eslint-disable-next-line local/code-no-any-casts
+			case MarshalledId.Date: return <any>new Date(obj.source);
 		}
 
 		if (
 			obj instanceof VSBuffer
 			|| obj instanceof Uint8Array
 		) {
+			// eslint-disable-next-line local/code-no-any-casts
 			return <any>obj;
 		}
 
